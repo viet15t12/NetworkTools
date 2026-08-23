@@ -34,28 +34,8 @@ ApplicationWindow {
         root.backendWantsNativeMenu
         && !root.nativePresenterFailed
         && nativeMenuHost.ready
-    readonly property var fallbackRecentProjects: [
-        {
-            "id": "qml-demo-core",
-            "name": "Core Lab",
-            "path": "~/Documents/Core-Lab.ntp",
-            "url": "file:///home/user/Documents/Core-Lab.ntp",
-            "openedAtDisplay": "06/08/2026 09:42:00",
-            "lastOpened": "Today, 09:42",
-            "isMock": true
-        },
-        {
-            "id": "qml-demo-campus",
-            "name": "Campus Network",
-            "path": "~/Documents/Campus-Network.ntp",
-            "url": "file:///home/user/Documents/Campus-Network.ntp",
-            "openedAtDisplay": "05/08/2026 16:10:00",
-            "lastOpened": "Yesterday",
-            "isMock": true
-        }
-    ]
     readonly property var recentProjects:
-        backend !== null ? backend.recentProjects : fallbackRecentProjects
+        backend !== null ? backend.recentProjects : []
     readonly property var filteredRecentProjects: {
         const query = recentSearch.text.trim().toLowerCase()
         if (query === "")
@@ -355,10 +335,14 @@ ApplicationWindow {
                     border.width: Theme.borderWidth
                     radius: Theme.radiusLarge
 
+                    readonly property bool hasRecentProjects:
+                        root.recentProjects.length !== 0
+
                     ColumnLayout {
                         anchors.fill: parent
                         anchors.margins: Theme.spacing16
                         spacing: Theme.spacing12
+                        visible: parent.hasRecentProjects
 
                         RowLayout {
                             Layout.fillWidth: true
@@ -406,7 +390,6 @@ ApplicationWindow {
                                 projectUrl: String(modelData.url || modelData.path || "")
                                 openedAt: String(modelData.openedAtDisplay
                                                  || modelData.lastOpened || "")
-                                mockProject: modelData.isMock === true
                                 onClicked: root.openRecent(modelData.id)
                                 onRemoveClicked: if (root.backend !== null) root.backend.removeRecent(modelData.id)
                                 Keys.onReturnPressed: clicked()
@@ -420,14 +403,58 @@ ApplicationWindow {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             visible: root.filteredRecentProjects.length === 0
-                            text: recentSearch.text.trim() === ""
-                                  ? "No recent projects"
-                                  : "No projects match your search"
+                                     && recentSearch.text.trim() !== ""
+                            text: "No projects match your search"
                             color: Theme.textDisabled
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontSizeNormal
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
+                        }
+                    }
+
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        visible: !parent.hasRecentProjects
+                        spacing: Theme.spacing12
+
+                        Text {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: "No recent projects yet"
+                            color: Theme.textPrimary
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontSizeTitle
+                            font.bold: true
+                        }
+
+                        Text {
+                            Layout.alignment: Qt.AlignHCenter
+                            Layout.maximumWidth: 440
+                            text: "Create a new project to get started, or open an existing .ntp file from your computer."
+                            color: Theme.textSecondary
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontSizeNormal
+                            wrapMode: Text.WordWrap
+                            horizontalAlignment: Text.AlignHCenter
+                        }
+
+                        RowLayout {
+                            Layout.alignment: Qt.AlignHCenter
+                            spacing: Theme.spacing8
+
+                            StandardButton {
+                                objectName: "welcomeEmptyCreateProjectButton"
+                                text: "Create New Project"
+                                type: "Primary"
+                                onClicked: createProjectDialog.open()
+                            }
+
+                            StandardButton {
+                                objectName: "welcomeEmptyOpenProjectButton"
+                                text: "Open Project"
+                                type: "Secondary"
+                                onClicked: openProjectDialog.open()
+                            }
                         }
                     }
                 }

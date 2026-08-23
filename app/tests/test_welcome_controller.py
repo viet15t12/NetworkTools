@@ -40,16 +40,24 @@ class WelcomeControllerTests(unittest.TestCase):
         self.controller.shutdown()
         self.temporary.cleanup()
 
-    def test_mock_recent_project_opens_through_stable_signal(self) -> None:
+    def test_no_demo_projects_are_suggested_without_real_recents(self) -> None:
         projects = self.controller.recentProjects
 
-        self.assertGreaterEqual(len(projects), 3)
-        self.assertTrue(all(project["isMock"] for project in projects))
+        self.assertEqual(projects, [])
+        self.assertEqual(self.workspace_requests, [])
 
-        self.controller.openRecent(projects[0]["id"])
+        self.controller.openRecent("does-not-exist")
 
-        self.assertEqual(self.workspace_requests[0][0], projects[0]["name"])
-        self.assertTrue(self.workspace_requests[0][1].endswith(".ntp"))
+        self.assertEqual(self.workspace_requests, [])
+
+    def test_recent_projects_only_list_real_existing_workspaces(self) -> None:
+        self.controller.createProject("Campus Core / Lab")
+
+        projects = self.controller.recentProjects
+
+        self.assertEqual(len(projects), 1)
+        self.assertEqual(projects[0]["name"], "Campus Core / Lab")
+        self.assertTrue(Path(str(projects[0]["path"])).is_file())
 
     def test_create_project_builds_real_ntp_and_active_temp_workspace(self) -> None:
         self.controller.createProject("Campus Core / Lab")
@@ -142,7 +150,7 @@ class WelcomeControllerTests(unittest.TestCase):
         self.assertIsNotNone(most_recent)
         self.assertEqual(most_recent["name"], "Persistent Lab")
         self.assertEqual(most_recent["path"], created_path)
-        self.assertFalse(most_recent.get("isMock", False))
+        self.assertNotIn("isMock", most_recent)
         self.assertEqual(most_recent["url"], Path(created_path).resolve().as_uri())
         self.assertRegex(
             most_recent["openedAtDisplay"],

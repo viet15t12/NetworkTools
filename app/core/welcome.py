@@ -86,35 +86,6 @@ class WelcomeController(QObject):
         self._active_session: WorkspaceSession | None = None
         self._pending_encrypted_path: Path | None = None
 
-        self._mock_recent_projects: list[dict[str, Any]] = [
-            {
-                "id": "mock-core-lab",
-                "name": "Core Lab",
-                "path": str(Path.home() / "Documents" / "Core-Lab.ntp"),
-                "url": (Path.home() / "Documents" / "Core-Lab.ntp").as_uri(),
-                "openedAtDisplay": "06/08/2026 09:42:00",
-                "lastOpened": "Today, 09:42",
-                "isMock": True,
-            },
-            {
-                "id": "mock-campus-network",
-                "name": "Campus Network",
-                "path": str(Path.home() / "Documents" / "Campus-Network.ntp"),
-                "url": (Path.home() / "Documents" / "Campus-Network.ntp").as_uri(),
-                "openedAtDisplay": "05/08/2026 16:10:00",
-                "lastOpened": "Yesterday",
-                "isMock": True,
-            },
-            {
-                "id": "mock-branch-rollout",
-                "name": "Branch Rollout",
-                "path": str(Path.home() / "Documents" / "Branch-Rollout.ntp"),
-                "url": (Path.home() / "Documents" / "Branch-Rollout.ntp").as_uri(),
-                "openedAtDisplay": "28/07/2026 13:25:00",
-                "lastOpened": "28 Jul 2026",
-                "isMock": True,
-            },
-        ]
         self._migrate_legacy_recents()
         self._recent_projects: list[dict[str, Any]] = self._load_recents()
 
@@ -133,7 +104,6 @@ class WelcomeController(QObject):
                 "openedAtDisplay": _format_opened_at(opened_at),
                 "timestamp": opened_datetime.timestamp(),
                 "lastOpened": _format_relative_timestamp(opened_datetime.timestamp()),
-                "isMock": False,
                 "isEncrypted": bool(item["is_encrypted"]),
             })
         return projects
@@ -191,8 +161,7 @@ class WelcomeController(QObject):
 
     def get_most_recent_project(self) -> dict[str, Any] | None:
         """Return the most recent existing project entry if available."""
-        real_recents = [item for item in self._recent_projects if not item.get("isMock")]
-        for item in real_recents:
+        for item in self._recent_projects:
             p = Path(str(item.get("path", "")))
             if p.is_file():
                 return item
@@ -200,8 +169,6 @@ class WelcomeController(QObject):
 
     @pyqtProperty("QVariantList", notify=recentProjectsChanged)
     def recentProjects(self) -> list[dict[str, Any]]:
-        if not self._recent_projects:
-            return [dict(project) for project in self._mock_recent_projects]
         return [dict(project) for project in self._recent_projects]
 
     @pyqtProperty(str, notify=activeWorkspaceChanged)
@@ -229,10 +196,6 @@ class WelcomeController(QObject):
     def workspace_service(self) -> WorkspaceService:
         return self._workspace_service
 
-    def _request_mock_workspace(self, name: str, path: str) -> None:
-        display_name = (name or "NetworkTools Project").strip()
-        self.workspaceRequested.emit(display_name, (path or "").strip())
-
     def _activate(self, session: WorkspaceSession) -> None:
         previous = self._active_session
         self._active_session = session
@@ -250,15 +213,12 @@ class WelcomeController(QObject):
     @pyqtSlot(str)
     def openRecent(self, project_id: str) -> None:
         wanted = (project_id or "").strip()
-        all_projects = self.recentProjects
         project = next(
-            (entry for entry in all_projects if entry.get("id") == wanted or entry.get("path") == wanted),
+            (entry for entry in self._recent_projects
+             if entry.get("id") == wanted or entry.get("path") == wanted),
             None,
         )
         if project is None:
-            return
-        if project.get("isMock"):
-            self._request_mock_workspace(str(project["name"]), str(project["path"]))
             return
         self._open_path(Path(str(project["path"])), password=None)
 

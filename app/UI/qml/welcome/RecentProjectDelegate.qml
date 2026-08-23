@@ -12,7 +12,6 @@ ItemDelegate {
     property string projectPath: ""
     property string projectUrl: ""
     property string openedAt: ""
-    property bool mockProject: false
 
     signal removeClicked()
 
@@ -60,15 +59,6 @@ ItemDelegate {
                 }
 
                 Text {
-                    visible: root.mockProject
-                    text: "DEMO"
-                    color: Theme.notificationInfoAccent
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeCaption
-                    font.bold: true
-                }
-
-                Text {
                     text: "Opened: " + root.openedAt
                     color: Theme.textSecondary
                     font.family: Theme.fontFamily
@@ -88,7 +78,7 @@ ItemDelegate {
 
         ThemedIcon {
             id: removeBtn
-            visible: hoverHandler.hovered && !root.mockProject
+            visible: hoverHandler.hovered
             Layout.preferredWidth: Theme.iconSizeSmall
             Layout.preferredHeight: Theme.iconSizeSmall
             iconSource: AppAssets.actionClose
