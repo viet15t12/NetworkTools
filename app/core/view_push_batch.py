@@ -76,7 +76,11 @@ class ViewPushBatchService:
         try:
             results = self._executor.run(
                 targets,
-                lambda host: controller.push(host, module),
+                lambda host: (
+                    controller.push_apply_only(host, module)
+                    if callable(getattr(controller, "push_apply_only", None))
+                    else controller.push(host, module)
+                ),
                 cancel_event=cancellation,
                 on_host=on_host,
                 on_progress=on_progress,
@@ -98,6 +102,54 @@ class ViewPushBatchService:
             "message": (
                 f"Push completed: {succeeded} succeeded, {failed} failed"
                 f"{f', {cancelled} cancelled' if cancelled else ''}."
+            ),
+        }
+
+    def reconcile(
+        self,
+        controller_name: str,
+        module_name: str,
+        hosts: Any,
+        *,
+        on_host: HostCallback,
+        on_progress: ProgressCallback,
+        cancel_event: threading.Event | None = None,
+    ) -> dict[str, Any]:
+        """Run deferred post-push show/save/synchronization per successful host."""
+        controller_key = str(controller_name or "").strip().lower()
+        module = str(module_name or "all").strip().lower() or "all"
+        targets = self.normalize_hosts(hosts)
+        if not controller_key or not targets:
+            return self._invalid("No devices require background synchronization.")
+        controller = self._controllers.get(controller_key)
+        cancellation = cancel_event or threading.Event()
+        with self._lock:
+            self._active_cancellations.add(cancellation)
+        try:
+            results = self._executor.run(
+                targets,
+                lambda host: controller.reconcile_after_push(host, module),
+                cancel_event=cancellation,
+                on_host=on_host,
+                on_progress=on_progress,
+            )
+        finally:
+            with self._lock:
+                self._active_cancellations.discard(cancellation)
+        succeeded = sum(1 for item in results if item.get("ok"))
+        cancelled = sum(1 for item in results if item.get("state") == "cancelled")
+        failed = len(results) - succeeded - cancelled
+        return {
+            "ok": failed == 0 and cancelled == 0,
+            "partial": succeeded > 0 and (failed > 0 or cancelled > 0),
+            "total": len(results),
+            "success": succeeded,
+            "failed": failed,
+            "cancelled": cancelled,
+            "results": results,
+            "message": (
+                f"Background device synchronization completed: {succeeded} succeeded, "
+                f"{failed} failed{f', {cancelled} cancelled' if cancelled else ''}."
             ),
         }
 

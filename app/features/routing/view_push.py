@@ -57,6 +57,34 @@ class RoutingViewPushController(BaseViewPushController):
     def push_tasks(
         self, host: str, module_name: str, tasks: list[dict[str, Any]]
     ) -> dict[str, Any]:
+        session_provider = self._session_provider_for_host(host)
+        return self._push_tasks_with_provider(
+            host, module_name, tasks, session_provider
+        )
+
+    def _push_without_reconcile(
+        self,
+        host: str,
+        module_name: str,
+        tasks: list[dict[str, Any]],
+        connector: Any | None,
+    ) -> dict[str, Any]:
+        if connector is None:
+            return self.push_tasks(host, module_name, tasks)
+        return self._push_tasks_with_provider(
+            host,
+            module_name,
+            tasks,
+            lambda target: connector if target == host else None,
+        )
+
+    def _push_tasks_with_provider(
+        self,
+        host: str,
+        module_name: str,
+        tasks: list[dict[str, Any]],
+        session_provider: Any,
+    ) -> dict[str, Any]:
         self.db._sync_worker_paths()
         from infrastructure.network.config import TMP_DIR
         from features.routing.dispatcher import routing_dispatcher
@@ -68,7 +96,6 @@ class RoutingViewPushController(BaseViewPushController):
         # left by an older Push operation.
         log_path.unlink(missing_ok=True)
 
-        session_provider = self._session_provider_for_host(host)
         routing_dispatcher(
             target_ip=host,
             target_module=module,

@@ -7,6 +7,38 @@ from features.syslog.receiver import SyslogReceiver
 
 
 class SyslogReceiverTests(unittest.TestCase):
+    def test_both_receiver_delivers_udp_and_tcp_on_the_same_port(self) -> None:
+        received: list[tuple[bytes, str, str]] = []
+        ready = threading.Event()
+
+        def collect(data: bytes, source: str, protocol: str) -> None:
+            received.append((data, source, protocol))
+            if len(received) == 2:
+                ready.set()
+
+        receiver = SyslogReceiver(
+            ListenerConfig("127.0.0.1", "127.0.0.1", 0, "both"),
+            collect,
+            lambda message: None,
+        )
+        receiver.start()
+        try:
+            self.assertEqual(len(receiver._servers), 2)
+            port = int(receiver._server.getsockname()[1])
+            self.assertEqual(
+                {int(server.getsockname()[1]) for server in receiver._servers},
+                {port},
+            )
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as udp_client:
+                udp_client.sendto(b"<189>%SYS-5-CONFIG_I: udp", ("127.0.0.1", port))
+            with socket.create_connection(("127.0.0.1", port), timeout=2.0) as tcp_client:
+                tcp_client.sendall(b"<189>%SYS-5-CONFIG_I: tcp\n")
+
+            self.assertTrue(ready.wait(2.0))
+            self.assertEqual({item[2] for item in received}, {"udp", "tcp"})
+        finally:
+            receiver.stop()
+
     def test_udp_receiver_delivers_datagram(self) -> None:
         received: list[tuple[bytes, str, str]] = []
         ready = threading.Event()

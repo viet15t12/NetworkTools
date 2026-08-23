@@ -55,6 +55,7 @@ class MessageRepository:
         host = str(filters.get("host") or "").strip()
         search = str(filters.get("search") or "").strip()
         severities = self._valid_severities(filters.get("severities", []))
+        protocols = self._valid_protocols(filters.get("protocols", []))
         if host:
             clauses.append("device_host = ?")
             params.append(host)
@@ -68,6 +69,9 @@ class MessageRepository:
         if severities:
             clauses.append(f"severity IN ({','.join('?' for _ in severities)})")
             params.extend(severities)
+        if protocols:
+            clauses.append(f"protocol IN ({','.join('?' for _ in protocols)})")
+            params.extend(protocols)
         if before_id > 0:
             clauses.append("id < ?")
             params.append(before_id)
@@ -98,6 +102,15 @@ class MessageRepository:
                 continue
             if 0 <= severity <= 7 and severity not in result:
                 result.append(severity)
+        return result
+
+    @staticmethod
+    def _valid_protocols(values: Any) -> list[str]:
+        result: list[str] = []
+        for value in values or []:
+            protocol = str(value or "").strip().lower()
+            if protocol in {"udp", "tcp"} and protocol not in result:
+                result.append(protocol)
         return result
 
     def delete_expired(self, retention_days: int, batch_size: int = 5_000) -> int:

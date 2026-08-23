@@ -274,7 +274,7 @@ class SvgResourceContractTests(unittest.TestCase):
             source,
         )
 
-        self.assertEqual(len(paths), 121)
+        self.assertEqual(len(paths), 124)
         self.assertEqual(len(paths), len(set(paths)))
         for path in paths:
             with self.subTest(asset=path):
@@ -328,7 +328,7 @@ class ButtonIconContractTests(unittest.TestCase):
             if re.search(r"^\s*text:.*\bSave(?:\s|\"|$)", block, flags=re.MULTILINE)
         ]
 
-        self.assertEqual(len(reload_blocks), 22)
+        self.assertEqual(len(reload_blocks), 23)
         self.assertTrue(
             all(
                 "AppAssets.actionDatabaseReload" in block
@@ -410,8 +410,9 @@ class ButtonIconContractTests(unittest.TestCase):
         # Welcome flow adds Create/Cancel, a reusable theme choice, and Done.
         # Router Interface replaces its former hard-coded port-family action
         # with one text-only virtual-interface create action.
-        self.assertEqual(len(self.button_blocks), 228)
-        self.assertEqual(len(buttons_with_icons), 86)
+        # The per-device Syslog page adds nine icon-bearing CRUD/push actions.
+        self.assertEqual(len(self.button_blocks), 237)
+        self.assertEqual(len(buttons_with_icons), 95)
         self.assertEqual(len(self.button_blocks) - len(buttons_with_icons), 142)
 
     def test_routing_group_replaces_clone_workflow(self) -> None:
@@ -768,6 +769,9 @@ class ButtonIconContractTests(unittest.TestCase):
         settings = (
             self.ui_root / "qml" / "features" / "syslog" / "SyslogServerSettings.qml"
         ).read_text(encoding="utf-8")
+        config_page = (
+            self.ui_root / "qml" / "features" / "syslog" / "SyslogDeviceConfigPage.qml"
+        ).read_text(encoding="utf-8")
         context_menu = (
             self.ui_root / "qml" / "sidebar" / "syslog" / "SyslogDeviceContextMenu.qml"
         ).read_text(encoding="utf-8")
@@ -787,6 +791,12 @@ class ButtonIconContractTests(unittest.TestCase):
         self.assertIn("DataTableRow {", row)
         self.assertGreaterEqual(row.count("DataTableCell {"), 6)
         self.assertGreaterEqual(settings.count("FormSection {"), 3)
+        self.assertIn('title: "Syslog Servers"', config_page)
+        self.assertIn('controllerName: "syslog"', config_page)
+        self.assertIn("CrudFormActions {", config_page)
+        self.assertIn("getDeviceConfigurations(host)", config_page)
+        self.assertIn("saveDeviceConfiguration(host, draftData)", config_page)
+        self.assertIn("deleteDeviceConfiguration(host, clone(row))", config_page)
         self.assertIn("ContextMenuItem {", context_menu)
         self.assertIn("AppAssets.navigationSyslog", activity_bar)
         self.assertIn("id: syslogWorkspaceLoader", main)
@@ -798,6 +808,8 @@ class ButtonIconContractTests(unittest.TestCase):
         self.assertIn('objectName: "syslogPanelReloadButton"', devices_panel)
         self.assertIn('tooltip: root.busy ? "Refreshing Connected Hosts..."', devices_panel)
         self.assertNotIn("StandardButton {", devices_panel)
+        self.assertNotIn("configureDevice(", devices_panel)
+        self.assertNotIn("cancelDevice(", devices_panel)
 
     def test_add_and_new_buttons_do_not_use_add_icons(self) -> None:
         for path, block in self.button_blocks:
@@ -842,7 +854,7 @@ class ButtonIconContractTests(unittest.TestCase):
 
         # System Logs, Manual Sync, and Welcome project creation add
         # confirmation dialogs.
-        self.assertEqual(len(cancel_blocks), 40)
+        self.assertEqual(len(cancel_blocks), 42)
         for path, block in cancel_blocks:
             with self.subTest(qml=path.name):
                 self.assertIn('type: "Text"', block)
@@ -1488,7 +1500,7 @@ class QmlModuleContractTests(unittest.TestCase):
         ):
             with self.subTest(content_contract=contract):
                 self.assertIn(contract, content)
-        self.assertEqual(content.count("asynchronous: true"), 10)
+        self.assertEqual(content.count("asynchronous: true"), 11)
 
         nested_loader_counts = {
             "qml/features/routing/RoutingView.qml": 5,

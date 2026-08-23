@@ -12,7 +12,7 @@ class SyslogCommandBuilderTests(unittest.TestCase):
             commands[0],
             "logging host 192.168.1.100 transport udp port 5514",
         )
-        self.assertIn("logging trap warnings", commands)
+        self.assertIn("logging trap notifications", commands)
         self.assertFalse(any(command.startswith("logging console") for command in commands))
         self.assertNotIn("service timestamps log datetime msec", commands)
         self.assertEqual(

@@ -28,7 +28,8 @@ class SyslogConfigurator:
 
     def configure(
         self, host: str, server_ip: str, protocol: str, port: int,
-        source_interface: str = "",
+        source_interface: str = "", trap_severity: int = 5,
+        timestamps: bool = False, sequence_numbers: bool = False,
     ) -> dict[str, object]:
         validation = self._validate_host(host)
         if validation is not None:
@@ -46,7 +47,10 @@ class SyslogConfigurator:
                 ),
             }
         try:
-            commands = build_enable_commands(server_ip, protocol, port, interface)
+            commands = build_enable_commands(
+                server_ip, protocol, port, interface, trap_severity,
+                timestamps, sequence_numbers,
+            )
         except (TypeError, ValueError) as exc:
             return {"ok": False, "stage": "validate", "message": str(exc)}
         result = self._run_transaction(
@@ -60,6 +64,7 @@ class SyslogConfigurator:
             self.repository.save_device_state(
                 host, server_ip, protocol, port, interface,
                 bool(result["ok"]), str(result["message"]),
+                trap_severity, timestamps, sequence_numbers,
             )
         except Exception as exc:
             return self._database_failure(host, result, exc)

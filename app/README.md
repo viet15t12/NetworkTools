@@ -39,6 +39,16 @@ Chạy thẳng khi môi trường đã sẵn sàng:
 ./networktools.sh run
 ```
 
+Lệnh `run` kiểm tra hai binary bắt buộc trước khi mở Python/QML:
+
+- C++ Syslog collector tại `bin/networktools-syslog-collector`;
+- Rust terminal tại `vendor/alacritty/target/release/networktools-terminal`.
+
+Nếu binary chưa có hoặc source tương ứng mới hơn binary, launcher tự build lại.
+Nếu cả hai đã cập nhật, app được chạy thẳng mà không gọi CMake/Cargo. Có thể kiểm
+tra hoặc build riêng collector bằng `./networktools.sh syslog-check` và
+`./networktools.sh syslog-build`.
+
 `./networktools.sh setup` không làm hỏng phần app chính khi Cython tùy chọn
 hoặc terminal companion chưa có. Để kiểm tra terminal riêng ở chế độ nghiêm
 ngặt, chạy:
@@ -133,7 +143,7 @@ app/
 | `acl/` | ACL, rule, binding, collector/template và worker View & Push |
 | `nat/` | static/dynamic NAT, PAT, NAT ACL, route-map và worker push |
 | `switching/` | switchport, VLAN, SVI/L3, monitoring và View/Push Layer 2 Cisco IOS |
-| `syslog/` | UDP/TCP listener, parser, batch writer, query và retention |
+| `syslog/` | listener/filter log và nhiều Syslog destination theo từng router/SW2/SW3 |
 | `sftp/` | kết nối, duyệt file và hàng đợi truyền SFTP |
 | `terminal/` | session/QProcess/NTTP manager cho NetworkTools Terminal độc lập |
 | `external_tools/` | catalog và metadata cho ứng dụng ngoài |
@@ -197,7 +207,7 @@ không có capability `save_config`; app không tự mở kết nối ngầm.
 
 ### View & Push và tiến trình nền
 
-- ACL Security, NAT/NAT ACL, DHCP, Routing, FHRP và Switching Layer 2 dùng chung `ViewPushButton`/`ViewPushDialog`; Routing Group/FHRP dùng dialog batch đa host dùng chung.
+- ACL Security, NAT/NAT ACL, DHCP, Routing, FHRP, Switching Layer 2 và cấu hình nhiều Syslog destination theo thiết bị dùng chung `ViewPushButton`/`ViewPushDialog`; Routing Group/FHRP dùng dialog batch đa host dùng chung.
 - Preview chỉ render cấu hình pending và không mở kết nối; Switching so sánh
   SHA-256 theo module, các feature theo row dùng `sync_status` dạng text.
 - Push chạy nền, ưu tiên tái sử dụng session SSH/Telnet của tab thiết bị; thiết bị `dev = 1` chỉ mô phỏng và không đăng nhập.
@@ -235,7 +245,7 @@ không có capability `save_config`; app không tự mở kết nối ngầm.
 | `AppPaths` | `AppPaths` | resource URL an toàn |
 | `externalTools` | `ExternalToolsManager` | catalog/công cụ ngoài |
 | `sftpController` | `SftpController` | SFTP workspace |
-| `syslogManager` / `syslogSettings` | Syslog feature | listener/query/configuration |
+| `syslogManager` / `syslogSettings` | Syslog feature | listener/query/filter và cấu hình destination theo thiết bị |
 
 Feature bar, menu chuột phải và `Ctrl+\`` mở hoặc focus ứng dụng đồng hành
 `networktools-terminal`. NetworkTools sinh UUID, khởi chạy bằng `QProcess`, theo

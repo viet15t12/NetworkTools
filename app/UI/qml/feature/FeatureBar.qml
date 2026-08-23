@@ -48,7 +48,8 @@ Rectangle {
         { id: "services", label: "Services", globalIndex: 15, implemented: true },
         { id: "security", label: "Security", globalIndex: 16, implemented: true },
         { id: "monitoring", label: "Monitoring", globalIndex: 17, implemented: true },
-        { id: "fhrp", label: "FHRP", globalIndex: 18, implemented: true }
+        { id: "fhrp", label: "FHRP", globalIndex: 18, implemented: true },
+        { id: "syslog", label: "Syslog Server", globalIndex: 19, implemented: true }
     ]
 
     property var textFeatures: featuresForDeviceType(deviceType)
@@ -73,11 +74,11 @@ Rectangle {
         const type = normalizedDeviceType(value)
         let allowed = []
         if (type === "router")
-            allowed = ["routing", "fhrp", "dhcp", "acl", "nat"]
+            allowed = ["routing", "fhrp", "dhcp", "acl", "nat", "syslog"]
         else if (type === "sw2")
-            allowed = ["switching", "security", "monitoring"]
+            allowed = ["switching", "security", "monitoring", "syslog"]
         else if (type === "sw3")
-            allowed = ["switching", "routing", "fhrp", "services", "security", "monitoring"]
+            allowed = ["switching", "routing", "fhrp", "services", "security", "monitoring", "syslog"]
         else
             return allTextFeatures
         const result = []

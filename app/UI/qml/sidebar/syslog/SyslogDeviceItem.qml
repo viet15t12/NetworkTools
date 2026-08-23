@@ -13,13 +13,11 @@ Rectangle {
     readonly property string host: String(deviceData.host || "")
     readonly property string deviceName: String(deviceData.device_name || host)
     readonly property string deviceType: String(deviceData.device_type || "").toLowerCase()
-    readonly property bool configured: Boolean(deviceData.configured)
     readonly property url deviceIcon: deviceType === "router" ? AppAssets.deviceRouter
                                       : deviceType === "sw2" || deviceType === "sw3"
                                         ? AppAssets.deviceSwitch : AppAssets.deviceStatusDot
 
     signal clicked(string host)
-    signal rightClicked(string host, bool configured, real globalX, real globalY)
 
     height: 52
     color: selected ? Theme.panelSideBarItemSelected
@@ -27,9 +25,7 @@ Rectangle {
                     : "transparent"
 
     ToolTip.visible: itemHover.hovered
-    ToolTip.text: configured
-                  ? "%1 · System Logs configured".arg(host)
-                  : "%1 · Not configured".arg(host)
+    ToolTip.text: "%1 · Connected log source".arg(host)
     ToolTip.delay: 400
 
     Rectangle {
@@ -78,8 +74,8 @@ Rectangle {
         }
 
         Text {
-            text: root.configured ? "Configured" : "Not set"
-            color: root.configured ? Theme.statusConnected : Theme.panelSideBarTextDisabled
+            text: "Connected"
+            color: Theme.statusConnected
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeSmall
         }
@@ -92,16 +88,4 @@ Rectangle {
         onTapped: root.clicked(root.host)
     }
 
-    TapHandler {
-        acceptedButtons: Qt.RightButton
-        onTapped: function(eventPoint) {
-            const globalPosition = root.mapToItem(
-                null,
-                eventPoint.position.x,
-                eventPoint.position.y
-            )
-            root.rightClicked(root.host, root.configured,
-                              globalPosition.x, globalPosition.y)
-        }
-    }
 }

@@ -34,17 +34,34 @@ CREATE INDEX IF NOT EXISTS idx_t12_syslog_severity_time
     ON t12_syslog_messages(severity, received_at DESC);
 CREATE INDEX IF NOT EXISTS idx_t12_syslog_source_ip
     ON t12_syslog_messages(source_ip);
+"""
 
-CREATE TABLE IF NOT EXISTS t12_syslog_device_state (
+SYSLOG_DEVICE_SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS t10_syslog_servers (
     device_host       TEXT NOT NULL,
     server_ip         TEXT NOT NULL,
     protocol          TEXT NOT NULL CHECK (protocol IN ('udp', 'tcp')),
     port              INTEGER NOT NULL CHECK (port BETWEEN 1 AND 65535),
     source_interface  TEXT,
+    trap_severity     INTEGER NOT NULL DEFAULT 5 CHECK (trap_severity BETWEEN 0 AND 7),
+    timestamps        INTEGER NOT NULL DEFAULT 0 CHECK (timestamps IN (0, 1)),
+    sequence_numbers  INTEGER NOT NULL DEFAULT 0 CHECK (sequence_numbers IN (0, 1)),
     configured        INTEGER NOT NULL DEFAULT 0 CHECK (configured IN (0, 1)),
+    sync_status       TEXT NOT NULL DEFAULT 'synchronized'
+                      CHECK (sync_status IN ('pending_apply', 'synchronized', 'pending_delete')),
     last_result       TEXT,
     updated_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (device_host, server_ip, protocol, port)
+    PRIMARY KEY (device_host, server_ip, protocol, port),
+    FOREIGN KEY (device_host) REFERENCES t01_devices(host)
+        ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_t10_syslog_servers_host
+    ON t10_syslog_servers(device_host);
+
+CREATE TABLE IF NOT EXISTS t10_syslog_migrations (
+    migration_key  TEXT PRIMARY KEY,
+    completed_at   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 """
 
@@ -56,6 +73,20 @@ MESSAGE_COLUMNS = {
     "cisco_facility": "TEXT",
     "cisco_subfacility": "TEXT",
     "facility": "TEXT",
+}
+
+DEVICE_CONFIG_COLUMNS = {
+    "source_interface": "TEXT",
+    "trap_severity": "INTEGER NOT NULL DEFAULT 5 CHECK (trap_severity BETWEEN 0 AND 7)",
+    "timestamps": "INTEGER NOT NULL DEFAULT 0 CHECK (timestamps IN (0, 1))",
+    "sequence_numbers": "INTEGER NOT NULL DEFAULT 0 CHECK (sequence_numbers IN (0, 1))",
+    "configured": "INTEGER NOT NULL DEFAULT 0 CHECK (configured IN (0, 1))",
+    "sync_status": (
+        "TEXT NOT NULL DEFAULT 'synchronized' "
+        "CHECK (sync_status IN ('pending_apply', 'synchronized', 'pending_delete'))"
+    ),
+    "last_result": "TEXT",
+    "updated_at": "TEXT",
 }
 
 
@@ -87,4 +118,23 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
-__all__ = ["SYSLOG_SCHEMA_SQL", "ensure_schema"]
+def ensure_device_schema(conn: sqlite3.Connection) -> None:
+    """Create/upgrade desired Syslog configuration in device_network.db."""
+    conn.executescript(SYSLOG_DEVICE_SCHEMA_SQL)
+    existing = {
+        str(row[1]) for row in conn.execute("PRAGMA table_info(t10_syslog_servers)")
+    }
+    for name, declaration in DEVICE_CONFIG_COLUMNS.items():
+        if name not in existing:
+            conn.execute(
+                f"ALTER TABLE t10_syslog_servers ADD COLUMN {name} {declaration}"
+            )
+    conn.commit()
+
+
+__all__ = [
+    "SYSLOG_DEVICE_SCHEMA_SQL",
+    "SYSLOG_SCHEMA_SQL",
+    "ensure_device_schema",
+    "ensure_schema",
+]

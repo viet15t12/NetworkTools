@@ -10,7 +10,9 @@ from PyQt6.QtCore import QObject, pyqtProperty, pyqtSignal, pyqtSlot
 
 from infrastructure.database.paths import DEVICE_NETWORK_DB, INFO_COLLECTED_DB
 
+from ..application.retention import run_retention
 from ..application.server_service import SyslogServerService
+from ..native import NativeSyslogCollector
 from .settings import SyslogSettings
 
 
@@ -27,7 +29,7 @@ def _variant_dict(value: Any) -> dict[str, Any]:
     try:
         return dict(value)
     except (TypeError, ValueError) as exc:
-        raise TypeError("Syslog filters must be a QML object or mapping") from exc
+        raise TypeError("Syslog data must be a QML object or mapping") from exc
 
 
 class SyslogManager(QObject):
@@ -47,6 +49,10 @@ class SyslogManager(QObject):
             INFO_COLLECTED_DB, DEVICE_NETWORK_DB,
             self._messages_stored, self._error, self._receiver_error,
         )
+        self.native = NativeSyslogCollector(self)
+        self.native.messageInserted.connect(self._native_message_stored)
+        self.native.collectorError.connect(self._receiver_error)
+        self.native.stopped.connect(self._native_stopped)
         self.executor = ThreadPoolExecutor(max_workers=3, thread_name_prefix="syslog-task")
         self._state_lock = threading.RLock()
         self._count_lock = threading.Lock()
@@ -74,7 +80,7 @@ class SyslogManager(QObject):
 
     @property
     def receiver(self) -> object | None:
-        return self.service.receiver
+        return self.native if self.native.is_running else None
 
     def set_database_paths(self, info_db: Any, device_db: Any) -> None:
         was_running = self.listenerState in {"starting", "listening"}
@@ -101,7 +107,7 @@ class SyslogManager(QObject):
 
     @pyqtProperty(int, notify=stateChanged)
     def droppedCount(self) -> int:
-        return self.service.dropped
+        return self.native.dropped
 
     def _set_state(self, state: str, message: str) -> None:
         with self._state_lock:
@@ -118,12 +124,18 @@ class SyslogManager(QObject):
         try:
             config = self.settings.listener_config()
             self._set_state("starting", "Starting Syslog server...")
-            self.service.start(config, self.settings.retentionDays)
-            message = f"Listening on {config.bind_ip}:{config.port}/{config.protocol.upper()}"
+            run_retention(self.service.repository, self.settings.retentionDays)
+            message = self.native.start(
+                self.settings.path,
+                self.service.repository.info_db,
+                self.service.repository.device_db,
+            )
+            transports = "UDP+TCP" if config.protocol == "both" else config.protocol.upper()
+            message = message or f"Listening on {config.bind_ip}:{config.port}/{transports}"
             self._set_state("listening", message)
             return {"ok": True, "message": message}
         except Exception as exc:
-            self.service.stop()
+            self.native.stop()
             self._set_state("error", str(exc))
             return {"ok": False, "message": str(exc)}
 
@@ -132,7 +144,7 @@ class SyslogManager(QObject):
         if self.listenerState == "stopped":
             return {"ok": True, "message": self.statusMessage}
         self._set_state("stopping", "Stopping Syslog server...")
-        self.service.stop()
+        self.native.stop()
         self._set_state("stopped", "Syslog server is stopped.")
         return {"ok": True, "message": self.statusMessage}
 
@@ -141,6 +153,13 @@ class SyslogManager(QObject):
             self._received_count += len(rows)
         self.messagesInserted.emit(rows)
         self.stateChanged.emit()
+
+    def _native_message_stored(self, row: dict[str, Any]) -> None:
+        self._messages_stored([dict(row)])
+
+    def _native_stopped(self) -> None:
+        if not self._shutdown and self.listenerState not in {"stopped", "stopping", "error"}:
+            self._set_state("error", "Native Syslog collector stopped unexpectedly.")
 
     def _receiver_error(self, message: str) -> None:
         self._set_state("error", message)
@@ -177,6 +196,33 @@ class SyslogManager(QObject):
     @pyqtSlot(str)
     def cancelDevice(self, host: str) -> None:
         self._device_action(host, "cancel")
+
+    @pyqtSlot(str, result="QVariant")
+    def getDeviceConfigurations(self, host: str) -> list[dict[str, Any]]:
+        """Return every managed Syslog destination for one router or switch."""
+        try:
+            return self.repository.device_configurations(host)
+        except Exception as exc:
+            self._error(str(exc))
+            return []
+
+    @pyqtSlot(str, "QVariant", result="QVariant")
+    def saveDeviceConfiguration(self, host: str, payload: Any) -> dict[str, Any]:
+        """Persist desired Syslog state without opening a device session."""
+        try:
+            return self.repository.save_configuration(host, _variant_dict(payload))
+        except Exception as exc:
+            return {"ok": False, "message": str(exc)}
+
+    @pyqtSlot(str, "QVariant", result="QVariant")
+    def deleteDeviceConfiguration(self, host: str, payload: Any) -> dict[str, Any]:
+        """Delete an unapplied row or stage a configured destination for removal."""
+        try:
+            return self.repository.stage_delete_configuration(
+                host, _variant_dict(payload)
+            )
+        except Exception as exc:
+            return {"ok": False, "message": str(exc)}
 
     def _device_action(self, host: str, action: str, source_interface: str = "") -> None:
         host = host.strip()
@@ -226,6 +272,7 @@ class SyslogManager(QObject):
     @pyqtSlot()
     def shutdown(self) -> None:
         self._shutdown = True
+        self.native.stop()
         self.service.stop(receiver_timeout=0.5, writer_timeout=1.0)
         self.executor.shutdown(wait=True, cancel_futures=True)
 

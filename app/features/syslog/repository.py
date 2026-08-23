@@ -16,7 +16,7 @@ class SyslogRepository:
         self.info_db = Path(info_db)
         self.device_db = Path(device_db)
         self.messages = MessageRepository(self.info_db)
-        self.device_states = DeviceStateRepository(self.info_db)
+        self.device_states = DeviceStateRepository(self.device_db, self.info_db)
         self.device_lookup = DeviceLookupRepository(self.device_db)
 
     def ensure_schema(self) -> None:

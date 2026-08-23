@@ -27,7 +27,7 @@ def _validate_destination(server_ip: str, protocol: str, port: int) -> str:
 
 def build_enable_commands(
     server_ip: str, protocol: str, port: int, source_interface: str,
-    trap_severity: int = 4, timestamps: bool = False,
+    trap_severity: int = 5, timestamps: bool = False,
     sequence_numbers: bool = False,
 ) -> list[str]:
     protocol = _validate_destination(server_ip, protocol, port)

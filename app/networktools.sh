@@ -4,6 +4,8 @@ set -eu
 APP_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 TERMINAL_SOURCE="$APP_ROOT/vendor/alacritty"
 TERMINAL_BINARY="$TERMINAL_SOURCE/target/release/networktools-terminal"
+SYSLOG_SOURCE="$APP_ROOT/native/syslog_collector"
+SYSLOG_BINARY="$APP_ROOT/bin/networktools-syslog-collector"
 cd "$APP_ROOT"
 
 prepare_environment() {
@@ -130,6 +132,92 @@ check_terminal() {
     return 1
 }
 
+terminal_sources_are_newer() {
+    [ -x "$TERMINAL_BINARY" ] || return 0
+    find "$TERMINAL_SOURCE" \
+        \( -path "$TERMINAL_SOURCE/target" -o -path "$TERMINAL_SOURCE/.git" \) -prune -o \
+        -type f \( -name '*.rs' -o -name 'Cargo.toml' -o -name 'Cargo.lock' \) \
+        -newer "$TERMINAL_BINARY" -print | grep -q .
+}
+
+ensure_terminal() {
+    if [ -n "${NETWORKTOOLS_TERMINAL_BINARY:-}" ]; then
+        check_terminal
+        return
+    fi
+    discovered=$(command -v networktools-terminal 2>/dev/null || true)
+    if [ -n "$discovered" ] && [ "$discovered" != "$TERMINAL_BINARY" ]; then
+        check_terminal
+        return
+    fi
+    if [ ! -x "$TERMINAL_BINARY" ]; then
+        echo "Rust terminal binary is missing; building it now..."
+        build_terminal
+    elif terminal_sources_are_newer; then
+        echo "Rust terminal sources changed; rebuilding them now..."
+        build_terminal
+    else
+        echo "Rust terminal: already compiled and up to date."
+    fi
+}
+
+check_syslog_collector() {
+    configured=${NETWORKTOOLS_SYSLOG_COLLECTOR:-}
+    target=${configured:-$SYSLOG_BINARY}
+    if [ ! -f "$target" ]; then
+        echo "ERROR: Native C++ Syslog collector was not found: $target" >&2
+        return 1
+    fi
+    if [ ! -x "$target" ]; then
+        echo "ERROR: Native C++ Syslog collector is not executable: $target" >&2
+        return 1
+    fi
+    echo "C++ Syslog collector: $target"
+}
+
+build_syslog_collector() {
+    if [ ! -x "$SYSLOG_SOURCE/build.sh" ]; then
+        echo "ERROR: C++ Syslog build script was not found: $SYSLOG_SOURCE/build.sh" >&2
+        return 1
+    fi
+    if ! command -v cmake >/dev/null 2>&1; then
+        echo "ERROR: CMake is required to build the C++ Syslog collector." >&2
+        return 1
+    fi
+    echo "Building native C++ Syslog collector..."
+    "$SYSLOG_SOURCE/build.sh"
+    check_syslog_collector
+}
+
+syslog_sources_are_newer() {
+    [ -x "$SYSLOG_BINARY" ] || return 0
+    find "$SYSLOG_SOURCE" -type f \
+        \( -name '*.cpp' -o -name '*.h' -o -name '*.hpp' -o \
+           -name 'CMakeLists.txt' -o -name 'build.sh' \) \
+        -newer "$SYSLOG_BINARY" -print | grep -q .
+}
+
+ensure_syslog_collector() {
+    if [ -n "${NETWORKTOOLS_SYSLOG_COLLECTOR:-}" ]; then
+        check_syslog_collector
+        return
+    fi
+    if [ ! -x "$SYSLOG_BINARY" ]; then
+        echo "C++ Syslog collector is missing; building it now..."
+        build_syslog_collector
+    elif syslog_sources_are_newer; then
+        echo "C++ Syslog sources changed; rebuilding them now..."
+        build_syslog_collector
+    else
+        echo "C++ Syslog collector: already compiled and up to date."
+    fi
+}
+
+ensure_runtime_binaries() {
+    ensure_syslog_collector
+    ensure_terminal
+}
+
 build_terminal() {
     if [ ! -f "$TERMINAL_SOURCE/Cargo.toml" ]; then
         echo "ERROR: Alacritty source was not found at $TERMINAL_SOURCE" >&2
@@ -179,6 +267,7 @@ check_terminal_optional() {
 
 run_app() {
     require_uv
+    ensure_runtime_binaries
     echo "Starting NetworkTools..."
     uv run --extra speed python main.py
 }
@@ -186,6 +275,7 @@ run_app() {
 setup_all() {
     sync_environment
     build_cython_optional
+    ensure_syslog_collector
     build_terminal_optional
     check_terminal_optional
 }
@@ -200,6 +290,8 @@ show_menu() {
     echo "  5) Run application"
     echo "  6) Full setup and run"
     echo "  7) Check NetworkTools Terminal"
+    echo "  8) Build C++ Syslog collector"
+    echo "  9) Check C++ Syslog collector"
     echo "  0) Exit"
     printf "Select: "
     read -r choice
@@ -211,6 +303,8 @@ show_menu() {
         5) run_app ;;
         6) setup_all; run_app ;;
         7) check_terminal ;;
+        8) build_syslog_collector ;;
+        9) check_syslog_collector ;;
         0) exit 0 ;;
         *) echo "Invalid selection." >&2; exit 2 ;;
     esac
@@ -223,11 +317,13 @@ case "${1:-menu}" in
     check) check_cython ;;
     terminal-build) build_terminal ;;
     terminal-check) check_terminal ;;
+    syslog-build) build_syslog_collector ;;
+    syslog-check) check_syslog_collector ;;
     run) run_app ;;
     all) setup_all; run_app ;;
     menu) show_menu ;;
     *)
-        echo "Usage: $0 [sync|build|setup|check|terminal-build|terminal-check|run|all]" >&2
+        echo "Usage: $0 [sync|build|setup|check|terminal-build|terminal-check|syslog-build|syslog-check|run|all]" >&2
         exit 2
         ;;
 esac

@@ -62,7 +62,7 @@ Item {
             "06": "Layer 2 Switching",
             "08": "FHRP",
             "09": "VTP",
-            "10": "ACL Insights",
+            "10": "Syslog Configuration",
             "11": "NAT Insights",
             "12": "Syslog"
         }
@@ -76,7 +76,7 @@ Item {
             "07": AppAssets.deviceNetworkVpn,
             "08": AppAssets.deviceRouter,
             "09": AppAssets.deviceSwitch,
-            "10": AppAssets.fileTypeKey,
+            "10": AppAssets.navigationSyslog,
             "11": AppAssets.deviceNetworkVpn,
             "12": AppAssets.navigationSyslog
         }
@@ -90,7 +90,7 @@ Item {
             "07": Theme.syntaxOutside,
             "08": Theme.syntaxBoolean,
             "09": Theme.syntaxNumber,
-            "10": Theme.notificationWarningAccent,
+            "10": Theme.notificationInfoAccent,
             "11": Theme.syntaxOutside,
             "12": Theme.notificationInfoAccent
         }

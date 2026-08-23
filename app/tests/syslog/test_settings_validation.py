@@ -1,9 +1,17 @@
 import unittest
+import json
+from pathlib import Path
+import tempfile
 
-from features.syslog.settings import _local_ipv4_addresses, _validate_ip
+from features.syslog.settings import SyslogSettings, _local_ipv4_addresses, _validate_ip
 
 
 class SyslogSettingsValidationTests(unittest.TestCase):
+    def test_listener_always_enables_udp_and_tcp(self) -> None:
+        settings = SyslogSettings()
+        self.assertEqual(settings.protocol, "both")
+        self.assertEqual(settings.listener_config().protocol, "both")
+
     def test_empty_advertised_ip_has_friendly_error(self) -> None:
         with self.assertRaisesRegex(ValueError, "Advertised/server IP is required"):
             _validate_ip("", "Advertised/server IP", allow_unspecified=False)
@@ -16,6 +24,18 @@ class SyslogSettingsValidationTests(unittest.TestCase):
             self.assertNotIn(":", value)
             self.assertNotEqual(value, "0.0.0.0")
             self.assertFalse(value.startswith("127."))
+
+    def test_settings_are_persisted_in_json_for_native_collector(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "syslog.json"
+            settings = SyslogSettings(settings_path=path)
+            settings.bindIp = "127.0.0.1"
+            settings.port = 15514
+
+            stored = json.loads(path.read_text(encoding="utf-8"))
+            self.assertEqual(stored["bind_ip"], "127.0.0.1")
+            self.assertEqual(stored["port"], 15514)
+            self.assertEqual(stored["protocol"], "both")
 
 
 if __name__ == "__main__":

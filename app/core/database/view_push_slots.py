@@ -69,17 +69,68 @@ class ViewPushSlotsMixin:
         if operation == "preview":
             commands = str(result.get("commands") or "") if isinstance(result, dict) else ""
             self.viewPushPreviewFinished.emit(controller, host, module, ok, message, commands)
-        elif operation != "batch":
+        elif operation not in {"batch", "post-push-batch"}:
             self.viewPushFinished.emit(controller, host, module, ok, message)
             if self._snapshot_was_updated(result):
                 self.runningConfigUpdated.emit(host)
-        if operation == "batch" and isinstance(result, dict):
+        if operation in {"batch", "post-push-batch"} and isinstance(result, dict):
             for item in result.get("results", []):
                 if isinstance(item, dict) and self._snapshot_was_updated(item):
                     updated_host = str(item.get("host") or "").strip()
                     if updated_host:
                         self.runningConfigUpdated.emit(updated_host)
         self.taskFinished.emit(ok, message)
+        if operation == "batch" and isinstance(result, dict):
+            deferred_hosts = [
+                str(item.get("host") or "").strip()
+                for item in result.get("results", [])
+                if isinstance(item, dict)
+                and item.get("ok")
+                and item.get("postPushPending")
+                and str(item.get("host") or "").strip()
+            ]
+            if deferred_hosts:
+                self._start_post_push_batch(controller, module, deferred_hosts)
+
+    def _start_post_push_batch(
+        self, controller: str, module: str, hosts: list[str]
+    ) -> bool:
+        """Start deferred show/save/snapshot work after the apply dialog completes."""
+        # Keep each deferred pass distinct. A user may start another batch while
+        # the previous pass is still collecting snapshots; per-host session
+        # locks serialize only the devices that overlap.
+        task_key = f"post-view-push-batch:{controller}:{module}:{id(hosts)}"
+
+        def run_reconciliation(progress: Any) -> dict[str, Any]:
+            def host_changed(host: str, state: str, _message: str, _value: int) -> None:
+                if state == "running":
+                    progress(f"Synchronizing device state for {host} in background...")
+
+            def batch_progress(
+                completed: int, success: int, failed: int, total: int
+            ) -> None:
+                progress(
+                    f"Background synchronization: {completed}/{total} completed, "
+                    f"{success} succeeded, {failed} failed."
+                )
+
+            return self._view_push_batch.reconcile(
+                controller,
+                module,
+                hosts,
+                on_host=host_changed,
+                on_progress=batch_progress,
+            )
+
+        return self._start_background_task(
+            task_key,
+            controller,
+            "",
+            module,
+            f"Synchronizing {len(hosts)} device(s) in background...",
+            run_reconciliation,
+            "post-push-batch",
+        )
 
     @staticmethod
     def _snapshot_was_updated(result: object) -> bool:

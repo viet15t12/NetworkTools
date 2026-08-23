@@ -10,10 +10,24 @@ StandardDialog {
 
     property var rowData: ({})
 
+    function rowValue(name, fallbackValue) {
+        const data = root.rowData
+        if (data === null || data === undefined || typeof data !== "object")
+            return fallbackValue
+        const value = data[name]
+        return value === null || value === undefined ? fallbackValue : value
+    }
+
+    function optionalNumber(name) {
+        const value = Number(root.rowValue(name, -1))
+        return !isNaN(value) && value >= 0 ? value : "—"
+    }
+
     preferredWidth: 780
     height: Math.min(560, parent.height - Theme.spacing24 * 2)
     title: "System Log Message"
-    subtitle: String(root.rowData.device_host || root.rowData.source_ip || "Unknown host")
+    subtitle: String(root.rowValue("device_host", "")
+                     || root.rowValue("source_ip", "") || "Unknown host")
     closeTooltip: "Close system log message"
 
     contentItem: ColumnLayout {
@@ -26,29 +40,29 @@ StandardDialog {
             rowSpacing: Theme.spacing8
 
             Text { text: "Source"; color: Theme.textSecondary; font.family: Theme.fontFamily; font.pixelSize: Theme.fontSizeSmall }
-            Text { Layout.fillWidth: true; text: String(root.rowData.source_ip || "—"); color: Theme.textPrimary; font.family: Theme.monoFontFamily; elide: Text.ElideRight }
+            Text { Layout.fillWidth: true; text: String(root.rowValue("source_ip", "") || "—"); color: Theme.textPrimary; font.family: Theme.monoFontFamily; elide: Text.ElideRight }
             Text { text: "Protocol"; color: Theme.textSecondary; font.family: Theme.fontFamily; font.pixelSize: Theme.fontSizeSmall }
-            Text { Layout.fillWidth: true; text: String(root.rowData.protocol || "—").toUpperCase(); color: Theme.textPrimary; font.family: Theme.fontFamily }
+            Text { Layout.fillWidth: true; text: String(root.rowValue("protocol", "") || "—").toUpperCase(); color: Theme.textPrimary; font.family: Theme.fontFamily }
 
             Text { text: "Received"; color: Theme.textSecondary; font.family: Theme.fontFamily; font.pixelSize: Theme.fontSizeSmall }
-            Text { Layout.fillWidth: true; text: String(root.rowData.received_at || "—"); color: Theme.textPrimary; font.family: Theme.monoFontFamily; elide: Text.ElideRight }
+            Text { Layout.fillWidth: true; text: String(root.rowValue("received_at", "") || "—"); color: Theme.textPrimary; font.family: Theme.monoFontFamily; elide: Text.ElideRight }
             Text { text: "Device time"; color: Theme.textSecondary; font.family: Theme.fontFamily; font.pixelSize: Theme.fontSizeSmall }
-            Text { Layout.fillWidth: true; text: String(root.rowData.device_time || "—"); color: Theme.textPrimary; font.family: Theme.monoFontFamily; elide: Text.ElideRight }
+            Text { Layout.fillWidth: true; text: String(root.rowValue("device_time", "") || "—"); color: Theme.textPrimary; font.family: Theme.monoFontFamily; elide: Text.ElideRight }
 
             Text { text: "PRI / Syslog facility"; color: Theme.textSecondary; font.family: Theme.fontFamily; font.pixelSize: Theme.fontSizeSmall }
-            Text { Layout.fillWidth: true; text: "%1 / %2".arg(root.rowData.syslog_pri === undefined || root.rowData.syslog_pri === null ? "—" : root.rowData.syslog_pri).arg(root.rowData.syslog_facility === undefined || root.rowData.syslog_facility === null ? "—" : root.rowData.syslog_facility); color: Theme.textPrimary; font.family: Theme.monoFontFamily }
+            Text { Layout.fillWidth: true; text: "%1 / %2".arg(root.optionalNumber("syslog_pri")).arg(root.optionalNumber("syslog_facility")); color: Theme.textPrimary; font.family: Theme.monoFontFamily }
             Text { text: "Parse status"; color: Theme.textSecondary; font.family: Theme.fontFamily; font.pixelSize: Theme.fontSizeSmall }
-            Text { Layout.fillWidth: true; text: String(root.rowData.parse_status || "—"); color: Theme.textPrimary; font.family: Theme.fontFamily }
+            Text { Layout.fillWidth: true; text: String(root.rowValue("parse_status", "") || "—"); color: Theme.textPrimary; font.family: Theme.fontFamily }
 
             Text { text: "Cisco facility"; color: Theme.textSecondary; font.family: Theme.fontFamily; font.pixelSize: Theme.fontSizeSmall }
-            Text { Layout.fillWidth: true; text: String(root.rowData.cisco_facility || root.rowData.facility || "—"); color: Theme.textPrimary; font.family: Theme.monoFontFamily; elide: Text.ElideRight }
+            Text { Layout.fillWidth: true; text: String(root.rowValue("cisco_facility", "") || root.rowValue("facility", "") || "—"); color: Theme.textPrimary; font.family: Theme.monoFontFamily; elide: Text.ElideRight }
             Text { text: "Subfacility"; color: Theme.textSecondary; font.family: Theme.fontFamily; font.pixelSize: Theme.fontSizeSmall }
-            Text { Layout.fillWidth: true; text: String(root.rowData.cisco_subfacility || "—"); color: Theme.textPrimary; font.family: Theme.monoFontFamily; elide: Text.ElideRight }
+            Text { Layout.fillWidth: true; text: String(root.rowValue("cisco_subfacility", "") || "—"); color: Theme.textPrimary; font.family: Theme.monoFontFamily; elide: Text.ElideRight }
 
             Text { text: "Severity / Mnemonic"; color: Theme.textSecondary; font.family: Theme.fontFamily; font.pixelSize: Theme.fontSizeSmall }
-            Text { Layout.fillWidth: true; text: "%1 / %2".arg(root.rowData.severity === undefined ? "—" : root.rowData.severity).arg(root.rowData.mnemonic || "—"); color: Theme.textPrimary; font.family: Theme.monoFontFamily; elide: Text.ElideRight }
+            Text { Layout.fillWidth: true; text: "%1 / %2".arg(root.optionalNumber("severity")).arg(root.rowValue("mnemonic", "") || "—"); color: Theme.textPrimary; font.family: Theme.monoFontFamily; elide: Text.ElideRight }
             Text { text: "Sequence / Clock"; color: Theme.textSecondary; font.family: Theme.fontFamily; font.pixelSize: Theme.fontSizeSmall }
-            Text { Layout.fillWidth: true; text: "%1 / %2".arg(root.rowData.sequence_number === undefined || root.rowData.sequence_number === null ? "—" : root.rowData.sequence_number).arg(root.rowData.clock_unsynchronized ? "unsynchronized" : "synchronized"); color: root.rowData.clock_unsynchronized ? Theme.alertWarning : Theme.textPrimary; font.family: Theme.monoFontFamily; elide: Text.ElideRight }
+            Text { Layout.fillWidth: true; text: "%1 / %2".arg(root.optionalNumber("sequence_number")).arg(root.rowValue("clock_unsynchronized", false) ? "unsynchronized" : "synchronized"); color: root.rowValue("clock_unsynchronized", false) ? Theme.alertWarning : Theme.textPrimary; font.family: Theme.monoFontFamily; elide: Text.ElideRight }
         }
 
         Text {
@@ -73,7 +87,8 @@ StandardDialog {
                 readOnly: true
                 selectByMouse: true
                 wrapMode: TextEdit.Wrap
-                text: String(root.rowData.raw_message || root.rowData.message || "")
+                text: String(root.rowValue("raw_message", "")
+                             || root.rowValue("message", "") || "")
                 color: Theme.textPrimary
                 selectionColor: Theme.selectionBackground
                 selectedTextColor: Theme.selectionForeground

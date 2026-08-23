@@ -83,6 +83,19 @@ class LauncherContractTests(unittest.TestCase):
         self.assertIn("unset VIRTUAL_ENV", shell)
         self.assertIn('/.cargo}/env"', shell)
 
+    def test_run_checks_cpp_and_rust_binaries_before_starting_python(self) -> None:
+        shell = (APP_ROOT / "networktools.sh").read_text(encoding="utf-8")
+
+        self.assertIn("ensure_runtime_binaries", shell)
+        self.assertIn("ensure_syslog_collector", shell)
+        self.assertIn("ensure_terminal", shell)
+        self.assertIn("syslog_sources_are_newer", shell)
+        self.assertIn("terminal_sources_are_newer", shell)
+        self.assertLess(
+            shell.index("ensure_runtime_binaries", shell.index("run_app()")),
+            shell.index('echo "Starting NetworkTools..."', shell.index("run_app()")),
+        )
+
     def test_terminal_check_accepts_configured_executable(self) -> None:
         launcher = APP_ROOT / "networktools.sh"
         with tempfile.TemporaryDirectory() as temp_dir:

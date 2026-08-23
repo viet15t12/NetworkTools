@@ -41,6 +41,14 @@ class MessageRepositoryV2Tests(unittest.TestCase):
             self.assertTrue(rows[0]["clock_unsynchronized"])
             self.assertEqual(rows[1]["cisco_facility"], "SYS")
 
+            repository.insert_messages([SyslogMessage(
+                source_ip="192.0.2.2", device_host="r2", protocol="tcp",
+                severity=5, message="tcp event", raw_message="tcp event",
+            )])
+            tcp_rows = repository.query_messages({"protocols": ["tcp"]}, limit=10)
+            self.assertEqual(len(tcp_rows), 1)
+            self.assertEqual(tcp_rows[0]["protocol"], "tcp")
+
 
 if __name__ == "__main__":
     unittest.main()

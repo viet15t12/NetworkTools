@@ -68,7 +68,7 @@ Rectangle {
                     anchors.fill: parent
                     anchors.leftMargin: Theme.spacing12
                     anchors.rightMargin: Theme.spacing12
-                    text: "Restart the listener after changing protocol, bind address, or port."
+                    text: "Restart the listener after changing the bind address or port."
                     color: Theme.textPrimary
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeSmall
@@ -97,13 +97,11 @@ Rectangle {
                     columnSpacing: Theme.spacing12
                     rowSpacing: Theme.spacing8
 
-                    StandardComboBox {
+                    StandardTextField {
                         Layout.fillWidth: true
-                        labelText: "Transport protocol"
-                        model: ["UDP", "TCP"]
-                        enabled: root.backend !== null
-                        currentIndex: root.backend !== null && root.backend.protocol === "tcp" ? 1 : 0
-                        onActivated: if (root.backend !== null) root.backend.protocol = currentIndex === 1 ? "tcp" : "udp"
+                        labelText: "Listener transports"
+                        text: "UDP + TCP (simultaneous)"
+                        readOnly: true
                     }
 
                     StandardSpinBox {

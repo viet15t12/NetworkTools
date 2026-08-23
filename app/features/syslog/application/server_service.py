@@ -69,13 +69,17 @@ class SyslogServerService:
     def configure_device(
         self, host: str, config: ListenerConfig, source_interface: str = "",
     ) -> dict[str, object]:
+        # Compatibility action predates per-device destinations. A dual local
+        # listener does not imply two Cisco destinations, so retain UDP here.
+        protocol = "udp" if config.protocol == "both" else config.protocol
         return self.configurator.configure(
-            host, config.advertised_ip, config.protocol, config.port, source_interface
+            host, config.advertised_ip, protocol, config.port, source_interface
         )
 
     def cancel_device(self, host: str, config: ListenerConfig) -> dict[str, object]:
+        protocol = "udp" if config.protocol == "both" else config.protocol
         return self.configurator.cancel(
-            host, config.advertised_ip, config.protocol, config.port
+            host, config.advertised_ip, protocol, config.port
         )
 
 

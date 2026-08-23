@@ -1,14 +1,41 @@
 import unittest
 from pathlib import Path
 
-from PyQt6.QtCore import QUrl
+from PyQt6.QtCore import QMetaObject, QObject, QUrl, pyqtSlot
 from PyQt6.QtQml import QQmlApplicationEngine, QQmlComponent
 from PyQt6.QtWidgets import QApplication
 
+from features.syslog.qt.manager import _variant_dict
 from features.syslog.settings import SyslogSettings
 
 
 APP_DIR = Path(__file__).resolve().parents[2]
+
+
+class _DeviceConfigBackend(QObject):
+    def __init__(self) -> None:
+        super().__init__()
+        self.deleted_payload = None
+
+    @pyqtSlot(str, result="QVariant")
+    def getDeviceConfigurations(self, host: str):
+        return [{
+            "device_host": host,
+            "server_ip": "192.168.122.1",
+            "protocol": "udp",
+            "port": 5514,
+            "source_interface": "GigabitEthernet0/0",
+            "trap_severity": 4,
+            "timestamps": False,
+            "sequence_numbers": False,
+            "configured": True,
+            "sync_status": "synchronized",
+        }]
+
+    @pyqtSlot(str, "QVariant", result="QVariant")
+    def deleteDeviceConfiguration(self, host: str, payload):
+        self.deleted_payload = _variant_dict(payload)
+        return {"ok": True, "message": "staged"}
 
 
 class SyslogQmlTests(unittest.TestCase):
@@ -16,7 +43,10 @@ class SyslogQmlTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.app = QApplication.instance() or QApplication([])
 
-    def _create(self, relative_path: str, context: dict | None = None):
+    def _create(
+        self, relative_path: str, context: dict | None = None,
+        properties: dict | None = None,
+    ):
         engine = QQmlApplicationEngine()
         engine.addImportPath(str(APP_DIR))
         for name, value in (context or {}).items():
@@ -29,7 +59,7 @@ class SyslogQmlTests(unittest.TestCase):
             engine,
             QUrl.fromLocalFile(str(APP_DIR / relative_path)),
         )
-        instance = component.create()
+        instance = component.createWithInitialProperties(properties or {})
         self.app.processEvents()
         self.assertIsNotNone(
             instance,
@@ -47,6 +77,27 @@ class SyslogQmlTests(unittest.TestCase):
             instance.deleteLater()
             engine.deleteLater()
 
+    def test_syslog_table_recycles_rows_without_null_model_warnings(self) -> None:
+        engine, instance, warnings = self._create(
+            "tests/qml/SyslogTableHarness.qml"
+        )
+        try:
+            QMetaObject.invokeMethod(instance, "churnRows")
+            QMetaObject.invokeMethod(instance, "exerciseNullRow")
+            for _ in range(4):
+                self.app.processEvents()
+            relevant = [
+                item for item in warnings
+                if "SyslogLogRow.qml" in item
+                or "SyslogMessageDetails.qml" in item
+                or "undefined member" in item
+                or "Cannot read property" in item
+            ]
+            self.assertEqual(relevant, [], warnings)
+        finally:
+            instance.deleteLater()
+            engine.deleteLater()
+
     def test_syslog_settings_spinboxes_do_not_create_binding_loops(self) -> None:
         settings = SyslogSettings()
         engine, instance, warnings = self._create(
@@ -58,6 +109,25 @@ class SyslogQmlTests(unittest.TestCase):
                 any("Binding loop" in warning for warning in warnings),
                 warnings,
             )
+        finally:
+            instance.deleteLater()
+            engine.deleteLater()
+
+    def test_device_config_delete_sends_plain_mapping_to_backend(self) -> None:
+        backend = _DeviceConfigBackend()
+        engine, instance, warnings = self._create(
+            "UI/qml/features/syslog/SyslogDeviceConfigPage.qml",
+            {"syslogManager": backend, "dbManager": None},
+            {"host": "192.168.122.102"},
+        )
+        try:
+            self.assertEqual(instance.property("selectedIndex"), 0)
+            QMetaObject.invokeMethod(instance, "deleteSelected")
+            self.app.processEvents()
+            self.assertIsInstance(backend.deleted_payload, dict)
+            self.assertEqual(backend.deleted_payload["server_ip"], "192.168.122.1")
+            self.assertEqual(backend.deleted_payload["port"], 5514)
+            self.assertFalse(any("Syslog data must" in item for item in warnings), warnings)
         finally:
             instance.deleteLater()
             engine.deleteLater()

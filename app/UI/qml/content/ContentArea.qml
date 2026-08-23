@@ -30,6 +30,7 @@ Rectangle {
     property bool interfaceViewLoaded: false
     property bool informationViewLoaded: false
     property bool switchWorkspaceLoaded: false
+    property bool syslogConfigLoaded: false
     property bool settingsViewLoaded: false
     property bool databaseViewLoaded: false
     property string effectiveHostIp: ""
@@ -44,6 +45,7 @@ Rectangle {
     property string interfaceHostIp: ""
     property string informationHostIp: ""
     property string switchHostIp: ""
+    property string syslogConfigHostIp: ""
 
     readonly property bool isSwitchDevice: {
         const role = String(contentArea.deviceRole || "").trim().toLowerCase()
@@ -66,6 +68,7 @@ Rectangle {
         case "ACL": return loaderIsBusy(aclLoader)
         case "NAT": return loaderIsBusy(natLoader)
         case "FHRP": return loaderIsBusy(fhrpLoader)
+        case "Syslog Server": return loaderIsBusy(syslogConfigLoader)
         case "Switching":
         case "Services":
         case "Security":
@@ -87,12 +90,12 @@ Rectangle {
     // Index phải khớp với FeatureBar.allTextFeatures[i].globalIndex
     // 0=Routing,1=VLAN,2=DHCP,3=ACL,4=BGP,5=NAT,6=STP,7=SNMP,
     // 8=NTP,9=AAA,10=MPLS,11=VPN,12=Firewall,13=Monitor,
-    // 14=Switching,15=Services,16=Security,17=Monitoring,18=FHRP
+    // 14=Switching,15=Services,16=Security,17=Monitoring,18=FHRP,19=Syslog Server
     readonly property var textFeatureNames: [
         "Routing", "VLAN", "DHCP", "ACL", "BGP", "NAT",
         "STP", "SNMP", "NTP", "AAA", "MPLS",
         "VPN", "Firewall", "Monitor", "Switching", "Services",
-        "Security", "Monitoring", "FHRP"
+        "Security", "Monitoring", "FHRP", "Syslog Server"
     ]
     readonly property var mainFeatureNames: ["Information", "CLI", "Interface"]
 
@@ -119,6 +122,8 @@ Rectangle {
             natViewLoaded = false
         if (fhrpLoader.status === Loader.Loading && activeFeatureName !== "FHRP")
             fhrpViewLoaded = false
+        if (syslogConfigLoader.status === Loader.Loading && activeFeatureName !== "Syslog Server")
+            syslogConfigLoaded = false
         if (interfaceLoader.status === Loader.Loading
                 && !(activeFeatureName === "" && activeMainFeatureName === "Interface"))
             interfaceViewLoaded = false
@@ -142,6 +147,7 @@ Rectangle {
         case "ACL": aclViewLoaded = true; break
         case "NAT": natViewLoaded = true; break
         case "FHRP": fhrpViewLoaded = true; break
+        case "Syslog Server": syslogConfigLoaded = true; break
         }
 
         if (switchWorkspaceActive)
@@ -164,6 +170,7 @@ Rectangle {
         case "ACL": aclHostIp = effectiveHostIp; return
         case "NAT": natHostIp = effectiveHostIp; return
         case "FHRP": fhrpHostIp = effectiveHostIp; return
+        case "Syslog Server": syslogConfigHostIp = effectiveHostIp; return
         case "Switching":
         case "Services":
         case "Security":
@@ -218,6 +225,7 @@ Rectangle {
         case "ACL": return aclLoader
         case "NAT": return natLoader
         case "FHRP": return fhrpLoader
+        case "Syslog Server": return syslogConfigLoader
         case "Switching":
         case "Services":
         case "Security":
@@ -328,6 +336,7 @@ Rectangle {
         case "ACL": return "ACL"
         case "NAT": return "NAT"
         case "FHRP": return "FHRP"
+        case "Syslog Server": return "Syslog Server"
         case "STP": return "STP"
         case "SNMP": return "SNMP"
         case "NTP": return "NTP"
@@ -474,6 +483,24 @@ Rectangle {
                     }
                 }
 
+                // ── Per-device Syslog destinations ─────────────────────
+                Loader {
+                    id: syslogConfigLoader
+                    objectName: "syslogConfigLoader"
+                    anchors.fill: parent
+                    active: contentArea.syslogConfigLoaded
+                    asynchronous: true
+                    visible: contentArea.activeFeatureName === "Syslog Server"
+                             && !contentArea.activeViewLoadPending
+                             && !contentArea.hostApplyPending
+                    sourceComponent: Component {
+                        SyslogDeviceConfigPage {
+                            objectName: "loadedSyslogDeviceConfigPage"
+                            host: contentArea.syslogConfigHostIp
+                        }
+                    }
+                }
+
                 Loader {
                     id: interfaceLoader
                     objectName: "interfaceLoader"
@@ -543,6 +570,7 @@ Rectangle {
                              && contentArea.activeFeatureName !== "ACL"
                              && contentArea.activeFeatureName !== "NAT"
                              && contentArea.activeFeatureName !== "FHRP"
+                             && contentArea.activeFeatureName !== "Syslog Server"
                     text: "%1 — Not yet implemented".arg(contentArea.displayFeatureName(contentArea.activeFeatureName))
                     color: Theme.textSecondary
                     font.family: Theme.fontFamily

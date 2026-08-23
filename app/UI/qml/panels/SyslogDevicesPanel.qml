@@ -119,11 +119,6 @@ Item {
                     root.selectedHost = host
                     root.hostSelected(host)
                 }
-                onRightClicked: function(host, configured, globalX, globalY) {
-                    root.selectedHost = host
-                    root.hostSelected(host)
-                    contextMenu.openAt(globalX, globalY, host, configured)
-                }
             }
 
             Text {
@@ -159,28 +154,6 @@ Item {
         onTriggered: root.reloadDevices()
     }
 
-    SyslogDeviceContextMenu {
-        id: contextMenu
-        parent: Overlay.overlay
-        busy: root.busy
-        onConfigureRequested: host => {
-            if (root.backend !== null)
-                root.backend.configureDevice(host)
-        }
-        onCancelRequested: host => {
-            if (root.backend !== null)
-                root.backend.cancelDevice(host)
-        }
-    }
-
-    SyslogSourceInterfaceDialog {
-        id: sourceInterfaceDialog
-        onPushRequested: function(host, sourceInterface) {
-            if (root.backend !== null)
-                root.backend.configureDeviceWithInterface(host, sourceInterface)
-        }
-    }
-
     Connections {
         target: root.backend
 
@@ -189,19 +162,6 @@ Item {
             root.applyFilter()
         }
 
-        function onDeviceConfigStarted(host, action) {
-            root.busy = true
-        }
-
-        function onDeviceConfigFinished(host, action, ok, message) {
-            root.busy = false
-            root.operationFinished(ok, message)
-        }
-
-        function onSourceInterfaceRequired(host, message) {
-            root.busy = false
-            sourceInterfaceDialog.openFor(host, message)
-        }
     }
 
     onVisibleChanged: {

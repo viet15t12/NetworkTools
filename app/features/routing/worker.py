@@ -254,6 +254,35 @@ def apply_routing_with_connector(connector, payload):
     return send_cli_routing_commands(getattr(connector, "host", "device"), connection, sub_type, commands)
 
 
+def apply_routing_batch_with_connector(connector, payloads):
+    """Apply every pending routing package for one host in one config transaction."""
+    connection = getattr(connector, "connection", None)
+    if connection is None:
+        raise RuntimeError("Active tab session has no Netmiko connection.")
+    device_type = str(getattr(connector, "device_type", "") or "cisco_ios")
+    template_folder = "cisco_ios" if device_type == "cisco_ios_telnet" else device_type
+    wrappers = {
+        "no logging console", "no logging monitor",
+        "logging console", "logging monitor",
+    }
+    commands = []
+    for payload in payloads:
+        rendered = build_cli_routing_commands(
+            payload,
+            template_folder,
+            payload.get("sub_type", "static").lower(),
+            payload.get("action", "setup").lower(),
+        )
+        commands.extend(command for command in rendered if command not in wrappers)
+    if not commands:
+        return "No commands."
+    combined = ["no logging console", "no logging monitor", *commands,
+                "logging console", "logging monitor"]
+    return send_cli_routing_commands(
+        getattr(connector, "host", "device"), connection, "batch", combined
+    )
+
+
 def task_push_routing(task):
     my_payload = task.host.data["ui_payload"]
     sub_type = my_payload.get("sub_type", "static").lower()
@@ -412,11 +441,8 @@ def run_routing_config_with_sessions(input_data, output_path, session_provider, 
             continue
 
         try:
-            messages = []
-            for payload in tasks:
-                result = apply_routing_with_connector(connector, payload)
-                messages.append(str(result))
-            output_data.append({"target": ip, "status": "success", "message": "\n".join(messages)})
+            result = apply_routing_batch_with_connector(connector, tasks)
+            output_data.append({"target": ip, "status": "success", "message": str(result)})
             print(f"[+] {ip}: pushed via active tab session")
         except Exception as e:
             output_data.append({"target": ip, "status": "failed", "message": str(e)})

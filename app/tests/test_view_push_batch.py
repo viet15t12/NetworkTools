@@ -12,6 +12,8 @@ class _Controller:
         self.lock = threading.Lock()
         self.active = 0
         self.maximum = 0
+        self.apply_only_calls: list[tuple[str, str]] = []
+        self.reconcile_calls: list[tuple[str, str]] = []
 
     def push(self, host: str, module: str) -> dict[str, object]:
         with self.lock:
@@ -23,6 +25,21 @@ class _Controller:
         if host == "r2":
             return {"ok": False, "message": "r2 rejected configuration"}
         return {"ok": True, "message": f"{module} pushed to {host}"}
+
+    def push_apply_only(self, host: str, module: str) -> dict[str, object]:
+        self.apply_only_calls.append((host, module))
+        result = self.push(host, module)
+        if result.get("ok"):
+            result["postPushPending"] = True
+        return result
+
+    def reconcile_after_push(self, host: str, module: str) -> dict[str, object]:
+        self.reconcile_calls.append((host, module))
+        return {
+            "ok": host != "r3",
+            "message": f"{module} synchronized for {host}",
+            "reconciliation": {"ok": host != "r3", "snapshotUpdated": host != "r3"},
+        }
 
 
 class _Factory:
@@ -60,6 +77,29 @@ class ViewPushBatchServiceTests(unittest.TestCase):
         self.assertGreater(controller.maximum, 1)
         self.assertLessEqual(controller.maximum, 2)
         self.assertCountEqual(final_hosts, ["r1", "r2", "r3"])
+        self.assertCountEqual(
+            controller.apply_only_calls,
+            [("r1", "ospf"), ("r2", "ospf"), ("r3", "ospf")],
+        )
+
+    def test_reconciles_in_a_separate_bounded_pass(self) -> None:
+        controller = _Controller()
+        service = ViewPushBatchService(_Factory(controller), max_concurrent_hosts=2)
+
+        result = service.reconcile(
+            "routing",
+            "ospf",
+            ["r1", "r3"],
+            on_host=lambda *_: None,
+            on_progress=lambda *_: None,
+        )
+
+        self.assertEqual(result["success"], 1)
+        self.assertEqual(result["failed"], 1)
+        self.assertTrue(result["partial"])
+        self.assertCountEqual(
+            controller.reconcile_calls, [("r1", "ospf"), ("r3", "ospf")]
+        )
 
     def test_pushes_up_to_five_hosts_at_the_same_time(self) -> None:
         controller = _Controller()

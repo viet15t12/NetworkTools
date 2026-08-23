@@ -135,6 +135,109 @@ class BaseViewPushController(ABC):
         except Exception as exc:
             return {"ok": False, "message": f"Push {self.module_label.lower()} failed: {exc}", "report": []}
 
+    def push_apply_only(self, host: str, module_name: str = "all") -> dict[str, Any]:
+        """Apply a batch target now and defer slow post-push collection."""
+        host = self._clean_host(host)
+        if not host:
+            return {"ok": False, "message": "Host is empty.", "report": []}
+
+        try:
+            tasks = self.collect_pending_tasks(host, module_name)
+            if not tasks:
+                return {"ok": True, "message": "No configuration required for Push.", "report": []}
+            is_dev_host = getattr(self.db, "_is_view_push_dev_host", None)
+            if callable(is_dev_host) and is_dev_host(host):
+                return dict(self.push_tasks(host, module_name, tasks) or {})
+            if self._managed_session:
+                executed = self._session_registry.execute(
+                    host,
+                    lambda connector: self._push_without_reconcile(
+                        host, module_name, tasks, connector
+                    ),
+                )
+                if not bool(executed.get("ok")):
+                    return {
+                        "ok": False,
+                        "severity": str(executed.get("severity") or "error"),
+                        "message": str(executed.get("message") or "Push failed."),
+                        "report": [],
+                    }
+                result = dict(executed.get("value") or {})
+            else:
+                result = self._push_without_reconcile(host, module_name, tasks, None)
+            if bool(result.get("ok")) and result.get("report"):
+                result["postPushPending"] = True
+                original = str(result.get("message") or "Push completed.")
+                result["message"] = f"{original} Device synchronization continues in background."
+            return result
+        except Exception as exc:
+            return {
+                "ok": False,
+                "message": f"Push {self.module_label.lower()} failed: {exc}",
+                "report": [],
+            }
+
+    def _push_without_reconcile(
+        self,
+        host: str,
+        module_name: str,
+        tasks: list[dict[str, Any]],
+        connector: Any | None,
+    ) -> dict[str, Any]:
+        """Apply tasks while the host session is owned, without running show commands."""
+        return dict(self.push_tasks(host, module_name, tasks) or {})
+
+    def reconcile_after_push(self, host: str, module_name: str = "all") -> dict[str, Any]:
+        """Collect and persist device state after an apply-only batch Push."""
+        host = self._clean_host(host)
+        if not host:
+            return {"ok": False, "message": "Host is empty."}
+        try:
+            if self._managed_session:
+                executed = self._session_registry.execute(
+                    host,
+                    lambda connector: self._reconcile_with_connector(
+                        host, module_name, connector
+                    ),
+                )
+                if not bool(executed.get("ok")):
+                    return {
+                        "ok": False,
+                        "message": str(
+                            executed.get("message")
+                            or f"Background synchronization failed for {host}."
+                        ),
+                    }
+                return dict(executed.get("value") or {})
+            provider = self._session_provider_for_host(host)
+            connector = provider(host) if provider is not None else None
+            return self._reconcile_with_connector(host, module_name, connector)
+        except Exception as exc:
+            return {"ok": False, "message": f"Background synchronization failed for {host}: {exc}"}
+
+    def _reconcile_with_connector(
+        self, host: str, module_name: str, connector: Any | None
+    ) -> dict[str, Any]:
+        reconcile = getattr(self.db, "reconcileViewPushSnapshot", None)
+        if connector is None or not callable(reconcile):
+            return {"ok": True, "message": f"No background synchronization required for {host}."}
+        reconciliation = dict(
+            reconcile(host, connector, **self.reconciliation_options(module_name)) or {}
+        )
+        return {
+            "ok": bool(reconciliation.get("ok")),
+            "severity": "success" if reconciliation.get("ok") else "warning",
+            "message": str(
+                reconciliation.get("message")
+                or (
+                    f"Background synchronization completed for {host}."
+                    if reconciliation.get("ok")
+                    else f"Background synchronization failed for {host}."
+                )
+            ),
+            "reconciliation": reconciliation,
+        }
+
     def _push_and_reconcile(
         self,
         host: str,
@@ -143,7 +246,7 @@ class BaseViewPushController(ABC):
         connector: Any | None,
     ) -> dict[str, Any]:
         """Run Push and its follow-up while the caller owns the host session."""
-        result = dict(self.push_tasks(host, module_name, tasks) or {})
+        result = self._push_without_reconcile(host, module_name, tasks, connector)
         if not bool(result.get("ok")) or not result.get("report"):
             return result
 
@@ -501,6 +604,7 @@ class ViewPushControllerFactory:
         from features.interfaces.view_push import InterfaceViewPushController
         from features.routing.view_push import RoutingViewPushController
         from features.switching.view_push import SwitchingViewPushController
+        from features.syslog.view_push import SyslogViewPushController
 
         self._controllers = {
             "routing": RoutingViewPushController(db, session_registry),
@@ -510,6 +614,7 @@ class ViewPushControllerFactory:
             "interface": InterfaceViewPushController(db, session_registry),
             "fhrp": FhrpViewPushController(db, session_registry),
             "switching": SwitchingViewPushController(db, session_registry),
+            "syslog": SyslogViewPushController(db, session_registry),
         }
 
     def get(self, controller_name: str) -> BaseViewPushController:

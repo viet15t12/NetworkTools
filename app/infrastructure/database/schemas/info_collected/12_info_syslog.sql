@@ -1,4 +1,4 @@
--- Syslog data is isolated in info_collected.db; device data remains read-only.
+-- Only received Syslog events are stored in info_collected.db.
 PRAGMA journal_mode = WAL;
 
 CREATE TABLE t12_syslog_messages (
@@ -32,15 +32,3 @@ CREATE INDEX idx_t12_syslog_source_ip
     ON t12_syslog_messages(source_ip);
 CREATE INDEX idx_t12_syslog_cisco_facility_time
     ON t12_syslog_messages(cisco_facility, received_at DESC);
-
-CREATE TABLE t12_syslog_device_state (
-    device_host       TEXT NOT NULL,
-    server_ip         TEXT NOT NULL,
-    protocol          TEXT NOT NULL CHECK (protocol IN ('udp', 'tcp')),
-    port              INTEGER NOT NULL CHECK (port BETWEEN 1 AND 65535),
-    source_interface  TEXT,
-    configured        INTEGER NOT NULL DEFAULT 0 CHECK (configured IN (0, 1)),
-    last_result       TEXT,
-    updated_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (device_host, server_ip, protocol, port)
-);

@@ -1,0 +1,8 @@
+[
+    {
+        "ip": "192.168.122.102",
+        "status": "SUCCESS",
+        "log": "^@\nR2#\nR2#\nR2#configure terminal\nEnter configuration commands, one per line.  End with CNTL/Z.\nR2(config)#no logging console\nR2(config)#no logging monitor\nR2(config)#ip route 0.0.0.0 0.0.0.0 192.168.122.1\nR2(config)#logging console\nR2(config)#logging monitor\nR2(config)#end\nR2#",
+        "db_updated": true
+    }
+]

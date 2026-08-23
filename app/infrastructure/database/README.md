@@ -1,7 +1,7 @@
 # Database infrastructure
 
 Cập nhật: **2026-08-16**. `paths.py` là nguồn path duy nhất. Schema chuẩn ở
-`schemas/device_network` (73 bảng) và `schemas/info_collected` (20 bảng); builder
+`schemas/device_network` (74 bảng) và `schemas/info_collected` (19 bảng); builder
 đọc trực tiếp file `.sql` theo thứ tự tên, không tạo aggregate SQL. DB runtime ở
 `data/` hoặc `NETWORKTOOLS_DATA_DIR`.
 

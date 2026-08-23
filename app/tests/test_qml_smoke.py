@@ -1842,17 +1842,18 @@ class QmlSmokeTests(unittest.TestCase):
         self.assertGreater(len(panel.property("tables")), 0, panel.property("tableGroups"))
         groups_value = panel.property("tableGroups")
         groups = groups_value.toVariant() if hasattr(groups_value, "toVariant") else groups_value
-        self.assertEqual(len(groups), 8, (groups, self.warnings))
+        self.assertEqual(len(groups), 9, (groups, self.warnings))
         self.assertEqual({group["key"] for group in groups}, {
-            "01", "02", "03", "04", "05", "06", "08", "09"
+            "01", "02", "03", "04", "05", "06", "08", "09", "10"
         })
         self.assertIn("02 - Router Interface", {group["title"] for group in groups})
+        self.assertIn("10 - Syslog Configuration", {group["title"] for group in groups})
         domain_colors = {group["color"].name() for group in groups}
         self.assertGreaterEqual(len(domain_colors), 6)
 
         group_repeater = panel.findChild(QObject, "databaseGroupRepeater")
         self.assertIsNotNone(group_repeater)
-        self.assertEqual(group_repeater.property("count"), 8)
+        self.assertEqual(group_repeater.property("count"), 9)
 
         database_item = self._create_with_properties(
             "UI/qml/panels/DatabaseTableItem.qml",
@@ -2712,6 +2713,7 @@ class QmlSmokeTests(unittest.TestCase):
         filter_layout = harness.findChild(QObject, "syslogFilterLayout")
         search = harness.findChild(QObject, "syslogMessageSearch")
         severity = harness.findChild(QObject, "syslogSeverityFilter")
+        protocol = harness.findChild(QObject, "syslogProtocolFilter")
         self.assertTrue(all((
             button,
             label,
@@ -2721,6 +2723,7 @@ class QmlSmokeTests(unittest.TestCase):
             filter_layout,
             search,
             severity,
+            protocol,
         )))
 
         self.assertTrue(button.property("compactContent"))
@@ -2736,13 +2739,13 @@ class QmlSmokeTests(unittest.TestCase):
         )
         self.assertGreaterEqual(float(search.property("width")), 120)
         self.assertGreaterEqual(float(severity.property("width")), 120)
+        self.assertGreaterEqual(float(protocol.property("width")), 120)
 
         for object_name in (
-            "syslogLiveUpdatesToggle",
-            "syslogClearViewButton",
             "syslogListenerButton",
             "syslogMessageSearch",
             "syslogSeverityFilter",
+            "syslogProtocolFilter",
             "syslogHostFilterChip",
             "syslogResetFiltersButton",
         ):
@@ -3474,6 +3477,18 @@ class QmlSmokeTests(unittest.TestCase):
             switch_sub_bar.property("tabs").toVariant(),
             ["VLAN", "EtherChannel", "STP", "VTP"],
         )
+
+        content.setProperty("activeTextFeature", 19)
+        self.assertTrue(
+            self._wait_until(
+                lambda: content.findChild(QObject, "loadedSyslogDeviceConfigPage")
+                is not None
+            )
+        )
+        syslog_config = content.findChild(QObject, "loadedSyslogDeviceConfigPage")
+        self.assertEqual(syslog_config.property("host"), "192.0.2.10")
+        self.assertIsNotNone(syslog_config.findChild(QObject, "syslogViewPushButton"))
+        self.assertIsNotNone(syslog_config.findChild(QObject, "syslogCrudActions"))
 
         content.setProperty("appMode", "settings")
         self.assertTrue(self._wait_until(lambda: content.findChild(QObject, "loadedSettingsView") is not None))

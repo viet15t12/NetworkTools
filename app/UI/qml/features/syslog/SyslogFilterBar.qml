@@ -9,7 +9,7 @@ Rectangle {
     objectName: "syslogFilterBar"
 
     property string selectedHost: ""
-    readonly property bool wideLayout: width >= 900
+    readonly property bool wideLayout: width >= 1080
     readonly property bool twoColumnLayout: !wideLayout && width >= 480
     signal filtersChanged(var filters)
     signal resetHostRequested()
@@ -24,10 +24,13 @@ Rectangle {
         const severity = severityBox.currentIndex > 0
                        ? [severityBox.currentIndex - 1]
                        : []
+        const protocols = protocolBox.currentIndex === 1 ? ["udp"]
+                        : protocolBox.currentIndex === 2 ? ["tcp"] : []
         return {
             "host": hostOverride === undefined ? selectedHost : hostOverride,
             "search": search.text,
-            "severities": severity
+            "severities": severity,
+            "protocols": protocols
         }
     }
 
@@ -39,6 +42,7 @@ Rectangle {
         debounce.stop()
         search.clear()
         severityBox.currentIndex = 0
+        protocolBox.currentIndex = 0
         if (selectedHost !== "")
             resetHostRequested()
         Qt.callLater(function() { root.filtersChanged(root.currentFilters("")) })
@@ -56,7 +60,7 @@ Rectangle {
         objectName: "syslogFilterLayout"
         anchors.fill: parent
         anchors.margins: Theme.spacing12
-        columns: root.wideLayout ? 4 : (root.twoColumnLayout ? 2 : 1)
+        columns: root.wideLayout ? 5 : (root.twoColumnLayout ? 2 : 1)
         columnSpacing: Theme.spacing8
         rowSpacing: Theme.spacing8
 
@@ -92,10 +96,21 @@ Rectangle {
             onActivated: root.emitFilters()
         }
 
-        Rectangle {
-            objectName: "syslogHostFilterChip"
+        StandardComboBox {
+            id: protocolBox
+            objectName: "syslogProtocolFilter"
             Layout.row: root.wideLayout ? 0 : (root.twoColumnLayout ? 1 : 2)
             Layout.column: root.wideLayout ? 2 : 0
+            Layout.fillWidth: !root.wideLayout
+            Layout.preferredWidth: root.wideLayout ? 150 : Theme.inputMinimumWidth
+            model: ["All protocols", "UDP", "TCP"]
+            onActivated: root.emitFilters()
+        }
+
+        Rectangle {
+            objectName: "syslogHostFilterChip"
+            Layout.row: root.wideLayout ? 0 : (root.twoColumnLayout ? 1 : 3)
+            Layout.column: root.wideLayout ? 3 : (root.twoColumnLayout ? 1 : 0)
             Layout.preferredHeight: 28
             Layout.fillWidth: !root.wideLayout
             Layout.preferredWidth: root.wideLayout
@@ -122,12 +137,14 @@ Rectangle {
 
         StandardButton {
             objectName: "syslogResetFiltersButton"
-            Layout.row: root.wideLayout ? 0 : (root.twoColumnLayout ? 1 : 3)
-            Layout.column: root.wideLayout ? 3 : (root.twoColumnLayout ? 1 : 0)
+            Layout.row: root.wideLayout ? 0 : (root.twoColumnLayout ? 2 : 4)
+            Layout.column: root.wideLayout ? 4 : 0
+            Layout.columnSpan: root.twoColumnLayout ? 2 : 1
             Layout.fillWidth: !root.wideLayout
             text: "Reset Filters"
             type: "Secondary"
             enabled: search.text !== "" || severityBox.currentIndex > 0
+                     || protocolBox.currentIndex > 0
                      || root.selectedHost !== ""
             onClicked: root.resetFilters()
         }

@@ -1,11 +1,14 @@
-"""Persistent and validated QSettings adapter exposed to QML."""
+"""Persistent JSON settings adapter shared by QML and the C++ collector."""
 
 from __future__ import annotations
 
+import json
+import os
+from pathlib import Path
 import socket
 from ipaddress import ip_address
 
-from PyQt6.QtCore import QObject, QSettings, pyqtProperty, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import QObject, QSettings, QStandardPaths, pyqtProperty, pyqtSignal, pyqtSlot
 
 from ..domain.models import ListenerConfig
 
@@ -52,17 +55,69 @@ def _validate_ip(value: str, field_name: str, *, allow_unspecified: bool) -> Non
 class SyslogSettings(QObject):
     changed = pyqtSignal()
 
-    def __init__(self, parent: QObject | None = None) -> None:
+    DEFAULTS = {
+        "enabled_on_startup": False,
+        "protocol": "both",
+        "bind_ip": "0.0.0.0",
+        "advertised_ip": "",
+        "port": 5514,
+        "retention_days": 30,
+        "max_message_bytes": 16384,
+        "max_tcp_clients": 64,
+    }
+
+    def __init__(
+        self, parent: QObject | None = None, *, settings_path: str | Path | None = None
+    ) -> None:
         super().__init__(parent)
-        self._store = QSettings()
         self._available_advertised_ips = _local_ipv4_addresses()
+        override = os.environ.get("NETWORKTOOLS_SYSLOG_SETTINGS", "").strip()
+        default_root = Path(QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppConfigLocation))
+        self._path = Path(settings_path or override or (default_root / "syslog.json")).expanduser()
+        self._values = self._load()
+
+    @property
+    def path(self) -> Path:
+        return self._path
+
+    def _load(self) -> dict[str, object]:
+        values = dict(self.DEFAULTS)
+        if self._path.is_file():
+            try:
+                stored = json.loads(self._path.read_text(encoding="utf-8"))
+                if isinstance(stored, dict):
+                    values.update({key: stored[key] for key in values if key in stored})
+                    return values
+            except (OSError, json.JSONDecodeError):
+                pass
+        # One-time migration from the former QSettings keys.
+        legacy = QSettings()
+        for key, default in self.DEFAULTS.items():
+            old = legacy.value(f"syslog/{key}", None)
+            if old is not None:
+                if isinstance(default, bool):
+                    values[key] = str(old).lower() in {"1", "true"}
+                elif isinstance(default, int):
+                    values[key] = int(old)
+                else:
+                    values[key] = str(old)
+        self._write(values)
+        return values
+
+    def _write(self, values: dict[str, object]) -> None:
+        self._path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = self._path.with_suffix(self._path.suffix + ".tmp")
+        temporary.write_text(
+            json.dumps(values, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
+        temporary.replace(self._path)
 
     def _get(self, key: str, default: object) -> object:
-        return self._store.value(f"syslog/{key}", default)
+        return self._values.get(key, default)
 
     def _set(self, key: str, value: object) -> None:
-        self._store.setValue(f"syslog/{key}", value)
-        self._store.sync()
+        self._values[key] = value
+        self._write(self._values)
         self.changed.emit()
 
     @pyqtProperty(bool, notify=changed)
@@ -75,12 +130,13 @@ class SyslogSettings(QObject):
 
     @pyqtProperty(str, notify=changed)
     def protocol(self) -> str:
-        value = str(self._get("protocol", "udp")).lower()
-        return value if value in {"udp", "tcp"} else "udp"
+        # The local collector always owns both transports. Individual device
+        # destinations still choose UDP or TCP independently.
+        return "both"
 
     @protocol.setter
     def protocol(self, value: str) -> None:
-        self._set("protocol", value.lower())
+        self._set("protocol", "both")
 
     @pyqtProperty(str, notify=changed)
     def bindIp(self) -> str:
@@ -135,8 +191,8 @@ class SyslogSettings(QObject):
             _validate_ip(self.bindIp, "Bind IP", allow_unspecified=True)
             if not 1 <= self.port <= 65535:
                 raise ValueError("Port must be between 1 and 65535")
-            if self.protocol not in {"udp", "tcp"}:
-                raise ValueError("Protocol must be UDP or TCP")
+            if self.protocol != "both":
+                raise ValueError("The Syslog listener must enable UDP and TCP")
         except ValueError as exc:
             return {"ok": False, "message": str(exc)}
         return {"ok": True, "message": "Syslog listener settings are valid."}
