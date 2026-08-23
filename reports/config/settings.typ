@@ -73,7 +73,7 @@
   below: below,
 )[
   #set text(size: size, weight: weight, style: style)
-  #set par(justify: false, leading: 0pt, spacing: 0pt)
+  #set par(justify: false, spacing: 0pt)
   #align(alignment, it)
 ]
 
