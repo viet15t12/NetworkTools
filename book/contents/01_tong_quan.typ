@@ -95,7 +95,7 @@ NetworkTools hiện đang tập trung vào moio trường nghiên cứu và thi�
     ([Rollback], [Quy trình khôi phục trạng thái trước đó của Project hoặc Workspace từ Snapshot]),
     ([Manual Sys], [Công cụ xử lý/theo dõi xung đột giữa trạng thái thiết bị và trạng thái mong muốn, giúp người quản trị xác định và giải quyết các vấn đề liên quan đến cấu hình]),
   ),
-  caption: [Một số khái niệm cơ bản ],
+  caption: [Một số khái niệm cơ bản],
 )
 
 == Cấu trúc quyển hướng dẫn

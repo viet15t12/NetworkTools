@@ -48,6 +48,7 @@
 #counter(page).update(1)
 
 #include "contents/01_tong_quan.typ"
+#include "contents/02_cai_dat_su_dung.typ"
 
 // ----------------------------------------------------------
 // PHỤ LỤC
