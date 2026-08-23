@@ -5,7 +5,7 @@ import tempfile
 from contextlib import closing
 from pathlib import Path
 
-from PyQt6.QtCore import QUrl
+from PyQt6.QtCore import QSettings, QUrl
 
 from core.welcome import WelcomeController
 from infrastructure.database.recent_projects import RecentProjectRepository
@@ -95,6 +95,74 @@ class WelcomeControllerTests(unittest.TestCase):
             Path(created_path), selected_folder / "Campus-Core-Lab.ntp"
         )
         self.assertTrue(Path(created_path).is_file())
+
+    def test_direct_location_can_be_saved_as_the_future_default(self) -> None:
+        selected_folder = Path(self.temporary.name) / "future projects"
+        selected_folder.mkdir()
+        settings = QSettings(
+            str(Path(self.temporary.name) / "settings.ini"),
+            QSettings.Format.IniFormat,
+        )
+        controller = WelcomeController(
+            workspace_service=self.controller.workspace_service,
+            default_project_directory=self.temporary.name,
+            recent_project_repository=RecentProjectRepository(
+                Path(self.temporary.name) / "default_location_state.db"
+            ),
+            settings=settings,
+        )
+        requests: list[tuple[str, str]] = []
+        controller.workspaceRequested.connect(
+            lambda name, path: requests.append((name, path))
+        )
+
+        controller.createProjectInPath(
+            "New Default", str(selected_folder), "", True
+        )
+
+        self.assertEqual(
+            Path(requests[-1][1]), selected_folder / "New-Default.ntp"
+        )
+        self.assertEqual(
+            Path(controller.defaultProjectDirectory), selected_folder.resolve()
+        )
+        self.assertEqual(
+            settings.value("Welcome/defaultProjectDirectory"),
+            str(selected_folder.resolve()),
+        )
+        controller.shutdown()
+
+        reloaded = WelcomeController(
+            workspace_service=self.controller.workspace_service,
+            recent_project_repository=RecentProjectRepository(
+                Path(self.temporary.name) / "reloaded_default_location_state.db"
+            ),
+            settings=settings,
+        )
+        reloaded_requests: list[tuple[str, str]] = []
+        reloaded.workspaceRequested.connect(
+            lambda name, path: reloaded_requests.append((name, path))
+        )
+        reloaded.createProject("Future Project")
+
+        self.assertEqual(
+            Path(reloaded_requests[-1][1]),
+            selected_folder / "Future-Project.ntp",
+        )
+        reloaded.shutdown()
+
+    def test_direct_location_does_not_change_default_without_opt_in(self) -> None:
+        selected_folder = Path(self.temporary.name) / "one off"
+        selected_folder.mkdir()
+
+        self.controller.createProjectInPath(
+            "One Off", str(selected_folder), "", False
+        )
+
+        self.assertEqual(
+            Path(self.controller.defaultProjectDirectory),
+            Path(self.temporary.name),
+        )
 
     def test_open_project_uses_selected_file_name(self) -> None:
         self.controller.createProject("Edge-Lab")

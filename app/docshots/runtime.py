@@ -28,6 +28,7 @@ from PyQt6.QtCore import (
     QSize,
     QThread,
     Qt,
+    QUrl,
     pyqtProperty,
     pyqtSignal,
     pyqtSlot,
@@ -280,6 +281,7 @@ class DocumentationWelcomeController(QObject):
     passwordRequired = pyqtSignal(str)
     operationFailed = pyqtSignal(str, str)
     activeWorkspaceChanged = pyqtSignal()
+    defaultProjectDirectoryChanged = pyqtSignal()
 
     _RECENTS = [
         {
@@ -315,6 +317,22 @@ class DocumentationWelcomeController(QObject):
     def recentProjects(self) -> list[dict[str, object]]:
         return [dict(item) for item in self._RECENTS]
 
+    @pyqtProperty(str, notify=defaultProjectDirectoryChanged)
+    def defaultProjectDirectory(self) -> str:
+        return "/documentation/networktools"
+
+    @pyqtSlot(str, result=QUrl)
+    def folderUrlForPath(self, folder_path: str) -> QUrl:
+        return QUrl.fromLocalFile(folder_path or self.defaultProjectDirectory)
+
+    @pyqtSlot(QUrl, result=str)
+    def localPathFromUrl(self, folder_url: QUrl) -> str:
+        return folder_url.toLocalFile() if folder_url.isLocalFile() else ""
+
+    @pyqtSlot(str, result=bool)
+    def projectLocationIsDefault(self, folder_path: str) -> bool:
+        return folder_path == self.defaultProjectDirectory
+
     @pyqtSlot(str)
     def requestWelcome(self, mode: str) -> None:
         self.welcomeRequested.emit(mode)
@@ -332,6 +350,12 @@ class DocumentationWelcomeController(QObject):
     @pyqtSlot(str, str, str)
     def createProjectIn(self, _name: str, _folder_url: str, _password: str) -> None:
         pass
+
+    @pyqtSlot(str, str, str, bool, result=bool)
+    def createProjectInPath(
+        self, _name: str, _folder_path: str, _password: str, _set_default: bool
+    ) -> bool:
+        return True
 
     @pyqtSlot(str)
     def unlockProject(self, _password: str) -> None:

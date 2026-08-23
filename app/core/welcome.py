@@ -60,6 +60,7 @@ class WelcomeController(QObject):
     """Expose project create/open lifecycle operations to QML."""
 
     recentProjectsChanged = pyqtSignal()
+    defaultProjectDirectoryChanged = pyqtSignal()
     workspaceRequested = pyqtSignal(str, str)
     welcomeRequested = pyqtSignal(str)
     passwordRequired = pyqtSignal(str)
@@ -73,16 +74,23 @@ class WelcomeController(QObject):
         workspace_service: WorkspaceService | None = None,
         default_project_directory: str | Path | None = None,
         recent_project_repository: RecentProjectRepository | None = None,
+        settings: QSettings | None = None,
     ) -> None:
         super().__init__(parent)
-        self._settings = QSettings()
+        self._settings = settings or QSettings()
         self._workspace_service = workspace_service or WorkspaceService()
         self._recent_project_repository = (
             recent_project_repository or RecentProjectRepository()
         )
-        self._default_project_directory = Path(
-            default_project_directory or (Path.home() / "Documents")
-        ).expanduser()
+        configured_directory = (
+            default_project_directory
+            if default_project_directory is not None
+            else self._settings.value(
+                "Welcome/defaultProjectDirectory",
+                str(Path.home() / "Documents"),
+            )
+        )
+        self._default_project_directory = Path(str(configured_directory)).expanduser()
         self._active_session: WorkspaceSession | None = None
         self._pending_encrypted_path: Path | None = None
 
@@ -171,6 +179,37 @@ class WelcomeController(QObject):
     def recentProjects(self) -> list[dict[str, Any]]:
         return [dict(project) for project in self._recent_projects]
 
+    @pyqtProperty(str, notify=defaultProjectDirectoryChanged)
+    def defaultProjectDirectory(self) -> str:
+        return str(self._default_project_directory)
+
+    @pyqtSlot(str, result=QUrl)
+    def folderUrlForPath(self, folder_path: str) -> QUrl:
+        """Return a native folder URL suitable for seeding ``FolderDialog``."""
+
+        candidate = self._path_from_user_input(folder_path)
+        if candidate is None or not candidate.is_dir():
+            candidate = self._default_project_directory
+        return QUrl.fromLocalFile(str(candidate.resolve()))
+
+    @pyqtSlot(QUrl, result=str)
+    def localPathFromUrl(self, folder_url: QUrl) -> str:
+        """Convert a native picker result to the path shown in the form."""
+
+        if not folder_url.isLocalFile():
+            return ""
+        return folder_url.toLocalFile().strip()
+
+    @pyqtSlot(str, result=bool)
+    def projectLocationIsDefault(self, folder_path: str) -> bool:
+        candidate = self._path_from_user_input(folder_path)
+        if candidate is None:
+            return False
+        return (
+            candidate.expanduser().resolve()
+            == self._default_project_directory.expanduser().resolve()
+        )
+
     @pyqtProperty(str, notify=activeWorkspaceChanged)
     def activeProjectPath(self) -> str:
         return str(self._active_session.project_path) if self._active_session else ""
@@ -252,6 +291,32 @@ class WelcomeController(QObject):
             password,
         )
 
+    @pyqtSlot(str, str, str, bool, result=bool)
+    def createProjectInPath(
+        self,
+        project_name: str,
+        folder_path: str,
+        password: str = "",
+        set_as_default: bool = False,
+    ) -> bool:
+        """Create in a folder entered directly in the New Project form."""
+
+        folder = self._path_from_user_input(folder_path)
+        if folder is None or not folder.is_dir():
+            self.operationFailed.emit(
+                "Create Project", "Choose an existing project folder."
+            )
+            return False
+        name = (project_name or "").strip() or "Untitled Project"
+        created = self._create_at(
+            name,
+            folder / f"{self._project_stem(name)}.ntp",
+            password,
+        )
+        if created and set_as_default:
+            self._set_default_project_directory(folder)
+        return created
+
     @pyqtSlot(str, QUrl, str)
     def createProjectAt(
         self, project_name: str, project_url: QUrl, password: str = ""
@@ -267,7 +332,7 @@ class WelcomeController(QObject):
             return
         self._create_at((project_name or "").strip(), Path(local_path), password)
 
-    def _create_at(self, name: str, target: Path, password: str) -> None:
+    def _create_at(self, name: str, target: Path, password: str) -> bool:
         if target.suffix.lower() != ".ntp":
             target = target.with_name(target.name + ".ntp")
         try:
@@ -278,8 +343,28 @@ class WelcomeController(QObject):
             )
         except (OSError, ValueError, WorkspacePackageError) as exc:
             self.operationFailed.emit("Create Project", str(exc))
-            return
+            return False
         self._activate(session)
+        return True
+
+    @staticmethod
+    def _path_from_user_input(value: str) -> Path | None:
+        text = (value or "").strip()
+        if not text:
+            return None
+        url = QUrl(text)
+        if url.isLocalFile():
+            text = url.toLocalFile().strip()
+        return Path(text).expanduser()
+
+    def _set_default_project_directory(self, folder: Path) -> None:
+        normalized = folder.expanduser().resolve()
+        if normalized == self._default_project_directory.expanduser().resolve():
+            return
+        self._default_project_directory = normalized
+        self._settings.setValue("Welcome/defaultProjectDirectory", str(normalized))
+        self._settings.sync()
+        self.defaultProjectDirectoryChanged.emit()
 
     @staticmethod
     def _project_stem(name: str) -> str:

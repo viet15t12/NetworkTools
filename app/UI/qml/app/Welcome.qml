@@ -21,8 +21,6 @@ ApplicationWindow {
     color: Theme.contentBackground
 
     property string requestedMode: ""
-    property string pendingProjectName: ""
-    property string pendingProjectPassword: ""
     property bool nativePresenterFailed: false
     readonly property var backend:
         typeof welcomeController !== "undefined" ? welcomeController : null
@@ -63,9 +61,10 @@ ApplicationWindow {
             root.backend.openRecent(String(projectId || ""))
     }
 
-    function chooseProjectLocation(projectName, password) {
-        root.pendingProjectName = projectName
-        root.pendingProjectPassword = password
+    function browseProjectLocation(currentLocation) {
+        if (root.backend !== null)
+            createProjectFolderDialog.currentFolder =
+                    root.backend.folderUrlForPath(currentLocation)
         createProjectFolderDialog.open()
     }
 
@@ -101,19 +100,28 @@ ApplicationWindow {
         title: "Choose Project Folder"
         onAccepted: {
             if (root.backend !== null)
-                root.backend.createProjectIn(
-                    root.pendingProjectName,
-                    selectedFolder,
-                    root.pendingProjectPassword
-                )
-            root.pendingProjectPassword = ""
+                createProjectDialog.setProjectLocation(
+                    root.backend.localPathFromUrl(selectedFolder))
         }
-        onRejected: root.pendingProjectPassword = ""
     }
 
     CreateProjectDialog {
         id: createProjectDialog
-        onCreateRequested: (projectName, password) => root.chooseProjectLocation(projectName, password)
+        defaultProjectDirectory: root.backend !== null
+                                 ? root.backend.defaultProjectDirectory : ""
+        locationIsDefault: function(projectLocation) {
+            return root.backend !== null
+                    && root.backend.projectLocationIsDefault(projectLocation)
+        }
+        onBrowseLocationRequested: currentLocation =>
+            root.browseProjectLocation(currentLocation)
+        onCreateRequested: (projectName, projectLocation, password, setAsDefault) => {
+            if (root.backend !== null
+                    && root.backend.createProjectInPath(
+                        projectName, projectLocation, password, setAsDefault)) {
+                createProjectDialog.accept()
+            }
+        }
     }
 
     WorkspacePasswordDialog {

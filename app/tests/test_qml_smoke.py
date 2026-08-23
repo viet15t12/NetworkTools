@@ -2571,6 +2571,13 @@ class QmlSmokeTests(unittest.TestCase):
         self.assertIsNotNone(window.findChild(QObject, "welcomeSettingsButton"))
         self.assertIsNotNone(window.findChild(QObject, "welcomeRecentProjectList"))
         self.assertIsNotNone(window.findChild(QObject, "welcomeCommandRegistry"))
+        self.assertIsNotNone(window.findChild(QObject, "welcomeProjectLocationField"))
+        self.assertIsNotNone(
+            window.findChild(QObject, "welcomeProjectLocationBrowseButton")
+        )
+        self.assertIsNotNone(
+            window.findChild(QObject, "welcomeSetDefaultProjectLocationCheck")
+        )
         self.assertEqual(self.warnings, [])
 
     def test_main_window_exposes_modern_menu_bar(self) -> None:

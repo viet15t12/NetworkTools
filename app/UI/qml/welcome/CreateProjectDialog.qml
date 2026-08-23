@@ -8,18 +8,41 @@ import UI
 StandardDialog {
     id: root
 
-    signal createRequested(string projectName, string password)
+    property string defaultProjectDirectory: ""
+    property var locationIsDefault: null
+
+    signal browseLocationRequested(string currentLocation)
+    signal createRequested(string projectName, string projectLocation,
+                           string password, bool setAsDefault)
 
     title: "Create New Project"
     subtitle: "Start a NetworkTools workspace"
-    preferredWidth: 520
-    implicitHeight: protectProjectCheck.checked ? 535 : 390
+    preferredWidth: 600
+    implicitHeight: protectProjectCheck.checked ? 625 : 485
 
-    onOpened: projectNameField.forceActiveFocus()
+    function normalizedLocation(value) {
+        let path = String(value || "").trim().replace(/\\/g, "/")
+        while (path.length > 1 && path.endsWith("/"))
+            path = path.slice(0, -1)
+        return Qt.platform.os === "windows" ? path.toLowerCase() : path
+    }
+
+    function setProjectLocation(location) {
+        if (String(location || "").trim().length > 0)
+            projectLocationField.text = location
+    }
+
+    onOpened: {
+        projectLocationField.text = root.defaultProjectDirectory
+        projectNameField.forceActiveFocus()
+    }
     onClosed: {
+        projectNameField.clear()
+        projectLocationField.clear()
         passwordField.clear()
         confirmPasswordField.clear()
         protectProjectCheck.checked = false
+        setDefaultLocationCheck.checked = false
     }
 
     contentItem: ColumnLayout {
@@ -32,6 +55,38 @@ StandardDialog {
             labelText: "Project name"
             placeholderText: "e.g., Campus Core Lab"
             onAccepted: if (createButton.enabled) createButton.clicked()
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Theme.spacing8
+
+            StandardTextField {
+                id: projectLocationField
+                objectName: "welcomeProjectLocationField"
+                Layout.fillWidth: true
+                labelText: "Project location"
+                placeholderText: "Choose or enter a folder path"
+                onAccepted: if (createButton.enabled) createButton.clicked()
+            }
+
+            StandardButton {
+                objectName: "welcomeProjectLocationBrowseButton"
+                Layout.alignment: Qt.AlignBottom
+                text: "Browse…"
+                onClicked: root.browseLocationRequested(projectLocationField.text)
+            }
+        }
+
+        StandardCheckBox {
+            id: setDefaultLocationCheck
+            objectName: "welcomeSetDefaultProjectLocationCheck"
+            visible: projectLocationField.text.trim().length > 0
+                     && (root.locationIsDefault !== null
+                         ? !root.locationIsDefault(projectLocationField.text)
+                         : root.normalizedLocation(projectLocationField.text)
+                           !== root.normalizedLocation(root.defaultProjectDirectory))
+            text: "Use this location as the default for future projects"
         }
 
         StandardCheckBox {
@@ -105,15 +160,18 @@ StandardDialog {
                 text: "Create Project"
                 type: "Primary"
                 enabled: projectNameField.text.trim().length > 0
+                         && projectLocationField.text.trim().length > 0
                          && (!protectProjectCheck.checked
                              || (passwordField.text.length > 0
                                  && passwordField.text === confirmPasswordField.text))
                 onClicked: {
                     root.createRequested(
                         projectNameField.text.trim(),
-                        protectProjectCheck.checked ? passwordField.text : ""
+                        projectLocationField.text.trim(),
+                        protectProjectCheck.checked ? passwordField.text : "",
+                        setDefaultLocationCheck.visible
+                            && setDefaultLocationCheck.checked
                     )
-                    root.accept()
                 }
             }
         }
