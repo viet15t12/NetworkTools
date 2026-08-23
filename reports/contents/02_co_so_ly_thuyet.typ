@@ -1,4 +1,5 @@
 #pagebreak(weak: true)
+#import "../config/tables.typ": report-table
 
 = Cơ sở lý thuyết và công nghệ
 == Quản lý cấu hình và tự động hóa mạng
@@ -58,8 +59,6 @@ Một câu lệnh chỉ có giá trị thực thi trong một ngữ cảnh (cont
 
 Giao tiếp qua CLI mang lại ưu điểm lớn về khả năng tương thích đa dạng với các nền tảng thiết bị vật lý lẫn môi trường mô phỏng. Dẫu vậy, bản chất duy trì trạng thái (stateful) của CLI đặt ra thách thức lớn về bài toán quản lý phiên làm việc (Session Management). Nếu hệ thống cho phép nhiều tiến trình (worker) gửi lệnh đồng thời qua cùng một kênh kết nối mà thiếu cơ chế khóa đồng bộ (Synchronization Lock), hiện tượng xung đột và đan xen dữ liệu (Race Condition) sẽ xảy ra, dẫn đến sai lệch nghiêm trọng trong quá trình vận hành tự động.
 
-// T SỬA LẠI NỘI DUNG ĐỂ HẠN CHẾ MẤY CÁI TỪ KHÓ HIỂU 
-
 === SSH và Telnet
 
 Secure Shell (SSH) là giao thức truy cập từ xa có cơ chế bảo vệ kết nối. Kiến trúc SSH được mô tả trong RFC 4251 @rfc4251. Trong quản trị mạng, SSH thường được sử dụng để xác thực người dùng, tạo kênh CLI và trao đổi dữ liệu giữa phần mềm quản trị với router hoặc switch.
@@ -73,19 +72,17 @@ SSH được ưu tiên vì thông tin xác thực và nội dung phiên được
 
 Telnet cũng cung cấp khả năng truy cập terminal từ xa nhưng không có cơ chế bảo vệ nội dung phiên tương đương SSH. Vì vậy, Telnet không nên là lựa chọn mặc định trong mạng thực tế. Tuy nhiên, nó vẫn có giá trị trong một số môi trường lab, thiết bị cũ hoặc mô hình mô phỏng.
 
-#figure(
-  table(
-    columns: (1fr, 1fr, 1fr),
-    inset: 8pt,
-    align: horizon,
-    [*Tiêu chí*], [*SSH*], [*Telnet*],
-    [Bảo vệ nội dung phiên], [Có], [Không],
-    [Cổng TCP mặc định], [22], [23],
-    [Khuyến nghị trong mạng thực tế], [Ưu tiên], [Hạn chế],
-    [Sử dụng trong môi trường lab], [Có], [Có],
+#report-table(
+  columns: (30%, 35%, 35%),
+  header: ([Tiêu chí], [SSH], [Telnet]),
+  rows: (
+    ([Bảo vệ nội dung phiên], [Có (Mã hóa toàn bộ phiên)], [Không (Bản rõ plain-text)]),
+    ([Cổng TCP mặc định], [22], [23]),
+    ([Khuyến nghị trong mạng thực tế], [Ưu tiên bắt buộc], [Hạn chế tối đa]),
+    ([Sử dụng trong môi trường lab], [Có (Ưu tiên)], [Có (Dự phòng cho thiết bị cũ)]),
   ),
-  caption: [So sánh SSH và Telnet],
-)
+  caption: [So sánh các đặc tính giữa giao thức SSH và Telnet],
+) <tab-ssh-vs-telnet>
 
 === Vòng đời phiên quản trị
 

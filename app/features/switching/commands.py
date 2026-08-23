@@ -138,6 +138,7 @@ def render_security(payload: dict[str, Any]) -> list[str]:
             continue
         commands.extend(
             [
+                " switchport mode access",
                 " switchport port-security",
                 f" switchport port-security maximum {item['max_mac']}",
                 f" switchport port-security violation {item['violation']}",
