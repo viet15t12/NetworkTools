@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from .action_bits import EMPTY_ACTION_CFG
 from .common import db_connection
 
 
@@ -33,8 +34,9 @@ def mark_interface_task_applied(db: Any, task: dict[str, Any]) -> None:
 
         if tracking.get("base_pending"):
             connection.execute(
-                "UPDATE t02_interface_name SET sync_status = 'synchronized' WHERE iface_id = ?;",
-                (iface_id,),
+                "UPDATE t02_interface_name "
+                "SET sync_status = 'synchronized', action_Cfg = ? WHERE iface_id = ?;",
+                (EMPTY_ACTION_CFG, iface_id),
             )
         for kind, state in tracking.get("profile_states", {}).items():
             if kind == "subinterface":
@@ -59,10 +61,17 @@ def mark_interface_task_applied(db: Any, task: dict[str, Any]) -> None:
                     (iface_id,),
                 )
             elif state == "pending_apply":
-                connection.execute(
-                    f"UPDATE {table} SET sync_status = 'synchronized' WHERE iface_id = ?;",
-                    (iface_id,),
-                )
+                if kind == "l3":
+                    connection.execute(
+                        f"UPDATE {table} SET sync_status = 'synchronized', "
+                        "action_Cfg = '00000' WHERE iface_id = ?;",
+                        (iface_id,),
+                    )
+                else:
+                    connection.execute(
+                        f"UPDATE {table} SET sync_status = 'synchronized' WHERE iface_id = ?;",
+                        (iface_id,),
+                    )
         connection.commit()
 
 

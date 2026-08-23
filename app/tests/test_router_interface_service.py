@@ -13,6 +13,7 @@ from features.devices.sync import parse_interface_block, sync_interfaces
 from features.interfaces.collector import collect_interface_tasks
 from features.interfaces.commands import render_interface_commands
 from features.interfaces.models import canonical_interface_name
+from features.interfaces.push_state import mark_interface_task_applied
 from features.interfaces.repository import delete_router_interface
 from features.interfaces.service import InterfaceService
 from features.interfaces.view_push import InterfaceViewPushController
@@ -115,6 +116,77 @@ class RouterInterfaceServiceTests(unittest.TestCase):
         self.assertFalse(
             delete_router_interface(self.db, existing["interface"]["iface_id"])
         )
+
+    def test_shutdown_only_sets_one_bit_and_renders_one_parameter(self) -> None:
+        with closing(self.db._connect()) as connection:
+            iface_id = int(
+                connection.execute(
+                    "SELECT iface_id FROM t02_interface_name WHERE interface_name = ?",
+                    ("GigabitEthernet0/0",),
+                ).fetchone()[0]
+            )
+            connection.execute(
+                "UPDATE t02_interface_name SET ip_address = ?, subnet_mask = ?, "
+                "description = NULL, shutdown = 0, action_Cfg = '0000000000000' "
+                "WHERE iface_id = ?",
+                ("192.168.25.2", "255.255.255.0", iface_id),
+            )
+            connection.execute(
+                "INSERT INTO t02_router_iface_l3("
+                "iface_id, mtu, speed, duplex, negotiation, proxy_arp, "
+                "unreachables, directed_broadcast, sync_status, action_Cfg"
+                ") VALUES (?, 1500, 'auto', 'auto', 1, 1, 1, 0, "
+                "'synchronized', '00000')",
+                (iface_id,),
+            )
+            connection.commit()
+
+        result = self.service.save(
+            {
+                "host": "10.0.0.1",
+                "interface_name": "Gi0/0",
+                "interface_kind": "L3",
+                "ip_address": "192.168.25.2",
+                "subnet_mask": "255.255.255.0",
+                "mtu": 1500,
+                "speed": "auto",
+                "duplex": "auto",
+                "negotiation": True,
+                "proxy_arp": True,
+                "unreachables": True,
+                "directed_broadcast": False,
+                "shutdown": True,
+            }
+        )
+
+        self.assertTrue(result["ok"], result)
+        self.assertEqual(result["interface"]["action_Cfg"], "0000000000001")
+        task = collect_interface_tasks(self.db, "10.0.0.1")[0]
+        self.assertEqual(
+            render_interface_commands(task),
+            ["interface GigabitEthernet0/0", "shutdown", "exit"],
+        )
+
+        mark_interface_task_applied(self.db, task)
+        stored = self.service.save(
+            {
+                "host": "10.0.0.1",
+                "interface_name": "Gi0/0",
+                "interface_kind": "L3",
+                "ip_address": "192.168.25.2",
+                "subnet_mask": "255.255.255.0",
+                "mtu": 1500,
+                "speed": "auto",
+                "duplex": "auto",
+                "negotiation": True,
+                "proxy_arp": True,
+                "unreachables": True,
+                "directed_broadcast": False,
+                "shutdown": True,
+            }
+        )
+        self.assertEqual(stored["interface"]["action_Cfg"], "0000000000000")
+        self.assertEqual(collect_interface_tasks(self.db, "10.0.0.1"), [])
 
     def test_loopback_is_virtual_and_omits_physical_line_commands(self) -> None:
         result = self.service.save(

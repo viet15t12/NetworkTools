@@ -3,6 +3,12 @@ from __future__ import annotations
 import sqlite3
 from typing import Any
 
+from .action_bits import (
+    FULL_ACTION_CFG,
+    action_cfg_for,
+    has_dirty_fields,
+    merge_action_cfg,
+)
 from .common import db_connection, log_db_error, normalize_host, text_or_none
 from .models import InterfaceType, infer_interface_type, qml_metadata
 
@@ -31,6 +37,7 @@ def _interface_select_sql(where_clause: str) -> str:
             i.description,
             i.shutdown,
             i.sync_status,
+            i.action_Cfg,
             CASE
                 WHEN s.id IS NOT NULL THEN 'Subinterface'
                 WHEN t.iface_id IS NOT NULL THEN 'Tunnel'
@@ -51,6 +58,7 @@ def _interface_select_sql(where_clause: str) -> str:
             l.proxy_arp,
             l.unreachables,
             l.directed_broadcast,
+            l.action_Cfg AS l3_action_Cfg,
             t.tunnel_mode,
             t.tunnel_src,
             t.tunnel_dst,
@@ -150,9 +158,30 @@ def get_router_interface_by_id(db: Any, iface_id: int) -> dict[str, Any]:
         return {}
 
 
-def _upsert_l3(conn: sqlite3.Connection, db: Any, iface_id: int, payload: dict[str, Any], sync_status: str = "pending_apply") -> None:
-    speed = _choice(payload.get("speed"), {"auto", "10", "100", "1000", "10000"}, "auto")
-    duplex = _choice(payload.get("duplex"), {"auto", "full", "half"}, "auto")
+def _l3_values(db: Any, payload: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "secondary_ip": text_or_none(payload.get("secondary_ip")),
+        "secondary_mask": text_or_none(payload.get("secondary_mask")),
+        "mtu": _int_or_none(db, payload.get("mtu")) or 1500,
+        "bandwidth": _int_or_none(db, payload.get("bandwidth")),
+        "delay": _int_or_none(db, payload.get("delay")),
+        "speed": _choice(payload.get("speed"), {"auto", "10", "100", "1000", "10000"}, "auto"),
+        "duplex": _choice(payload.get("duplex"), {"auto", "full", "half"}, "auto"),
+        "negotiation": _bool_int(db, payload.get("negotiation", True)),
+        "proxy_arp": _bool_int(db, payload.get("proxy_arp", True)),
+        "unreachables": _bool_int(db, payload.get("unreachables", True)),
+        "directed_broadcast": _bool_int(db, payload.get("directed_broadcast")),
+    }
+
+
+def _upsert_l3(
+    conn: sqlite3.Connection,
+    db: Any,
+    iface_id: int,
+    payload: dict[str, Any],
+    sync_status: str = "pending_apply",
+) -> None:
+    values = _l3_values(db, payload)
     conn.execute(
         """
         INSERT INTO t02_router_iface_l3 (
@@ -160,7 +189,7 @@ def _upsert_l3(conn: sqlite3.Connection, db: Any, iface_id: int, payload: dict[s
             speed, duplex, negotiation, proxy_arp, unreachables,
             directed_broadcast, sync_status, action_Cfg
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '11111')
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '00000')
         ON CONFLICT(iface_id) DO UPDATE SET
             secondary_ip = excluded.secondary_ip,
             secondary_mask = excluded.secondary_mask,
@@ -174,24 +203,57 @@ def _upsert_l3(conn: sqlite3.Connection, db: Any, iface_id: int, payload: dict[s
             unreachables = excluded.unreachables,
             directed_broadcast = excluded.directed_broadcast,
             sync_status = excluded.sync_status,
-            action_Cfg = '11111';
+            action_Cfg = '00000';
         """,
         (
             iface_id,
-            text_or_none(payload.get("secondary_ip")),
-            text_or_none(payload.get("secondary_mask")),
-            _int_or_none(db, payload.get("mtu")) or 1500,
-            _int_or_none(db, payload.get("bandwidth")),
-            _int_or_none(db, payload.get("delay")),
-            speed,
-            duplex,
-            _bool_int(db, payload.get("negotiation", True)),
-            _bool_int(db, payload.get("proxy_arp", True)),
-            _bool_int(db, payload.get("unreachables", True)),
-            _bool_int(db, payload.get("directed_broadcast")),
+            values["secondary_ip"],
+            values["secondary_mask"],
+            values["mtu"],
+            values["bandwidth"],
+            values["delay"],
+            values["speed"],
+            values["duplex"],
+            values["negotiation"],
+            values["proxy_arp"],
+            values["unreachables"],
+            values["directed_broadcast"],
             sync_status,
         ),
     )
+
+
+def _changed_l3_fields(current: sqlite3.Row | None, desired: dict[str, Any]) -> set[str]:
+    if current is None:
+        return {
+            "secondary_ip",
+            "mtu",
+            "bandwidth",
+            "delay",
+            "speed",
+            "duplex",
+            "negotiation",
+            "proxy_arp",
+            "unreachables",
+            "directed_broadcast",
+        }
+    groups = {
+        "secondary_ip": ("secondary_ip", "secondary_mask"),
+        "mtu": ("mtu",),
+        "bandwidth": ("bandwidth",),
+        "delay": ("delay",),
+        "speed": ("speed",),
+        "duplex": ("duplex",),
+        "negotiation": ("negotiation",),
+        "proxy_arp": ("proxy_arp",),
+        "unreachables": ("unreachables",),
+        "directed_broadcast": ("directed_broadcast",),
+    }
+    return {
+        field
+        for field, columns in groups.items()
+        if any(current[column] != desired[column] for column in columns)
+    }
 
 
 def _upsert_tunnel(conn: sqlite3.Connection, db: Any, iface_id: int, payload: dict[str, Any], sync_status: str = "pending_apply") -> bool:
@@ -324,10 +386,82 @@ def save_router_interface(db: Any, payload_value: Any) -> bool:
                 ).fetchone()
             if row:
                 iface_id = int(row["iface_id"])
+                current = conn.execute(
+                    "SELECT * FROM t02_interface_name WHERE iface_id = ?",
+                    (iface_id,),
+                ).fetchone()
+                current_l3 = conn.execute(
+                    "SELECT * FROM t02_router_iface_l3 WHERE iface_id = ?",
+                    (iface_id,),
+                ).fetchone()
+                desired_l3 = _l3_values(db, payload)
+                changed_fields: set[str] = set()
+                if text_or_none(current["description"]) != text_or_none(payload.get("description")):
+                    changed_fields.add("description")
+                if (
+                    text_or_none(current["ip_address"]),
+                    text_or_none(current["subnet_mask"]),
+                ) != (
+                    text_or_none(payload.get("ip_address")),
+                    text_or_none(payload.get("subnet_mask")),
+                ):
+                    changed_fields.add("primary_ip")
+                if int(current["shutdown"] or 0) != _bool_int(db, payload.get("shutdown")):
+                    changed_fields.add("shutdown")
+
+                existing_kinds = {
+                    "L3": current_l3 is not None
+                    and current_l3["sync_status"] != "pending_delete",
+                    "Tunnel": conn.execute(
+                        "SELECT 1 FROM t02_router_iface_tunnel WHERE iface_id = ? "
+                        "AND sync_status != 'pending_delete'",
+                        (iface_id,),
+                    ).fetchone() is not None,
+                    "WAN": conn.execute(
+                        "SELECT 1 FROM t02_router_iface_wan WHERE iface_id = ? "
+                        "AND sync_status != 'pending_delete'",
+                        (iface_id,),
+                    ).fetchone() is not None,
+                    "Subinterface": conn.execute(
+                        "SELECT 1 FROM t02_router_iface_subif WHERE host = ? AND subif_name = ? "
+                        "AND sync_status != 'pending_delete'",
+                        (host, current["interface_name"]),
+                    ).fetchone() is not None,
+                }
+                current_kind = next(
+                    (key for key, present in existing_kinds.items() if present), None
+                )
+                profile_changed = current_kind is not None and current_kind != kind
+                if kind == "L3":
+                    changed_fields.update(_changed_l3_fields(current_l3, desired_l3))
+                    profile_changed = profile_changed or current_l3 is None
+
+                changed_mask = action_cfg_for(changed_fields)
+                previous_mask = current["action_Cfg"]
+                # Upgrade an already-pending task made by an older app version:
+                # its five-bit L3 mask meant that the whole interface was dirty.
+                if (
+                    current_l3 is not None
+                    and current_l3["sync_status"] == "pending_apply"
+                    and "1" in str(current_l3["action_Cfg"] or "")
+                    and not has_dirty_fields(previous_mask)
+                ):
+                    previous_mask = FULL_ACTION_CFG
+                action_cfg = (
+                    FULL_ACTION_CFG
+                    if profile_changed
+                    else merge_action_cfg(previous_mask, changed_mask)
+                )
+                base_status = (
+                    "pending_apply"
+                    if has_dirty_fields(action_cfg) or current["sync_status"] == "pending_apply"
+                    else str(current["sync_status"] or "synchronized")
+                )
                 conn.execute(
                     """
                     UPDATE t02_interface_name
-                    SET ip_address = ?, subnet_mask = ?, description = ?, shutdown = ?, sync_status = 'pending_apply'
+                    SET ip_address = ?, subnet_mask = ?, description = ?, shutdown = ?,
+                        sync_status = ?, action_Cfg = ?
                     WHERE iface_id = ?;
                     """,
                     (
@@ -335,6 +469,8 @@ def save_router_interface(db: Any, payload_value: Any) -> bool:
                         text_or_none(payload.get("subnet_mask")),
                         text_or_none(payload.get("description")),
                         _bool_int(db, payload.get("shutdown")),
+                        base_status,
+                        action_cfg,
                         iface_id,
                     ),
                 )
@@ -343,9 +479,9 @@ def save_router_interface(db: Any, payload_value: Any) -> bool:
                     """
                     INSERT INTO t02_interface_name (
                         host, interface_name, ip_address, subnet_mask,
-                        description, shutdown, sync_status
+                        description, shutdown, sync_status, action_Cfg
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, 'pending_apply');
+                    VALUES (?, ?, ?, ?, ?, ?, 'pending_apply', ?);
                     """,
                     (
                         host,
@@ -354,12 +490,39 @@ def save_router_interface(db: Any, payload_value: Any) -> bool:
                         text_or_none(payload.get("subnet_mask")),
                         text_or_none(payload.get("description")),
                         _bool_int(db, payload.get("shutdown")),
+                        FULL_ACTION_CFG,
                     ),
                 )
                 iface_id = int(cursor.lastrowid)
+                current_l3 = None
+                changed_fields = set()
+                profile_changed = True
 
             if kind == "L3":
-                _upsert_l3(conn, db, iface_id, payload)
+                l3_changed = bool(
+                    changed_fields
+                    & {
+                        "secondary_ip",
+                        "mtu",
+                        "bandwidth",
+                        "delay",
+                        "speed",
+                        "duplex",
+                        "negotiation",
+                        "proxy_arp",
+                        "unreachables",
+                        "directed_broadcast",
+                    }
+                )
+                l3_status = (
+                    "pending_apply"
+                    if current_l3 is None
+                    or profile_changed
+                    or l3_changed
+                    or current_l3["sync_status"] == "pending_apply"
+                    else str(current_l3["sync_status"] or "synchronized")
+                )
+                _upsert_l3(conn, db, iface_id, payload, l3_status)
                 conn.execute("UPDATE t02_router_iface_tunnel SET sync_status = 'pending_delete' WHERE iface_id = ?;", (iface_id,))
                 conn.execute("UPDATE t02_router_iface_wan SET sync_status = 'pending_delete' WHERE iface_id = ?;", (iface_id,))
             elif kind == "Tunnel":

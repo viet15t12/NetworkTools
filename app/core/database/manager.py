@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sqlite3
 import sys
 from pathlib import Path
 from typing import Any
@@ -24,6 +25,7 @@ from .device_slots import DeviceSlotsMixin
 from .routing_slots import RoutingSlotsMixin
 from .view_push_runtime import initialize_view_push_runtime
 from features.devices import DeviceRepository
+from features.interfaces.schema import ensure_schema as ensure_interface_schema
 from .unsupported_slots import UnsupportedSlotsMixin
 from .view_push_slots import ViewPushSlotsMixin
 
@@ -98,6 +100,8 @@ class DatabaseManager(
         """Validate the managed schema and synchronize compatibility worker paths."""
         try:
             validate_device_database(self.db_path)
+            with sqlite3.connect(self.db_path) as connection:
+                ensure_interface_schema(connection)
             DeviceRepository(self.db_path).synchronize_classification()
             configure_worker_paths(self.db_path)
             return True

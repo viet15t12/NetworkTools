@@ -5,19 +5,12 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from .action_bits import ACTION_WIDTH, field_is_dirty, normalize_action_cfg
 from .models import InterfaceType, infer_interface_type
 
 
 def _enabled(value: Any) -> bool:
     return bool(int(value or 0))
-
-
-def _has_bit(action_cfg: Any, index_from_right: int) -> bool:
-    bits = str(action_cfg or "")
-    if not bits:
-        return True
-    position = len(bits) - 1 - index_from_right
-    return 0 <= position < len(bits) and bits[position] == "1"
 
 
 def _append_toggle(commands: list[str], enabled: Any, command: str) -> None:
@@ -73,52 +66,63 @@ def _cleanup_subinterface(_profile: dict[str, Any]) -> list[str]:
     return ["no encapsulation dot1Q"]
 
 
-def _render_l3(profile: dict[str, Any]) -> list[str]:
+def _render_l3(
+    profile: dict[str, Any], action_cfg: Any = None, *, selective: bool = False
+) -> list[str]:
     commands: list[str] = []
-    bits = profile.get("action_Cfg")
-    if _has_bit(bits, 0):
+    dirty = lambda field: not selective or field_is_dirty(action_cfg, field)
+    if dirty("secondary_ip"):
         if profile.get("secondary_ip") and profile.get("secondary_mask"):
             commands.append(
                 f"ip address {profile['secondary_ip']} {profile['secondary_mask']} secondary"
             )
-    if profile.get("mtu"):
-        commands.append(f"mtu {profile['mtu']}")
-    if profile.get("bandwidth"):
+    if dirty("mtu"):
+        commands.append(f"mtu {profile['mtu']}" if profile.get("mtu") else "default mtu")
+    if dirty("bandwidth") and profile.get("bandwidth"):
         commands.append(f"bandwidth {profile['bandwidth']}")
-    if profile.get("delay"):
+    if dirty("delay") and profile.get("delay"):
         commands.append(f"delay {profile['delay']}")
-    if _has_bit(bits, 4):
+    if dirty("speed"):
         speed = str(profile.get("speed") or "auto")
         commands.append("speed auto" if speed == "auto" else f"speed {speed}")
-    if _has_bit(bits, 3):
+    if dirty("duplex"):
         duplex = str(profile.get("duplex") or "auto")
         commands.append("duplex auto" if duplex == "auto" else f"duplex {duplex}")
-    if _has_bit(bits, 2):
-        # Auto-negotiation is already the IOS default and some virtual IOS
-        # images reject the explicit `negotiation auto` form.  Emit only the
-        # non-default request; this keeps the generated config portable while
-        # still allowing users to disable negotiation deliberately.
+    if dirty("negotiation"):
+        # Full/legacy renders omit the IOS default. A selective change back to
+        # the enabled state must explicitly undo a prior `no negotiation auto`.
         if not _enabled(profile.get("negotiation")):
             commands.append("no negotiation auto")
-    if _has_bit(bits, 1):
+        elif selective:
+            commands.append("negotiation auto")
+    if dirty("proxy_arp"):
         _append_toggle(commands, profile.get("proxy_arp"), "ip proxy-arp")
+    if dirty("unreachables"):
         _append_toggle(commands, profile.get("unreachables"), "ip unreachables")
+    if dirty("directed_broadcast"):
         _append_toggle(
             commands, profile.get("directed_broadcast"), "ip directed-broadcast"
         )
     return commands
 
 
-def _render_virtual_l3(profile: dict[str, Any]) -> list[str]:
+def _render_virtual_l3(
+    profile: dict[str, Any], action_cfg: Any = None, *, selective: bool = False
+) -> list[str]:
     """Render only L3-safe options for Loopback and other virtual L3 types."""
     commands: list[str] = []
-    if profile.get("secondary_ip") and profile.get("secondary_mask"):
+    dirty = lambda field: not selective or field_is_dirty(action_cfg, field)
+    if (
+        dirty("secondary_ip")
+        and profile.get("secondary_ip")
+        and profile.get("secondary_mask")
+    ):
         commands.append(
             f"ip address {profile['secondary_ip']} {profile['secondary_mask']} secondary"
         )
-    if profile.get("bandwidth"):
+    if dirty("bandwidth") and profile.get("bandwidth"):
         commands.append(f"bandwidth {profile['bandwidth']}")
-    if profile.get("delay"):
+    if dirty("delay") and profile.get("delay"):
         commands.append(f"delay {profile['delay']}")
     return commands
 
@@ -242,24 +246,52 @@ def render_interface_commands(task: dict[str, Any]) -> list[str]:
         if cleanup:
             commands.extend(cleanup(profile))
 
-    description = str(interface.get("description") or "").strip()
-    commands.append(f"description {description}" if description else "no description")
-    if interface.get("ip_address") and interface.get("subnet_mask"):
-        commands.append(
-            f"ip address {interface['ip_address']} {interface['subnet_mask']}"
-        )
-    else:
-        commands.append("no ip address")
-
     kind = task.get("profile_kind")
     profile = task.get("profile")
+    raw_action_cfg = str(interface.get("action_Cfg") or "")
+    valid_action_cfg = (
+        len(raw_action_cfg) == ACTION_WIDTH
+        and all(bit in "01" for bit in raw_action_cfg)
+    )
+    legacy_l3_pending = (
+        kind == "l3"
+        and isinstance(profile, dict)
+        and str(profile.get("sync_status") or "pending_apply") == "pending_apply"
+        and "1" in str(profile.get("action_Cfg") or "")
+        and "1" not in normalize_action_cfg(raw_action_cfg)
+    )
+    selective_l3 = kind == "l3" and valid_action_cfg and not legacy_l3_pending
+    action_cfg = normalize_action_cfg(raw_action_cfg)
+
+    description = str(interface.get("description") or "").strip()
+    if not selective_l3 or field_is_dirty(action_cfg, "description"):
+        commands.append(
+            f"description {description}" if description else "no description"
+        )
+    if not selective_l3 or field_is_dirty(action_cfg, "primary_ip"):
+        if interface.get("ip_address") and interface.get("subnet_mask"):
+            commands.append(
+                f"ip address {interface['ip_address']} {interface['subnet_mask']}"
+            )
+        else:
+            commands.append("no ip address")
+
     renderer = _PROFILE_RENDERERS.get(str(kind))
     if renderer and isinstance(profile, dict):
         if kind == "l3" and interface_type is not InterfaceType.PHYSICAL:
-            commands.extend(_render_virtual_l3(profile))
+            commands.extend(
+                _render_virtual_l3(profile, action_cfg, selective=selective_l3)
+            )
+        elif kind == "l3":
+            commands.extend(_render_l3(profile, action_cfg, selective=selective_l3))
         else:
             commands.extend(renderer(profile))
-    commands.append("shutdown" if _enabled(interface.get("shutdown")) else "no shutdown")
+    if not selective_l3 or field_is_dirty(action_cfg, "shutdown"):
+        commands.append(
+            "shutdown" if _enabled(interface.get("shutdown")) else "no shutdown"
+        )
+    if len(commands) == 1:
+        return []
     commands.append("exit")
     return commands
 

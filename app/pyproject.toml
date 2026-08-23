@@ -1,6 +1,6 @@
 [project]
 name = "networktools"
-version = "0.2.0"
+version = "0.2"
 description = "PyQt6/QML desktop application for network device configuration workflows."
 readme = "README.md"
 requires-python = ">=3.11"

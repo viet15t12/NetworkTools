@@ -94,6 +94,55 @@ class WorkspacePackageTests(unittest.TestCase):
         session.close()
         self.assertFalse(working_directory.exists())
 
+    def test_manifest_uses_compact_json_for_large_content_inventories(self) -> None:
+        entries = tuple(
+            package_module.ContentEntry(
+                path=(
+                    "snapshots/00000000-0000-0000-0000-000000000000/backup/"
+                    f"router/cfg/.networktools-git/objects/{index:04x}/"
+                    "0123456789abcdef0123456789abcdef01234567"
+                ),
+                size=index,
+                sha256="0" * 64,
+            )
+            for index in range(4_000)
+        )
+        manifest = package_module.WorkspaceManifest(
+            project_id="00000000-0000-0000-0000-000000000001",
+            name="Large inventory",
+            created_at="2026-08-23T00:00:00Z",
+            modified_at="2026-08-23T00:00:00Z",
+            created_by_app_version="test",
+            last_saved_by_app_version="test",
+            minimum_reader_version="0.1.0",
+            database_schema_versions={"deviceNetwork": 1, "infoCollected": 1},
+            content=entries,
+        )
+
+        payload = manifest.to_bytes()
+
+        self.assertNotIn(b'\n  "content"', payload)
+        self.assertLess(len(payload), 1024 * 1024)
+        self.assertEqual(
+            package_module.WorkspaceManifest.from_bytes(payload).content,
+            entries,
+        )
+        self.assertIsNone(PackageLimits().max_manifest_size)
+        self.assertIsNone(PackageLimits().max_members)
+        self.assertIsNone(PackageLimits().max_entry_size)
+        self.assertIsNone(PackageLimits().max_total_size)
+        self.assertIsNone(PackageLimits().max_package_size)
+
+    def test_custom_manifest_size_limit_is_still_enforced(self) -> None:
+        package = self.root / "ManifestLimited.ntp"
+        self.codec.pack(self.workspace, package)
+        strict_codec = WorkspacePackageCodec(
+            limits=PackageLimits(max_manifest_size=64)
+        )
+
+        with self.assertRaises(WorkspaceLimitExceeded):
+            strict_codec.open(package)
+
     def test_session_cleanup_can_retry_after_a_windows_sharing_failure(self) -> None:
         session = self.codec.new_session(self.root / "Retry.ntp", "Retry")
         working_directory = session.working_directory

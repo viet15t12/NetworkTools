@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+import time
 from typing import Any
 
 from PyQt6.QtCore import pyqtSlot
@@ -69,10 +70,12 @@ class ViewPushSlotsMixin:
         if operation == "preview":
             commands = str(result.get("commands") or "") if isinstance(result, dict) else ""
             self.viewPushPreviewFinished.emit(controller, host, module, ok, message, commands)
-        elif operation not in {"batch", "post-push-batch"}:
+        elif operation not in {"batch", "post-push-batch", "post-push-single"}:
             self.viewPushFinished.emit(controller, host, module, ok, message)
             if self._snapshot_was_updated(result):
                 self.runningConfigUpdated.emit(host)
+        if operation == "post-push-single" and self._snapshot_was_updated(result):
+            self.runningConfigUpdated.emit(host)
         if operation in {"batch", "post-push-batch"} and isinstance(result, dict):
             for item in result.get("results", []):
                 if isinstance(item, dict) and self._snapshot_was_updated(item):
@@ -80,6 +83,14 @@ class ViewPushSlotsMixin:
                     if updated_host:
                         self.runningConfigUpdated.emit(updated_host)
         self.taskFinished.emit(ok, message)
+        if (
+            operation == "push"
+            and isinstance(result, dict)
+            and result.get("ok")
+            and result.get("postPushPending")
+            and host
+        ):
+            self._start_post_push_single(controller, host, module)
         if operation == "batch" and isinstance(result, dict):
             deferred_hosts = [
                 str(item.get("host") or "").strip()
@@ -91,6 +102,31 @@ class ViewPushSlotsMixin:
             ]
             if deferred_hosts:
                 self._start_post_push_batch(controller, module, deferred_hosts)
+
+    def _start_post_push_single(
+        self, controller: str, host: str, module: str
+    ) -> bool:
+        """Synchronize one successfully applied device without holding its dialog."""
+        task_key = (
+            f"post-view-push:{controller}:{host}:{module}:{time.monotonic_ns()}"
+        )
+
+        def run_reconciliation(progress: Any) -> dict[str, Any]:
+            progress(f"Synchronizing device state for {host} in background...")
+            return dict(
+                self._view_push.get(controller).reconcile_after_push(host, module)
+                or {}
+            )
+
+        return self._start_background_task(
+            task_key,
+            controller,
+            host,
+            module,
+            f"Synchronizing {host} in background...",
+            run_reconciliation,
+            "post-push-single",
+        )
 
     def _start_post_push_batch(
         self, controller: str, module: str, hosts: list[str]
@@ -387,7 +423,16 @@ class ViewPushSlotsMixin:
         def run_push(progress: Any) -> dict[str, Any]:
             """Execute the requested push inside the shared task coordinator."""
             progress(f"Rendering {controller.upper()} configuration for {target_host}...")
-            result = self.pushViewPush(controller, target_host, module)
+            try:
+                result = self._view_push.get(controller).push_apply_only(
+                    target_host, module
+                )
+            except Exception as exc:
+                result = {
+                    "ok": False,
+                    "message": f"Push {controller} failed: {exc}",
+                    "report": [],
+                }
             progress(f"Finished {controller.upper()} push for {target_host}.")
             return result
 

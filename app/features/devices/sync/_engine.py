@@ -1065,7 +1065,8 @@ def sync_interfaces(conn: sqlite3.Connection, host: str, interfaces: list[dict[s
         parent_name = name.rsplit(".", 1)[0]
         if parent_name in existing_interfaces:
             conn.execute(
-                "UPDATE t02_interface_name SET sync_status = 'synchronized' "
+                "UPDATE t02_interface_name SET sync_status = 'synchronized', "
+                "action_Cfg = '0000000000000' "
                 "WHERE iface_id = ?;",
                 (existing_interfaces[parent_name],),
             )
@@ -1086,7 +1087,8 @@ def sync_interfaces(conn: sqlite3.Connection, host: str, interfaces: list[dict[s
             conn.execute(
                 """
                 UPDATE t02_interface_name
-                SET ip_address = ?, subnet_mask = ?, description = ?, shutdown = ?, sync_status = 'synchronized'
+                SET ip_address = ?, subnet_mask = ?, description = ?, shutdown = ?,
+                    sync_status = 'synchronized', action_Cfg = '0000000000000'
                 WHERE iface_id = ?;
                 """,
                 (
@@ -1212,7 +1214,7 @@ def sync_l3(conn: sqlite3.Connection, iface_id: int, row: dict[str, Any]) -> Non
             speed, duplex, negotiation, proxy_arp, unreachables,
             directed_broadcast, sync_status, action_Cfg
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synchronized', '11111')
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synchronized', '00000')
         ON CONFLICT(iface_id) DO UPDATE SET
             secondary_ip = excluded.secondary_ip,
             secondary_mask = excluded.secondary_mask,
@@ -1226,7 +1228,7 @@ def sync_l3(conn: sqlite3.Connection, iface_id: int, row: dict[str, Any]) -> Non
             unreachables = excluded.unreachables,
             directed_broadcast = excluded.directed_broadcast,
             sync_status = 'synchronized',
-            action_Cfg = '11111';
+            action_Cfg = '00000';
         """,
         (
             iface_id,

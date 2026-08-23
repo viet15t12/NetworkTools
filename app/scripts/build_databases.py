@@ -325,6 +325,14 @@ def _repair_info_collected_feature_schema(db_path: Path) -> list[str]:
     return changes
 
 
+def _repair_device_network_feature_schema(db_path: Path) -> list[str]:
+    """Add interface dirty-mask columns without rebuilding user data."""
+    from features.interfaces.schema import ensure_schema
+
+    with closing(sqlite3.connect(db_path)) as connection:
+        return ensure_schema(connection)
+
+
 def build_all() -> None:
     ensure_data_dir()
     for source_dir, db_path in TARGETS:
@@ -358,6 +366,8 @@ def ensure_runtime_databases() -> dict[str, object]:
             repaired[db_path.name] = ["textual status migration"]
             continue
         changes: list[str] = []
+        if source_dir == DEVICE_NETWORK_SCHEMA_DIR:
+            changes.extend(_repair_device_network_feature_schema(db_path))
         if source_dir == INFO_COLLECTED_SCHEMA_DIR:
             # Existing workspaces can have the original Syslog table. Its new
             # indexes reference columns that ALTER TABLE must add first.
