@@ -487,6 +487,46 @@ class QmlSmokeTests(unittest.TestCase):
         )
         self.assertEqual(self.warnings, [])
 
+    def test_l2_security_trusted_uplink_options_refresh_reactively(self) -> None:
+        """Interface inventory must reach the ComboBox without reopening the page."""
+        page = self._create_with_properties(
+            "UI/qml/features/switching/security/L2SecurityPage.qml",
+            {"host": "192.0.2.248", "width": 1100, "height": 720},
+        )
+        result, is_undefined = QQmlExpression(
+            QQmlEngine.contextForObject(page),
+            page,
+            """
+            section = "trust";
+            interfaceOptions = [
+                {id: 1, if_name: "GigabitEthernet0/1", mode: "trunk",
+                 oper_status: "up"},
+                {id: 2, if_name: "GigabitEthernet0/2", mode: "access",
+                 oper_status: "down"}
+            ];
+            dataRevision += 1;
+            ({values: availableTrustInterfaces(),
+              labels: availableTrustInterfaceLabels()})
+            """,
+        ).evaluate()
+
+        self.assertFalse(is_undefined)
+        self.assertEqual(
+            result.toVariant(),
+            {
+                "values": ["GigabitEthernet0/1", "GigabitEthernet0/2"],
+                "labels": [
+                    "GigabitEthernet0/1  —  trunk · up",
+                    "GigabitEthernet0/2  —  access · down",
+                ],
+            },
+        )
+        self.app.processEvents()
+        combo = page.findChild(QObject, "trustInterfaceCombo")
+        self.assertIsNotNone(combo)
+        self.assertEqual(combo.property("currentValue"), "GigabitEthernet0/1")
+        self.assertEqual(self.warnings, [])
+
     def test_vtp_saved_domain_can_be_loaded_back_into_the_editor(self) -> None:
         page = self._create_with_properties(
             "UI/qml/features/switching/switching/VtpPage.qml",

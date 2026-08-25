@@ -45,21 +45,34 @@ class FhrpRepository:
     def matching_interfaces(
         self, hosts: list[str], gateway: ipaddress.IPv4Address
     ) -> list[dict[str, Any]]:
+        """Return device-backed L3 endpoints that can safely receive FHRP now."""
         if not hosts:
             return []
         placeholders = ",".join("?" for _ in hosts)
         with closing(self.db._connect()) as conn:
             rows = conn.execute(
                 f"""
-                SELECT iface_id, host, interface_name, ip_address, subnet_mask
-                FROM t02_interface_name
-                WHERE host IN ({placeholders})
-                  AND sync_status != 'pending_delete'
-                  AND COALESCE(ip_address, '') != ''
-                  AND COALESCE(subnet_mask, '') != ''
+                SELECT i.iface_id, i.host, i.interface_name, i.ip_address,
+                       i.subnet_mask, 'router' AS interface_kind
+                FROM t02_interface_name AS i
+                WHERE i.host IN ({placeholders})
+                  AND i.sync_status = 'synchronized'
+                  AND COALESCE(i.shutdown, 0) = 0
+                  AND COALESCE(i.ip_address, '') != ''
+                  AND COALESCE(i.subnet_mask, '') != ''
+                UNION ALL
+                SELECT s.id AS iface_id, s.host,
+                       'Vlan' || CAST(s.vlan_id AS TEXT) AS interface_name,
+                       s.ip_address, s.subnet_mask, 'svi' AS interface_kind
+                FROM t06_svi_interface AS s
+                WHERE s.host IN ({placeholders})
+                  AND s.sync_status = 'synchronized'
+                  AND COALESCE(s.shutdown, 0) = 0
+                  AND COALESCE(s.ip_address, '') != ''
+                  AND COALESCE(s.subnet_mask, '') != ''
                 ORDER BY host COLLATE NOCASE, interface_name COLLATE NOCASE;
                 """,
-                hosts,
+                (*hosts, *hosts),
             ).fetchall()
         result: list[dict[str, Any]] = []
         for row in rows:
@@ -78,6 +91,7 @@ class FhrpRepository:
             result.append(
                 {
                     "iface_id": row["iface_id"],
+                    "interface_kind": row["interface_kind"],
                     "host": row["host"],
                     "interface_name": row["interface_name"],
                     "ip_address": row["ip_address"],
@@ -111,10 +125,17 @@ class FhrpRepository:
                     dict(row)
                     for row in conn.execute(
                         """
-                        SELECT m.member_id, m.host, m.iface_id, i.interface_name,
+                        SELECT m.member_id, m.host, m.iface_id, m.interface_kind,
+                               COALESCE(
+                                   i.interface_name,
+                                   'Vlan' || CAST(s.vlan_id AS TEXT)
+                               ) AS interface_name,
                                m.priority, m.preempt, m.shutdown, m.sync_status
                         FROM t08_fhrp_members AS m
-                        JOIN t02_interface_name AS i ON i.iface_id = m.iface_id
+                        LEFT JOIN t02_interface_name AS i
+                          ON m.interface_kind = 'router' AND i.iface_id = m.iface_id
+                        LEFT JOIN t06_svi_interface AS s
+                          ON m.interface_kind = 'svi' AND s.id = m.iface_id
                         WHERE m.fhrp_id = ?
                         ORDER BY m.host COLLATE NOCASE;
                         """,
@@ -192,6 +213,31 @@ class FhrpRepository:
                         "DELETE FROM t08_fhrp_groups WHERE fhrp_id = ?;",
                         (fhrp_id,),
                     )
+                for member in members:
+                    endpoint_conflict = conn.execute(
+                        """
+                        SELECT g.virtual_ip
+                        FROM t08_fhrp_groups AS g
+                        JOIN t08_fhrp_members AS m ON m.fhrp_id = g.fhrp_id
+                        WHERE g.protocol = ? AND g.group_number = ?
+                          AND m.host = ? AND m.interface_kind = ? AND m.iface_id = ?
+                        LIMIT 1;
+                        """,
+                        (
+                            protocol,
+                            payload["group_number"],
+                            member["host"],
+                            member["interface_kind"],
+                            member["iface_id"],
+                        ),
+                    ).fetchone()
+                    if endpoint_conflict is not None:
+                        raise ValueError(
+                            f"{protocol.upper()} group {payload['group_number']} "
+                            f"already exists on {member['host']} interface "
+                            f"{member['interface_name']} with virtual IP "
+                            f"{endpoint_conflict['virtual_ip']}."
+                        )
                 cursor = conn.execute(
                     """
                     INSERT INTO t08_fhrp_groups (
@@ -211,14 +257,16 @@ class FhrpRepository:
                     member_cursor = conn.execute(
                         """
                         INSERT INTO t08_fhrp_members (
-                            fhrp_id, host, iface_id, priority, preempt, shutdown, sync_status
+                            fhrp_id, host, iface_id, interface_kind,
+                            priority, preempt, shutdown, sync_status
                         )
-                        VALUES (?, ?, ?, ?, ?, ?, 'pending_apply');
+                        VALUES (?, ?, ?, ?, ?, ?, ?, 'pending_apply');
                         """,
                         (
                             fhrp_id,
                             member["host"],
                             member["iface_id"],
+                            member["interface_kind"],
                             member["priority"],
                             int(member["preempt"]),
                             int(member["shutdown"]),
@@ -319,7 +367,7 @@ class FhrpRepository:
                 """,
                 (
                     member_id,
-                    member.get("version", 3),
+                    member.get("version", 2),
                     member.get("advertisement_ms", 1000),
                     int(member.get("accept_mode", False)),
                     auth_type,

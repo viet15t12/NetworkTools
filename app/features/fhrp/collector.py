@@ -22,12 +22,20 @@ def collect_fhrp_tasks(db: Any, host: str) -> list[dict[str, Any]]:
         rows = conn.execute(
             """
             SELECT m.member_id, m.fhrp_id, m.host, m.iface_id,
+                   m.interface_kind,
                    m.priority, m.preempt, m.shutdown, m.sync_status,
-                   i.interface_name, g.protocol, g.group_number,
+                   COALESCE(
+                       i.interface_name,
+                       'Vlan' || CAST(s.vlan_id AS TEXT)
+                   ) AS interface_name,
+                   g.protocol, g.group_number,
                    g.virtual_ip, g.address_family, g.description
             FROM t08_fhrp_members AS m
             JOIN t08_fhrp_groups AS g ON g.fhrp_id = m.fhrp_id
-            JOIN t02_interface_name AS i ON i.iface_id = m.iface_id
+            LEFT JOIN t02_interface_name AS i
+              ON m.interface_kind = 'router' AND i.iface_id = m.iface_id
+            LEFT JOIN t06_svi_interface AS s
+              ON m.interface_kind = 'svi' AND s.id = m.iface_id
             WHERE m.host = ?
               AND m.sync_status IN ('pending_apply', 'pending_delete')
             ORDER BY m.member_id;

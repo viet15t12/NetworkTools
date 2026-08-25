@@ -1,15 +1,61 @@
 {# Cisco IOS FHRP member configuration. Each task owns exactly one interface. #}
 interface {{ config.interface_name }}
-{% if mode == 'remove' %}
+ {% if mode == 'remove' %}
 {% if config.protocol == 'hsrp' %}
- no standby {{ config.group_number }} preempt
  no standby {{ config.group_number }} ip {{ config.virtual_ip }}
+{% for track in config.tracks %}
+ no standby {{ config.group_number }} track {{ track.track_object }}
+{% endfor %}
+{% if config.shutdown %}
+ no standby {{ config.group_number }} shutdown
+{% endif %}
+{% if config.options.auth_type != 'none' %}
+ no standby {{ config.group_number }} authentication
+{% endif %}
+{% if config.options.hello_ms != 3000 or config.options.hold_ms != 10000 %}
+ no standby {{ config.group_number }} timers
+{% endif %}
+ no standby {{ config.group_number }} priority
+{% if config.preempt %}
+ no standby {{ config.group_number }} preempt
+{% endif %}
 {% elif config.protocol == 'vrrp' %}
- no vrrp {{ config.group_number }} preempt
  no vrrp {{ config.group_number }} ip {{ config.virtual_ip }}
+{% for track in config.tracks %}
+ no vrrp {{ config.group_number }} track {{ track.track_object }}
+{% endfor %}
+{% if config.shutdown %}
+ no vrrp {{ config.group_number }} shutdown
+{% endif %}
+{% if config.options.auth_type != 'none' %}
+ no vrrp {{ config.group_number }} authentication
+{% endif %}
+{% if config.options.advertisement_ms != 1000 %}
+ no vrrp {{ config.group_number }} timers advertise
+{% endif %}
+ no vrrp {{ config.group_number }} priority
+{% if config.preempt %}
+ no vrrp {{ config.group_number }} preempt
+{% endif %}
 {% else %}
- no glbp {{ config.group_number }} preempt
  no glbp {{ config.group_number }} ip {{ config.virtual_ip }}
+{% for track in config.tracks %}
+ no glbp {{ config.group_number }} weighting track {{ track.track_object }}
+{% endfor %}
+{% if config.shutdown %}
+ no glbp {{ config.group_number }} shutdown
+{% endif %}
+{% if config.options.auth_type != 'none' %}
+ no glbp {{ config.group_number }} authentication
+{% endif %}
+ no glbp {{ config.group_number }} forwarder preempt
+ no glbp {{ config.group_number }} weighting
+ no glbp {{ config.group_number }} load-balancing
+{% if config.options.hello_ms != 3000 or config.options.hold_ms != 10000 %}
+ no glbp {{ config.group_number }} timers
+{% endif %}
+ no glbp {{ config.group_number }} priority
+ no glbp {{ config.group_number }} preempt
 {% endif %}
 {% else %}
 {% set options = config.options %}
@@ -18,7 +64,7 @@ interface {{ config.interface_name }}
  standby {{ config.group_number }} ip {{ config.virtual_ip }}
  standby {{ config.group_number }} priority {{ config.priority }}
 {% if config.preempt %}
- standby {{ config.group_number }} preempt{% if options.preempt_delay_min_sec %} delay minimum {{ options.preempt_delay_min_sec }}{% endif %}
+ standby {{ config.group_number }} preempt{% if options.get('preempt_delay_min_sec', 0) or options.get('preempt_delay_reload_sec', 0) %} delay{% if options.get('preempt_delay_min_sec', 0) %} minimum {{ options.preempt_delay_min_sec }}{% endif %}{% if options.get('preempt_delay_reload_sec', 0) %} reload {{ options.preempt_delay_reload_sec }}{% endif %}{% endif %}
 {% else %}
  no standby {{ config.group_number }} preempt
 {% endif %}
@@ -56,6 +102,9 @@ interface {{ config.interface_name }}
 {% if options.auth_type != 'none' %}
  vrrp {{ config.group_number }} authentication text {{ options.auth_secret }}
 {% endif %}
+{% if config.shutdown %}
+ vrrp {{ config.group_number }} shutdown
+{% endif %}
 {% for track in config.tracks %}
  vrrp {{ config.group_number }} track {{ track.track_object }} decrement {{ track.decrement_value }}
 {% endfor %}
@@ -75,7 +124,15 @@ interface {{ config.interface_name }}
 {% endif %}
 {% endif %}
  glbp {{ config.group_number }} load-balancing {{ options.load_balancing }}
- glbp {{ config.group_number }} weighting {{ options.weighting_max }}
+ glbp {{ config.group_number }} weighting {{ options.weighting_max }}{% if options.weighting_lower %} lower {{ options.weighting_lower }}{% endif %}{% if options.weighting_upper %} upper {{ options.weighting_upper }}{% endif %}
+{% if options.forwarder_preempt %}
+ glbp {{ config.group_number }} forwarder preempt
+{% if options.forwarder_preempt_delay_sec %}
+ glbp {{ config.group_number }} forwarder preempt delay minimum {{ options.forwarder_preempt_delay_sec }}
+{% endif %}
+{% else %}
+ no glbp {{ config.group_number }} forwarder preempt
+{% endif %}
 {% if options.auth_type == 'plain' %}
  glbp {{ config.group_number }} authentication text {{ options.auth_secret }}
 {% elif options.auth_type == 'md5-key' %}
@@ -86,6 +143,9 @@ interface {{ config.interface_name }}
 {% for track in config.tracks %}
  glbp {{ config.group_number }} weighting track {{ track.track_object }} decrement {{ track.decrement_value }}
 {% endfor %}
+{% if config.shutdown %}
+ glbp {{ config.group_number }} shutdown
+{% endif %}
 {% endif %}
 {% endif %}
  exit

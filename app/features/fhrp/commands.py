@@ -49,3 +49,12 @@ def redact_fhrp_commands(lines: list[str]) -> list[str]:
                 line = " ".join(parts)
         redacted.append(line)
     return redacted
+
+
+def redact_fhrp_output(text: Any, task: dict[str, Any]) -> str:
+    """Remove a task's authentication value from echoed Cisco CLI output."""
+    output = str(text or "")
+    secret = str(
+        (task.get("config") or {}).get("options", {}).get("auth_secret") or ""
+    )
+    return output.replace(secret, "<redacted>") if secret else output

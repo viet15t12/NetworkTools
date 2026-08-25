@@ -9,6 +9,7 @@ from core.database.conversion import ConversionMixin
 from features.fhrp.collector import collect_fhrp_tasks
 from features.fhrp.commands import redact_fhrp_commands, render_fhrp_commands
 from features.fhrp.service import FhrpService
+from features.fhrp.schema import ensure_schema as ensure_fhrp_schema
 from features.fhrp.view_push import FhrpViewPushController
 from features.fhrp.worker import push_fhrp_tasks
 from features.routing.group_service import RoutingGroupService
@@ -550,6 +551,418 @@ class RoutingGroupAndFhrpTests(unittest.TestCase):
         )
         self.assertTrue(result["ok"])
         self.assertEqual(result["interfaces"], [])
+
+    def test_fhrp_matches_synchronized_switch_svi_without_router_table_mirroring(self) -> None:
+        with self.db._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO t01_devices(
+                    host, device_name, method, os, role, device_type, connection_status
+                ) VALUES ('10.0.0.3', 'SW3', 'SSH', 'cisco', 'sw3', 'sw3', 'connected')
+                """
+            )
+            connection.execute(
+                "INSERT INTO t06_vlan_db(host, vlan_id, vlan_name, success, device_present) "
+                "VALUES ('10.0.0.3', 10, 'Users', 'synchronized', 1)"
+            )
+            connection.execute(
+                """
+                INSERT INTO t06_svi_interface(
+                    host, vlan_id, ip_address, subnet_mask,
+                    shutdown, sync_status, device_present
+                ) VALUES (
+                    '10.0.0.3', 10, '192.168.10.4', '255.255.255.0',
+                    0, 'synchronized', 1
+                )
+                """
+            )
+            connection.commit()
+
+        service = FhrpService(self.db)
+        interfaces = service.matching_interfaces(
+            ["10.0.0.1", "10.0.0.3"], "192.168.10.1"
+        )["interfaces"]
+        self.assertEqual(
+            {(row["host"], row["interface_kind"]) for row in interfaces},
+            {("10.0.0.1", "router"), ("10.0.0.3", "svi")},
+        )
+        result = service.save({
+            "protocol": "hsrp",
+            "group_number": 40,
+            "default_gateway": "192.168.10.1",
+            "members": [
+                {
+                    "host": row["host"],
+                    "iface_id": row["iface_id"],
+                    "interface_kind": row["interface_kind"],
+                }
+                for row in interfaces
+            ],
+        })
+        self.assertTrue(result["ok"], result)
+        svi_task = collect_fhrp_tasks(self.db, "10.0.0.3")[0]
+        self.assertEqual(svi_task["config"]["interface_name"], "Vlan10")
+        self.assertIn("interface Vlan10", render_fhrp_commands(svi_task))
+
+    def test_fhrp_excludes_interfaces_that_are_still_waiting_for_push(self) -> None:
+        with self.db._connect() as connection:
+            connection.execute(
+                "UPDATE t02_interface_name SET sync_status = 'pending_apply' "
+                "WHERE host = '10.0.0.1'"
+            )
+            connection.commit()
+
+        interfaces = FhrpService(self.db).matching_interfaces(
+            ["10.0.0.1", "10.0.0.2"], "192.168.10.1"
+        )["interfaces"]
+        self.assertEqual([row["host"] for row in interfaces], ["10.0.0.2"])
+
+    def test_fhrp_rejects_mismatched_authentication_between_members(self) -> None:
+        service = FhrpService(self.db)
+        interfaces = service.matching_interfaces(
+            ["10.0.0.1", "10.0.0.2"], "192.168.10.1"
+        )["interfaces"]
+        members = [
+            {
+                "host": row["host"],
+                "iface_id": row["iface_id"],
+                "interface_kind": row["interface_kind"],
+                "auth_type": "plain" if index == 0 else "none",
+                "auth_secret": "shared" if index == 0 else "",
+            }
+            for index, row in enumerate(interfaces)
+        ]
+
+        result = service.save({
+            "protocol": "hsrp",
+            "group_number": 41,
+            "default_gateway": "192.168.10.1",
+            "members": members,
+        })
+
+        self.assertFalse(result["ok"])
+        self.assertIn("same version, timers, authentication", result["message"])
+
+    def test_fhrp_rejects_second_primary_vip_for_same_interface_group(self) -> None:
+        service = FhrpService(self.db)
+
+        def payload(gateway: str) -> dict[str, object]:
+            interfaces = service.matching_interfaces(
+                ["10.0.0.1", "10.0.0.2"], gateway
+            )["interfaces"]
+            return {
+                "protocol": "hsrp",
+                "group_number": 42,
+                "default_gateway": gateway,
+                "members": [
+                    {
+                        "host": row["host"],
+                        "iface_id": row["iface_id"],
+                        "interface_kind": row["interface_kind"],
+                    }
+                    for row in interfaces
+                ],
+            }
+
+        self.assertTrue(service.save(payload("192.168.10.1"))["ok"])
+        conflict = service.save(payload("192.168.10.254"))
+        self.assertFalse(conflict["ok"])
+        self.assertIn("already exists", conflict["message"])
+
+    def test_vrrp_uses_version_two_and_rejects_reserved_owner_priority(self) -> None:
+        service = FhrpService(self.db)
+        interfaces = service.matching_interfaces(
+            ["10.0.0.1", "10.0.0.2"], "192.168.10.1"
+        )["interfaces"]
+        members = [
+            {
+                "host": row["host"],
+                "iface_id": row["iface_id"],
+                "interface_kind": row["interface_kind"],
+            }
+            for row in interfaces
+        ]
+        result = service.save({
+            "protocol": "vrrp",
+            "group_number": 43,
+            "default_gateway": "192.168.10.1",
+            "members": members,
+        })
+        self.assertTrue(result["ok"], result)
+        with self.db._connect() as connection:
+            versions = {
+                row[0]
+                for row in connection.execute("SELECT version FROM t08_vrrp_options")
+            }
+        self.assertEqual(versions, {2})
+
+        members[0]["priority"] = 255
+        owner = service.save({
+            "protocol": "vrrp",
+            "group_number": 44,
+            "default_gateway": "192.168.10.254",
+            "members": members,
+        })
+        self.assertFalse(owner["ok"])
+        self.assertIn("address-owner", owner["message"])
+
+        for member in members:
+            member["priority"] = 100
+            member["version"] = 3
+        version_three = service.save({
+            "protocol": "vrrp",
+            "group_number": 44,
+            "default_gateway": "192.168.10.254",
+            "members": members,
+        })
+        self.assertFalse(version_three["ok"])
+        self.assertIn("supports VRRPv2 only", version_three["message"])
+
+    def test_fhrp_rejects_member_interfaces_with_different_masks(self) -> None:
+        with self.db._connect() as connection:
+            connection.execute(
+                "UPDATE t02_interface_name SET subnet_mask = '255.255.255.128' "
+                "WHERE host = '10.0.0.2'"
+            )
+            connection.commit()
+        service = FhrpService(self.db)
+        interfaces = service.matching_interfaces(
+            ["10.0.0.1", "10.0.0.2"], "192.168.10.1"
+        )["interfaces"]
+        result = service.save({
+            "protocol": "hsrp",
+            "group_number": 46,
+            "default_gateway": "192.168.10.1",
+            "members": [
+                {
+                    "host": row["host"],
+                    "iface_id": row["iface_id"],
+                    "interface_kind": row["interface_kind"],
+                }
+                for row in interfaces
+            ],
+        })
+        self.assertFalse(result["ok"])
+        self.assertIn("same IPv4 subnet and prefix", result["message"])
+
+    def test_glbp_renderer_applies_saved_weighting_and_forwarder_policy(self) -> None:
+        service = FhrpService(self.db)
+        interfaces = service.matching_interfaces(
+            ["10.0.0.1", "10.0.0.2"], "192.168.10.1"
+        )["interfaces"]
+        result = service.save({
+            "protocol": "glbp",
+            "group_number": 47,
+            "default_gateway": "192.168.10.1",
+            "members": [
+                {
+                    "host": row["host"],
+                    "iface_id": row["iface_id"],
+                    "interface_kind": row["interface_kind"],
+                    "hello_ms": 1000,
+                    "hold_ms": 3000,
+                    "weighting_max": 120,
+                    "weighting_lower": 80,
+                    "weighting_upper": 110,
+                    "forwarder_preempt": True,
+                    "forwarder_preempt_delay_sec": 10,
+                    "shutdown": True,
+                }
+                for row in interfaces
+            ],
+        })
+        self.assertTrue(result["ok"], result)
+        commands = render_fhrp_commands(
+            collect_fhrp_tasks(self.db, "10.0.0.1")[0]
+        )
+        self.assertIn("glbp 47 timers 1 3", commands)
+        self.assertIn("glbp 47 weighting 120 lower 80 upper 110", commands)
+        self.assertIn("glbp 47 forwarder preempt delay minimum 10", commands)
+        self.assertIn("glbp 47 shutdown", commands)
+
+    def test_fhrp_remove_cleans_group_policy_not_only_virtual_ip(self) -> None:
+        service = FhrpService(self.db)
+        interfaces = service.matching_interfaces(
+            ["10.0.0.1", "10.0.0.2"], "192.168.10.1"
+        )["interfaces"]
+        result = service.save({
+            "protocol": "hsrp",
+            "group_number": 45,
+            "default_gateway": "192.168.10.1",
+            "members": [
+                {
+                    "host": row["host"],
+                    "iface_id": row["iface_id"],
+                    "interface_kind": row["interface_kind"],
+                    "preempt": True,
+                    "auth_type": "md5-key",
+                    "auth_secret": "shared-key",
+                    "hello_ms": 1000,
+                    "hold_ms": 3000,
+                    "tracks": [{"track_object": "1", "decrement_value": 20}],
+                }
+                for row in interfaces
+            ],
+        })
+        self.assertTrue(result["ok"], result)
+        self.assertTrue(service.delete(result["fhrp_id"])["ok"])
+        commands = render_fhrp_commands(
+            collect_fhrp_tasks(self.db, "10.0.0.1")[0]
+        )
+        for command in (
+            "no standby 45 ip 192.168.10.1",
+            "no standby 45 track 1",
+            "no standby 45 authentication",
+            "no standby 45 timers",
+            "no standby 45 priority",
+            "no standby 45 preempt",
+        ):
+            self.assertIn(command, commands)
+
+    def test_fhrp_worker_verifies_device_state_and_redacts_echoed_secret(self) -> None:
+        class Connection:
+            def send_config_set(self, _commands, **_kwargs):
+                return "standby 50 authentication shared-key"
+
+            def send_command(self, command, **_kwargs):
+                if command.startswith("show running-config interface"):
+                    return "interface GigabitEthernet0/0\n standby 50 ip 192.168.10.1"
+                return "Gi0/0 50 Active 192.168.10.1"
+
+        task = {
+            "target": {"ip": "10.0.0.1"},
+            "sub_type": "hsrp",
+            "action": "setup",
+            "config": {
+                "member_id": 1,
+                "fhrp_id": 1,
+                "protocol": "hsrp",
+                "interface_name": "GigabitEthernet0/0",
+                "group_number": 50,
+                "virtual_ip": "192.168.10.1",
+                "priority": 100,
+                "preempt": 1,
+                "shutdown": 0,
+                "options": {
+                    "version": 2,
+                    "hello_ms": 3000,
+                    "hold_ms": 10000,
+                    "preempt_delay_min_sec": 0,
+                    "preempt_delay_reload_sec": 0,
+                    "auth_type": "md5-key",
+                    "auth_secret": "shared-key",
+                },
+                "tracks": [],
+            },
+        }
+        connector = type("Connector", (), {"connection": Connection()})()
+
+        report = push_fhrp_tasks([task], "cisco_ios", lambda _host: connector)[0]
+
+        self.assertEqual(report["status"], "SUCCESS")
+        self.assertNotIn("shared-key", report["log"])
+        self.assertIn("<redacted>", report["log"])
+        self.assertIn("operational state verified", report["log"])
+
+    def test_fhrp_worker_does_not_sync_when_operational_group_is_missing(self) -> None:
+        class Connection:
+            def send_config_set(self, _commands, **_kwargs):
+                return "configuration accepted"
+
+            def send_command(self, command, **_kwargs):
+                if command.startswith("show running-config interface"):
+                    return "interface GigabitEthernet0/0\n vrrp 51 ip 192.168.10.1"
+                return ""
+
+        task = {
+            "target": {"ip": "10.0.0.1"},
+            "sub_type": "vrrp",
+            "action": "setup",
+            "config": {
+                "member_id": 1,
+                "fhrp_id": 1,
+                "protocol": "vrrp",
+                "interface_name": "GigabitEthernet0/0",
+                "group_number": 51,
+                "virtual_ip": "192.168.10.1",
+                "priority": 100,
+                "preempt": 1,
+                "shutdown": 0,
+                "options": {
+                    "version": 2,
+                    "advertisement_ms": 1000,
+                    "accept_mode": 0,
+                    "auth_type": "none",
+                    "auth_secret": None,
+                },
+                "tracks": [],
+            },
+        }
+        connector = type("Connector", (), {"connection": Connection()})()
+
+        report = push_fhrp_tasks([task], "cisco_ios", lambda _host: connector)[0]
+
+        self.assertEqual(report["status"], "FAILED")
+        self.assertIn("operational verification", report["log"])
+
+    def test_legacy_fhrp_schema_upgrade_preserves_member_and_aligns_vrrp(self) -> None:
+        connection = sqlite3.connect(":memory:")
+        connection.executescript(
+            """
+            PRAGMA foreign_keys = ON;
+            CREATE TABLE t01_devices(host TEXT PRIMARY KEY);
+            CREATE TABLE t02_interface_name(
+                iface_id INTEGER PRIMARY KEY, host TEXT NOT NULL,
+                FOREIGN KEY(host) REFERENCES t01_devices(host)
+            );
+            CREATE TABLE t06_svi_interface(id INTEGER PRIMARY KEY, host TEXT NOT NULL);
+            CREATE TABLE t08_fhrp_groups(fhrp_id INTEGER PRIMARY KEY);
+            CREATE TABLE t08_fhrp_members(
+                member_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                fhrp_id INTEGER NOT NULL, host TEXT NOT NULL, iface_id INTEGER NOT NULL,
+                priority INTEGER NOT NULL DEFAULT 100, preempt INTEGER NOT NULL DEFAULT 0,
+                shutdown INTEGER NOT NULL DEFAULT 0,
+                sync_status TEXT NOT NULL DEFAULT 'pending_apply',
+                FOREIGN KEY(fhrp_id) REFERENCES t08_fhrp_groups(fhrp_id),
+                FOREIGN KEY(host) REFERENCES t01_devices(host),
+                FOREIGN KEY(iface_id) REFERENCES t02_interface_name(iface_id)
+            );
+            CREATE TABLE t08_vrrp_options(
+                member_id INTEGER PRIMARY KEY, version INTEGER NOT NULL,
+                FOREIGN KEY(member_id) REFERENCES t08_fhrp_members(member_id)
+            );
+            CREATE TRIGGER trg_t08_group_protocol_immutable
+            BEFORE UPDATE ON t08_fhrp_groups
+            FOR EACH ROW
+            WHEN EXISTS (
+                SELECT 1 FROM t08_fhrp_members WHERE fhrp_id = OLD.fhrp_id
+            )
+            BEGIN
+                SELECT RAISE(ABORT, 'group is populated');
+            END;
+            INSERT INTO t01_devices VALUES ('r1');
+            INSERT INTO t02_interface_name VALUES (7, 'r1');
+            INSERT INTO t08_fhrp_groups VALUES (3);
+            INSERT INTO t08_fhrp_members(
+                member_id, fhrp_id, host, iface_id
+            ) VALUES (5, 3, 'r1', 7);
+            INSERT INTO t08_vrrp_options VALUES (5, 3);
+            """
+        )
+
+        changes = ensure_fhrp_schema(connection)
+
+        member = connection.execute(
+            "SELECT member_id, interface_kind FROM t08_fhrp_members"
+        ).fetchone()
+        self.assertEqual(member, (5, "router"))
+        self.assertEqual(
+            connection.execute("SELECT version FROM t08_vrrp_options").fetchone()[0],
+            2,
+        )
+        self.assertIn("t08_fhrp_members.interface_kind", changes)
+        self.assertEqual(connection.execute("PRAGMA foreign_key_check").fetchall(), [])
+        connection.close()
 
 
 if __name__ == "__main__":

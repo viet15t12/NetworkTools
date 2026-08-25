@@ -42,6 +42,10 @@ CREATE TABLE IF NOT EXISTS t08_fhrp_members (
     fhrp_id         INTEGER NOT NULL,
     host            TEXT    NOT NULL,
     iface_id        INTEGER NOT NULL,
+    -- Router/subinterface inventory lives in t02; switch SVIs live in t06.
+    -- Keep the source explicit instead of mirroring SVI rows into t02.
+    interface_kind  TEXT    NOT NULL DEFAULT 'router'
+                            CHECK(interface_kind IN ('router','svi')),
     priority        INTEGER NOT NULL DEFAULT 100 CHECK(priority BETWEEN 1 AND 255),
     preempt         INTEGER NOT NULL DEFAULT 0   CHECK(preempt IN (0,1)),
     shutdown        INTEGER NOT NULL DEFAULT 0   CHECK(shutdown IN (0,1)),
@@ -49,25 +53,23 @@ CREATE TABLE IF NOT EXISTS t08_fhrp_members (
 
     -- Mot host/interface chi xuat hien mot lan trong cung nhom logic.
     UNIQUE(fhrp_id, host),
-    UNIQUE(fhrp_id, iface_id),
+    UNIQUE(fhrp_id, interface_kind, iface_id),
     FOREIGN KEY (fhrp_id) REFERENCES t08_fhrp_groups(fhrp_id)
         ON UPDATE CASCADE ON DELETE CASCADE,
     FOREIGN KEY (host) REFERENCES t01_devices(host)
-        ON UPDATE CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (iface_id) REFERENCES t02_interface_name(iface_id)
         ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS ix_t08_fhrp_members_host
     ON t08_fhrp_members(host);
 CREATE INDEX IF NOT EXISTS ix_t08_fhrp_members_iface
-    ON t08_fhrp_members(iface_id);
+    ON t08_fhrp_members(interface_kind, iface_id);
 
 -- Bao dam iface_id thuc su thuoc host duoc khai bao trong cung dong member.
 CREATE TRIGGER IF NOT EXISTS trg_t08_member_iface_host_insert
 BEFORE INSERT ON t08_fhrp_members
 FOR EACH ROW
-WHEN NOT EXISTS (
+WHEN NEW.interface_kind = 'router' AND NOT EXISTS (
     SELECT 1
     FROM t02_interface_name AS i
     WHERE i.iface_id = NEW.iface_id AND i.host = NEW.host
@@ -76,16 +78,89 @@ BEGIN
     SELECT RAISE(ABORT, 'FHRP interface does not belong to host');
 END;
 
-CREATE TRIGGER IF NOT EXISTS trg_t08_member_iface_host_update
-BEFORE UPDATE OF host, iface_id ON t08_fhrp_members
+CREATE TRIGGER IF NOT EXISTS trg_t08_member_svi_host_insert
+BEFORE INSERT ON t08_fhrp_members
 FOR EACH ROW
-WHEN NOT EXISTS (
+WHEN NEW.interface_kind = 'svi' AND NOT EXISTS (
+    SELECT 1
+    FROM t06_svi_interface AS s
+    WHERE s.id = NEW.iface_id AND s.host = NEW.host
+)
+BEGIN
+    SELECT RAISE(ABORT, 'FHRP SVI does not belong to host');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_t08_member_iface_host_update
+BEFORE UPDATE OF host, iface_id, interface_kind ON t08_fhrp_members
+FOR EACH ROW
+WHEN NEW.interface_kind = 'router' AND NOT EXISTS (
     SELECT 1
     FROM t02_interface_name AS i
     WHERE i.iface_id = NEW.iface_id AND i.host = NEW.host
 )
 BEGIN
     SELECT RAISE(ABORT, 'FHRP interface does not belong to host');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_t08_member_svi_host_update
+BEFORE UPDATE OF host, iface_id, interface_kind ON t08_fhrp_members
+FOR EACH ROW
+WHEN NEW.interface_kind = 'svi' AND NOT EXISTS (
+    SELECT 1
+    FROM t06_svi_interface AS s
+    WHERE s.id = NEW.iface_id AND s.host = NEW.host
+)
+BEGIN
+    SELECT RAISE(ABORT, 'FHRP SVI does not belong to host');
+END;
+
+-- One protocol/group number represents one FHRP group on an interface. Extra
+-- virtual addresses require explicit secondary-address support, which this UI
+-- does not expose.
+CREATE TRIGGER IF NOT EXISTS trg_t08_member_endpoint_group_unique
+BEFORE INSERT ON t08_fhrp_members
+FOR EACH ROW
+WHEN EXISTS (
+    SELECT 1
+    FROM t08_fhrp_groups AS wanted
+    JOIN t08_fhrp_members AS existing
+      ON existing.host = NEW.host
+     AND existing.interface_kind = NEW.interface_kind
+     AND existing.iface_id = NEW.iface_id
+    JOIN t08_fhrp_groups AS current ON current.fhrp_id = existing.fhrp_id
+    WHERE wanted.fhrp_id = NEW.fhrp_id
+      AND current.fhrp_id <> wanted.fhrp_id
+      AND current.protocol = wanted.protocol
+      AND current.group_number = wanted.group_number
+)
+BEGIN
+    SELECT RAISE(ABORT, 'FHRP protocol/group already exists on interface');
+END;
+
+-- Interface identity cannot disappear before its FHRP group is removed and
+-- verified on the device; otherwise the cleanup command loses its target name.
+CREATE TRIGGER IF NOT EXISTS trg_t08_router_endpoint_delete_guard
+BEFORE DELETE ON t02_interface_name
+FOR EACH ROW
+WHEN EXISTS (
+    SELECT 1 FROM t08_fhrp_members
+    WHERE interface_kind = 'router' AND iface_id = OLD.iface_id
+)
+AND EXISTS (SELECT 1 FROM t01_devices WHERE host = OLD.host)
+BEGIN
+    SELECT RAISE(ABORT, 'Remove FHRP group before deleting router interface');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_t08_svi_endpoint_delete_guard
+BEFORE DELETE ON t06_svi_interface
+FOR EACH ROW
+WHEN EXISTS (
+    SELECT 1 FROM t08_fhrp_members
+    WHERE interface_kind = 'svi' AND iface_id = OLD.id
+)
+AND EXISTS (SELECT 1 FROM t01_devices WHERE host = OLD.host)
+BEGIN
+    SELECT RAISE(ABORT, 'Remove FHRP group before deleting SVI');
 END;
 
 -- Khong cho doi protocol khi nhom da co member/options; tao nhom moi se ro rang hon.
@@ -120,14 +195,13 @@ CREATE TABLE IF NOT EXISTS t08_hsrp_options (
 -- 8d. Tuy chon rieng cho VRRP.
 CREATE TABLE IF NOT EXISTS t08_vrrp_options (
     member_id              INTEGER PRIMARY KEY,
-    version                INTEGER NOT NULL DEFAULT 3 CHECK(version IN (2,3)),
+    -- The current Cisco IOS renderer uses classic VRRPv2 interface syntax.
+    version                INTEGER NOT NULL DEFAULT 2 CHECK(version = 2),
     advertisement_ms       INTEGER NOT NULL DEFAULT 1000 CHECK(advertisement_ms > 0),
     accept_mode            INTEGER NOT NULL DEFAULT 0 CHECK(accept_mode IN (0,1)),
     auth_type              TEXT NOT NULL DEFAULT 'none'
-                                  CHECK(auth_type IN ('none','plain','md5')),
+                                  CHECK(auth_type IN ('none','plain')),
     auth_secret            TEXT,
-    -- VRRPv3 khong su dung authentication field kieu VRRPv2.
-    CHECK(version = 2 OR auth_type = 'none'),
     CHECK(
         (auth_type = 'none' AND auth_secret IS NULL) OR
         (auth_type <> 'none' AND auth_secret IS NOT NULL)

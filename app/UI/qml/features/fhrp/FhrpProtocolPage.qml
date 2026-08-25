@@ -59,6 +59,8 @@ Rectangle {
     property string errorText: ""
     property int viewPushRevision: 0
     property bool operationBusy: false
+    property string groupAuthType: "none"
+    property string groupAuthSecret: ""
     property alias savedGroupModel: groupModel
     readonly property int maxHosts: 5
     readonly property bool isViewLoading: false
@@ -141,10 +143,9 @@ Rectangle {
             memberModel.append({
                 host: host,
                 ifaceId: 0,
+                interfaceKind: "router",
                 priority: "100",
-                preempt: true,
-                authType: "none",
-                authSecret: ""
+                preempt: true
             })
         } else if (!selected && index >= 0) {
             memberModel.remove(index)
@@ -177,6 +178,7 @@ Rectangle {
     function clearMemberMatches() {
         for (let i = 0; i < memberModel.count; i++) {
             memberModel.setProperty(i, "ifaceId", 0)
+            memberModel.setProperty(i, "interfaceKind", "router")
         }
     }
 
@@ -186,6 +188,8 @@ Rectangle {
         groupField.clear()
         gatewayField.clear()
         descriptionField.clear()
+        groupAuthType = "none"
+        groupAuthSecret = ""
         errorText = ""
     }
 
@@ -210,13 +214,25 @@ Rectangle {
             const host = memberModel.get(i).host
             const options = interfaceOptionsForHost(host)
             const current = Number(memberModel.get(i).ifaceId || 0)
-            if (!options.some(item => Number(item.iface_id) === current))
+            const currentKind = String(memberModel.get(i).interfaceKind || "router")
+            if (!options.some(item => Number(item.iface_id) === current
+                              && String(item.interface_kind) === currentKind)) {
                 memberModel.setProperty(i, "ifaceId",
                                         options.length > 0 ? Number(options[0].iface_id) : 0)
+                memberModel.setProperty(i, "interfaceKind",
+                                        options.length > 0
+                                        ? String(options[0].interface_kind) : "router")
+            }
         }
     }
 
     function updateMember(index, field, value) {
+        if (field === "interfaceKey") {
+            const parts = String(value || "").split(":")
+            memberModel.setProperty(index, "interfaceKind", parts[0] || "router")
+            memberModel.setProperty(index, "ifaceId", Number(parts[1] || 0))
+            return
+        }
         memberModel.setProperty(index, field, value)
     }
 
@@ -227,12 +243,13 @@ Rectangle {
             members.push({
                 host: row.host,
                 iface_id: Number(row.ifaceId),
+                interface_kind: String(row.interfaceKind || "router"),
                 priority: Number(row.priority),
                 preempt: row.preempt,
                 shutdown: false,
-                auth_type: row.authType,
-                auth_secret: row.authSecret,
-                version: root.protocol === "vrrp" ? 3 : 2
+                auth_type: root.groupAuthType,
+                auth_secret: root.groupAuthSecret,
+                version: 2
             })
         }
         return members
@@ -581,6 +598,53 @@ Rectangle {
 
                 FormSection {
                     Layout.fillWidth: true
+                    title: "Group authentication"
+
+                    GridLayout {
+                        Layout.fillWidth: true
+                        columns: width < 700 ? 1 : 2
+                        columnSpacing: Theme.spacing12
+                        rowSpacing: Theme.spacing8
+
+                        StandardComboBox {
+                            Layout.fillWidth: true
+                            labelText: "Authentication"
+                            model: root.protocol === "vrrp"
+                                   ? ["None", "Plain"]
+                                   : ["None", "Plain", "MD5 key", "MD5 key-chain"]
+                            valueModel: root.protocol === "vrrp"
+                                        ? ["none", "plain"]
+                                        : ["none", "plain", "md5-key", "md5-keychain"]
+                            currentIndex: Math.max(
+                                              0, valueModel.indexOf(root.groupAuthType))
+                            onActivated: {
+                                root.groupAuthType = currentValue
+                                if (currentValue === "none")
+                                    root.groupAuthSecret = ""
+                            }
+                        }
+                        StandardPasswordField {
+                            Layout.fillWidth: true
+                            visible: root.groupAuthType !== "none"
+                            labelText: root.groupAuthType === "md5-keychain"
+                                       ? "Key-chain name" : "Authentication secret"
+                            text: root.groupAuthSecret
+                            onTextChanged: root.groupAuthSecret = text
+                        }
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: "Authentication is applied identically to every member so peers can form one FHRP group."
+                        color: Theme.textDisabled
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSizeSmall
+                        wrapMode: Text.WordWrap
+                    }
+                }
+
+                FormSection {
+                    Layout.fillWidth: true
                     title: "Member policy"
 
                     EmptyState {
@@ -603,11 +667,9 @@ Rectangle {
                             interfaceOptions: root.interfaceOptionsForHost(
                                                   memberEditor.model.host)
                             ifaceId: memberEditor.model.ifaceId
+                            interfaceKind: memberEditor.model.interfaceKind
                             priority: memberEditor.model.priority
                             preempt: memberEditor.model.preempt
-                            authType: memberEditor.model.authType
-                            authSecret: memberEditor.model.authSecret
-                            protocol: root.protocol
                             onFieldChanged: function(memberIndex, field, value) {
                                 root.updateMember(memberIndex, field, value)
                             }

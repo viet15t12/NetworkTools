@@ -446,6 +446,7 @@ class ButtonIconContractTests(unittest.TestCase):
         view = (fhrp_root / "FhrpView.qml").read_text(encoding="utf-8")
         subbar = (fhrp_root / "FhrpSubBar.qml").read_text(encoding="utf-8")
         page = (fhrp_root / "FhrpProtocolPage.qml").read_text(encoding="utf-8")
+        member = (fhrp_root / "FhrpMemberEditor.qml").read_text(encoding="utf-8")
 
         self.assertIn('tabs: ["HSRP", "VRRP", "GLBP"]', subbar)
         self.assertEqual(view.count("FhrpProtocolPage {"), 3)
@@ -456,6 +457,9 @@ class ButtonIconContractTests(unittest.TestCase):
         self.assertIn('objectName: "fhrpSummaryGrid"', page)
         self.assertIn('objectName: "fhrpHostPicker"', page)
         self.assertIn('title: "Member policy"', page)
+        self.assertIn('title: "Group authentication"', page)
+        self.assertIn("groupAuthType", page)
+        self.assertNotIn('labelText: "Authentication"', member)
         self.assertIn('text: "Reset"', page)
 
     def test_sftp_assets_are_deduplicated_and_use_semantic_bindings(self) -> None:

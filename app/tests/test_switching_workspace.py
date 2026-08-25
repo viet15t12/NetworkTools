@@ -379,6 +379,70 @@ class SwitchingWorkspaceTests(unittest.TestCase):
             commands,
         )
 
+    def test_l2_security_only_offers_usable_layer2_interface_inventory(self) -> None:
+        """Security selectors must follow Interface-tab lifecycle and mode."""
+        with closing(self.db._connect()) as conn:
+            conn.executemany(
+                """
+                INSERT INTO t06_interface_l2(
+                    host, if_name, mode, oper_status, success
+                ) VALUES ('sw2.local', ?, ?, ?, ?);
+                """,
+                (
+                    ("GigabitEthernet0/1", "access", "up", "pending_delete"),
+                    ("GigabitEthernet0/2", "routed", "up", "synchronized"),
+                    ("GigabitEthernet0/3", "access", "down", "synchronized"),
+                    ("GigabitEthernet0/4", "trunk", "up", "synchronized"),
+                ),
+            )
+            conn.commit()
+
+        state = get_l2_security(self.db, "sw2.local")
+
+        self.assertEqual(
+            [row["if_name"] for row in state["interfaces"]],
+            ["GigabitEthernet0/4", "GigabitEthernet0/3"],
+        )
+        self.assertEqual(state["interfaces"][0]["mode"], "trunk")
+        self.assertEqual(state["interfaces"][0]["oper_status"], "up")
+        rejected = add_l2_trust_port(
+            self.db, "sw2.local", "GigabitEthernet0/1"
+        )
+        self.assertFalse(rejected["ok"], rejected)
+
+    def test_dai_requires_snooping_binding_source_in_managed_workflow(self) -> None:
+        """The app has no ARP ACL surface, so DAI cannot stand alone."""
+        invalid = save_l2_vlan_security(
+            self.db,
+            "sw2.local",
+            {"vlan_id": 10, "dhcp_snooping": False, "dai_enabled": True},
+        )
+
+        self.assertFalse(invalid["ok"], invalid)
+        self.assertIn("Enable DHCP Snooping", invalid["message"])
+
+    def test_security_cannot_reuse_vlan_absent_from_device_snapshot(self) -> None:
+        """Synchronized tombstones stay available for cleanup, not new policy."""
+        with closing(self.db._connect()) as conn:
+            conn.execute(
+                """
+                UPDATE t06_vlan_db
+                SET success = 'synchronized', device_present = 0
+                WHERE host = 'sw2.local' AND vlan_id = 10;
+                """
+            )
+            conn.commit()
+
+        state = get_l2_security(self.db, "sw2.local")
+        saved = save_l2_vlan_security(
+            self.db,
+            "sw2.local",
+            {"vlan_id": 10, "dhcp_snooping": True, "dai_enabled": False},
+        )
+
+        self.assertNotIn(10, [row["vlan_id"] for row in state["vlans"]])
+        self.assertFalse(saved["ok"], saved)
+
     def test_pre_merge_switch_schema_is_upgraded_without_data_loss(self) -> None:
         legacy_path = Path(self.temp.name) / "legacy_switch.db"
         with closing(sqlite3.connect(legacy_path)) as connection:

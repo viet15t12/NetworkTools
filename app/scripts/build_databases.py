@@ -326,11 +326,14 @@ def _repair_info_collected_feature_schema(db_path: Path) -> list[str]:
 
 
 def _repair_device_network_feature_schema(db_path: Path) -> list[str]:
-    """Add interface dirty-mask columns without rebuilding user data."""
-    from features.interfaces.schema import ensure_schema
+    """Apply feature-owned, non-destructive upgrades without rebuilding data."""
+    from features.fhrp.schema import ensure_schema as ensure_fhrp_schema
+    from features.interfaces.schema import ensure_schema as ensure_interface_schema
 
     with closing(sqlite3.connect(db_path)) as connection:
-        return ensure_schema(connection)
+        changes = ensure_interface_schema(connection)
+        changes.extend(ensure_fhrp_schema(connection))
+        return changes
 
 
 def build_all() -> None:

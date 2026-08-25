@@ -18,6 +18,7 @@ Item {
     property bool policyDirty: false
     property bool staticDirty: false
     property bool saving: false
+    property bool refreshingReferences: false
     property var policyDraft: ({})
     property var staticDraft: ({})
     property var interfaceOptions: []
@@ -27,6 +28,17 @@ Item {
     property int dataRevision: 0
 
     readonly property bool compactLayout: width < Theme.dataWorkspaceBreakpoint
+    readonly property bool hasVlanProtection: {
+        const revision = root.dataRevision
+        for (let i = 0; i < vlanPolicyModel.count; i++) {
+            // Reflect the selected unsaved draft as the user moves between the
+            // VLAN Protection and Trusted Uplinks sections.
+            const row = root.policyDirty && i === root.selectedPolicyIndex
+                      ? root.policyDraft : vlanPolicyModel.get(i)
+            if (row.dhcp_snooping || row.dai_enabled) return true
+        }
+        return false
+    }
     readonly property var summaryMetrics: {
         const revision = root.dataRevision
         let snooping = 0
@@ -58,12 +70,48 @@ Item {
     function staticAt(index) {
         return index >= 0 && index < staticMacModel.count ? staticMacModel.get(index) : null
     }
+    // Normalize the two cross-tab reference entities in one place so a schema
+    // field addition cannot make full-load and background-refresh drift apart.
+    function normalizedVlanReference(row) {
+        const source = row || ({})
+        return {
+            id: Number(source.id || 0),
+            vlan_id: Number(source.vlan_id || 0),
+            vlan_name: source.vlan_name === undefined || source.vlan_name === null
+                       ? "" : String(source.vlan_name),
+            dhcp_snooping: Boolean(source.dhcp_snooping),
+            dai_enabled: Boolean(source.dai_enabled),
+            success: String(source.success || "skipped")
+        }
+    }
+    function normalizedInterfaceReference(row) {
+        const source = row || ({})
+        return {
+            id: Number(source.id || 0),
+            if_name: String(source.if_name || ""),
+            description: String(source.description || ""),
+            mode: String(source.mode || "access"),
+            admin_status: String(source.admin_status || "up"),
+            oper_status: String(source.oper_status || "unknown")
+        }
+    }
+    function replaceTrustPorts(rows) {
+        trustPortModel.clear()
+        for (let i = 0; i < rows.length; i++) {
+            trustPortModel.append({
+                id: Number(rows[i].id || 0),
+                if_name: String(rows[i].if_name || ""),
+                success: String(rows[i].success || "pending_apply")
+            })
+        }
+    }
     function interfaceNames() {
         const values = []
         for (let i = 0; i < interfaceOptions.length; i++) values.push(interfaceOptions[i].if_name)
         return values
     }
     function availableTrustInterfaces() {
+        const revision = root.dataRevision
         const values = []
         for (let i = 0; i < interfaceOptions.length; i++) {
             const candidate = interfaceOptions[i].if_name
@@ -77,6 +125,24 @@ Item {
             if (!alreadyTrusted) values.push(candidate)
         }
         return values
+    }
+    function availableTrustInterfaceLabels() {
+        const available = root.availableTrustInterfaces()
+        const labels = []
+        for (let i = 0; i < available.length; i++) {
+            const ifName = available[i]
+            let detail = "Layer 2"
+            for (let j = 0; j < interfaceOptions.length; j++) {
+                if (interfaceOptions[j].if_name === ifName) {
+                    const mode = String(interfaceOptions[j].mode || "access")
+                    const status = String(interfaceOptions[j].oper_status || "unknown")
+                    detail = mode + (status === "unknown" ? "" : " · " + status)
+                    break
+                }
+            }
+            labels.push(ifName + "  —  " + detail)
+        }
+        return labels
     }
     function vlanLabels() {
         const labels = []
@@ -97,31 +163,18 @@ Item {
         const macs = result && result.static_macs ? result.static_macs : []
         const interfaces = result && result.interfaces ? result.interfaces : []
         vlanPolicyModel.clear()
-        trustPortModel.clear()
         staticMacModel.clear()
-        vlanOptions = []
-        interfaceOptions = []
+        // Build plain JavaScript arrays locally, then assign once. Mutating a
+        // ``property var`` array with push() does not reliably notify QML
+        // bindings such as the Trusted Uplink ComboBox.
+        const nextVlanOptions = []
+        const nextInterfaceOptions = []
         for (let i = 0; i < vlans.length; i++) {
-            const row = vlans[i] || ({})
-            const normalized = {
-                id: Number(row.id || 0),
-                vlan_id: Number(row.vlan_id || 0),
-                vlan_name: row.vlan_name === undefined || row.vlan_name === null
-                           ? "" : String(row.vlan_name),
-                dhcp_snooping: Boolean(row.dhcp_snooping),
-                dai_enabled: Boolean(row.dai_enabled),
-                success: String(row.success || "skipped")
-            }
+            const normalized = normalizedVlanReference(vlans[i])
             vlanPolicyModel.append(normalized)
-            vlanOptions.push(normalized)
+            nextVlanOptions.push(normalized)
         }
-        for (let i = 0; i < ports.length; i++) {
-            trustPortModel.append({
-                id: Number(ports[i].id || 0),
-                if_name: String(ports[i].if_name || ""),
-                success: String(ports[i].success || "pending_apply")
-            })
-        }
+        replaceTrustPorts(ports)
         for (let i = 0; i < macs.length; i++) {
             staticMacModel.append({
                 id: Number(macs[i].id || 0),
@@ -132,11 +185,10 @@ Item {
             })
         }
         for (let i = 0; i < interfaces.length; i++) {
-            interfaceOptions.push({
-                if_name: String(interfaces[i].if_name || ""),
-                mode: String(interfaces[i].mode || "access")
-            })
+            nextInterfaceOptions.push(normalizedInterfaceReference(interfaces[i]))
         }
+        vlanOptions = nextVlanOptions
+        interfaceOptions = nextInterfaceOptions
         selectedPolicyIndex = vlanPolicyModel.count > 0 ? 0 : -1
         selectedStaticIndex = staticMacModel.count > 0 ? 0 : -1
         policyDraft = policyAt(selectedPolicyIndex) ? clone(policyAt(selectedPolicyIndex)) : ({})
@@ -146,6 +198,33 @@ Item {
         staticFormMode = 0
         dataRevision += 1
         if (reason === "manual") message = "Layer 2 security data reloaded."
+    }
+    function refreshReferenceData(reason) {
+        // Refresh only cross-tab reference data. This intentionally preserves
+        // an unsaved VLAN policy or Static MAC draft while interface inventory
+        // is synchronized in the background.
+        if (refreshingReferences) return
+        refreshingReferences = true
+        const result = dbManager.getSwitchL2Security(host)
+        const interfaces = result && result.interfaces ? result.interfaces : []
+        const vlans = result && result.vlans ? result.vlans : []
+        const ports = result && result.trust_ports ? result.trust_ports : []
+        const nextInterfaces = []
+        const nextVlans = []
+
+        for (let i = 0; i < interfaces.length; i++)
+            nextInterfaces.push(normalizedInterfaceReference(interfaces[i]))
+        for (let i = 0; i < vlans.length; i++)
+            nextVlans.push(normalizedVlanReference(vlans[i]))
+        replaceTrustPorts(ports)
+        interfaceOptions = nextInterfaces
+        vlanOptions = nextVlans
+        dataRevision += 1
+        refreshingReferences = false
+        if (reason === "device-sync") {
+            message = "Interface inventory synchronized; trusted uplinks refreshed."
+            messageError = false
+        }
     }
     function selectPolicy(index) {
         selectedPolicyIndex = index
@@ -247,6 +326,18 @@ Item {
 
     Component.onCompleted: load()
     onHostChanged: load()
+    onSectionChanged: {
+        if (section === "trust" || section === "staticMac")
+            refreshReferenceData("section")
+    }
+
+    Connections {
+        target: typeof dbManager !== "undefined" ? dbManager : null
+        function onRunningConfigUpdated(updatedHost) {
+            if (String(updatedHost || "").trim() === String(root.host || "").trim())
+                root.refreshReferenceData("device-sync")
+        }
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -380,11 +471,19 @@ Item {
                         description: "Inspect DHCP exchanges and build the trusted binding database for this VLAN."
                         SwitchPropertyRow { label: "Push status"; value: String(root.policyDraft.success || "skipped").replace(/_/g, " ") }
                         StandardToggleButton {
+                            objectName: "l2DhcpSnoopingToggle"
                             Layout.fillWidth: true
                             text: "Enable DHCP Snooping"
                             description: "Required before DAI can use dynamically learned bindings."
                             checked: Boolean(root.policyDraft.dhcp_snooping)
-                            onToggled: root.updatePolicy("dhcp_snooping", checked)
+                            onToggled: {
+                                root.updatePolicy("dhcp_snooping", checked)
+                                // DAI in this workflow uses Snooping bindings.
+                                // Turning Snooping off also turns DAI off so the
+                                // saved policy always remains deployable.
+                                if (!checked && Boolean(root.policyDraft.dai_enabled))
+                                    root.updatePolicy("dai_enabled", false)
+                            }
                         }
                     }
                     SwitchInspectorSection {
@@ -393,11 +492,18 @@ Item {
                         description: "Validate ARP packets against trusted bindings on untrusted access ports."
                         showDivider: false
                         StandardToggleButton {
+                            objectName: "l2DaiToggle"
                             Layout.fillWidth: true
                             text: "Enable DAI"
                             description: "Protect this VLAN from ARP spoofing."
                             checked: Boolean(root.policyDraft.dai_enabled)
-                            onToggled: root.updatePolicy("dai_enabled", checked)
+                            onToggled: {
+                                root.updatePolicy("dai_enabled", checked)
+                                // One-click convenience: enabling DAI also
+                                // enables its required DHCP Snooping bindings.
+                                if (checked && !Boolean(root.policyDraft.dhcp_snooping))
+                                    root.updatePolicy("dhcp_snooping", true)
+                            }
                         }
                         RowLayout {
                             Layout.fillWidth: true
@@ -503,18 +609,31 @@ Item {
                         font.pixelSize: Theme.fontSizeSmall
                         wrapMode: Text.WordWrap
                     }
+                    InlineMessage {
+                        Layout.fillWidth: true
+                        message: root.hasVlanProtection
+                                 ? "Trust only the interface facing a legitimate DHCP server or upstream switch. Client-facing access ports must remain untrusted."
+                                 : "No VLAN protection is enabled yet. You may select the uplink now, then enable DHCP Snooping in VLAN Protection before Push."
+                        severity: root.hasVlanProtection ? "info" : "warning"
+                    }
                     StandardComboBox {
                         id: trustInterfaceCombo
+                        objectName: "trustInterfaceCombo"
                         Layout.fillWidth: true
                         labelText: "Layer 2 interface"
-                        model: root.availableTrustInterfaces()
+                        model: root.availableTrustInterfaceLabels()
+                        valueModel: root.availableTrustInterfaces()
+                        emptyText: root.refreshingReferences
+                                   ? "Refreshing interfaces..."
+                                   : "No Layer 2 interfaces available"
+                        emptyWarningText: "No usable Layer 2 interface is available. Complete or synchronize the Interfaces tab, then return here or select Reload."
                     }
                     StandardButton {
                         Layout.alignment: Qt.AlignRight
                         text: "Add Trust Port"
                         type: "Primary"
                         enabled: trustInterfaceCombo.count > 0 && !root.saving
-                        onClicked: root.addTrustPort(trustInterfaceCombo.model[trustInterfaceCombo.currentIndex])
+                        onClicked: root.addTrustPort(trustInterfaceCombo.currentValue)
                     }
                 }
             }

@@ -12,12 +12,9 @@ Rectangle {
     required property string host
     required property var interfaceOptions
     required property int ifaceId
+    required property string interfaceKind
     required property string priority
     required property bool preempt
-    required property string authType
-    required property string authSecret
-    required property string protocol
-
     signal fieldChanged(int memberIndex, string field, var value)
 
     readonly property bool hasMatchingInterface: interfaceOptionCount() > 0
@@ -54,11 +51,12 @@ Rectangle {
         return labels
     }
 
-    function interfaceIds() {
-        const ids = []
+    function interfaceKeys() {
+        const keys = []
         for (let i = 0; i < interfaceOptionCount(); i++)
-            ids.push(String(interfaceOptionAt(i).iface_id))
-        return ids
+            keys.push(String(interfaceOptionAt(i).interface_kind)
+                      + ":" + String(interfaceOptionAt(i).iface_id))
+        return keys
     }
 
     ColumnLayout {
@@ -139,15 +137,15 @@ Rectangle {
                 Layout.fillWidth: true
                 labelText: "Gateway-facing interface"
                 model: root.interfaceLabels()
-                valueModel: root.interfaceIds()
+                valueModel: root.interfaceKeys()
                 emptyText: "No eligible interface"
                 currentIndex: {
-                    const values = root.interfaceIds()
-                    return Math.max(0, values.indexOf(String(root.ifaceId)))
+                    const values = root.interfaceKeys()
+                    return Math.max(0, values.indexOf(
+                                        root.interfaceKind + ":" + String(root.ifaceId)))
                 }
                 onActivated: root.fieldChanged(
-                                 root.memberIndex, "ifaceId",
-                                 Number(root.interfaceIds()[currentIndex]))
+                                 root.memberIndex, "interfaceKey", currentValue)
             }
             StandardTextField {
                 Layout.fillWidth: true
@@ -156,27 +154,6 @@ Rectangle {
                 inputMethodHints: Qt.ImhDigitsOnly
                 onTextEdited: value => root.fieldChanged(
                                   root.memberIndex, "priority", value)
-            }
-            StandardComboBox {
-                Layout.fillWidth: true
-                labelText: "Authentication"
-                model: root.protocol === "vrrp"
-                       ? ["None", "Plain"]
-                       : ["None", "Plain", "MD5 key", "MD5 key-chain"]
-                valueModel: root.protocol === "vrrp"
-                            ? ["none", "plain"]
-                            : ["none", "plain", "md5-key", "md5-keychain"]
-                currentIndex: Math.max(0, valueModel.indexOf(root.authType))
-                onActivated: root.fieldChanged(
-                                 root.memberIndex, "authType", currentValue)
-            }
-            StandardPasswordField {
-                Layout.fillWidth: true
-                visible: root.authType !== "none"
-                labelText: "Authentication secret"
-                text: root.authSecret
-                onTextChanged: root.fieldChanged(
-                                   root.memberIndex, "authSecret", text)
             }
         }
 

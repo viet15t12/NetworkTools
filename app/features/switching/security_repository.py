@@ -1,3 +1,10 @@
+"""Persistence rules shared by the switch Layer 2 Security surfaces.
+
+The page deliberately reads VLANs and interfaces from the canonical switching
+inventory instead of maintaining security-specific copies. This keeps VLAN
+Protection, Trusted Uplinks, Static MAC, and Port Security consistent.
+"""
+
 from __future__ import annotations
 
 import re
@@ -18,6 +25,12 @@ def _canonical_mac(value: Any) -> str:
 
 
 def get_l2_security(db: Any, host: str) -> dict[str, Any]:
+    """Return one coherent security workspace snapshot for ``host``.
+
+    Only usable, non-deleted Layer 2 interfaces are offered to Trusted Uplinks
+    and Static MAC. Operational fields are included so the UI can explain why
+    a port is a sensible uplink without issuing another network command.
+    """
     target = text(host)
     if not target:
         return {"vlans": [], "trust_ports": [], "static_macs": [], "interfaces": []}
@@ -35,6 +48,10 @@ def get_l2_security(db: Any, host: str) -> dict[str, Any]:
              AND COALESCE(s.success, 'pending_apply') <> 'pending_delete'
             WHERE v.host = ?
               AND COALESCE(v.success, 'pending_apply') <> 'pending_delete'
+              AND (
+                  v.device_present = 1
+                  OR COALESCE(v.success, 'pending_apply') <> 'synchronized'
+              )
             ORDER BY v.vlan_id;
             """,
             (target,),
@@ -61,9 +78,15 @@ def get_l2_security(db: Any, host: str) -> dict[str, Any]:
         ).fetchall()
         interfaces = conn.execute(
             """
-            SELECT if_name, mode FROM t06_interface_l2
-            WHERE host = ? AND mode <> 'routed'
-            ORDER BY if_name COLLATE NOCASE;
+            SELECT id, if_name, description, mode, admin_status, oper_status,
+                   success
+            FROM t06_interface_l2
+            WHERE host = ?
+              AND mode <> 'routed'
+              AND COALESCE(success, 'pending_apply') <> 'pending_delete'
+            ORDER BY
+                CASE mode WHEN 'trunk' THEN 0 WHEN 'hybrid' THEN 1 ELSE 2 END,
+                if_name COLLATE NOCASE;
             """,
             (target,),
         ).fetchall()
@@ -76,6 +99,12 @@ def get_l2_security(db: Any, host: str) -> dict[str, Any]:
 
 
 def save_l2_vlan_security(db: Any, host: str, payload: dict[str, Any]) -> dict[str, Any]:
+    """Stage DHCP Snooping/DAI policy for one active VLAN.
+
+    This application does not model ARP ACLs, so DAI must use the DHCP Snooping
+    binding database. Enforcing that dependency avoids generating a policy
+    which looks protected in the UI but cannot validate dynamic bindings.
+    """
     target = text(host)
     if not target:
         return failed("Host is required")
@@ -84,6 +113,11 @@ def save_l2_vlan_security(db: Any, host: str, payload: dict[str, Any]) -> dict[s
         vlan_id = integer(payload.get("vlan_id"), "VLAN ID", 1, 4094)
         snooping = boolean(payload.get("dhcp_snooping"))
         dai = boolean(payload.get("dai_enabled"))
+        if dai and not snooping:
+            raise ValueError(
+                "Enable DHCP Snooping before Dynamic ARP Inspection; "
+                "ARP ACL-based DAI is not managed by this workflow"
+            )
         with closing(db._connect()) as conn:
             with conn:
                 require_active_vlan(conn, target, vlan_id)
@@ -112,6 +146,7 @@ def save_l2_vlan_security(db: Any, host: str, payload: dict[str, Any]) -> dict[s
 
 
 def add_l2_trust_port(db: Any, host: str, if_name: Any) -> dict[str, Any]:
+    """Stage one existing Layer 2 port as the trusted server/uplink path."""
     target = text(host)
     interface = text(if_name)
     if not target or not interface:
@@ -123,7 +158,8 @@ def add_l2_trust_port(db: Any, host: str, if_name: Any) -> dict[str, Any]:
                 found = conn.execute(
                     """
                     SELECT 1 FROM t06_interface_l2
-                    WHERE host = ? AND if_name = ? AND mode <> 'routed';
+                    WHERE host = ? AND if_name = ? AND mode <> 'routed'
+                      AND COALESCE(success, 'pending_apply') <> 'pending_delete';
                     """,
                     (target, interface),
                 ).fetchone()

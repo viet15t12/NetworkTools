@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from .commands import redact_fhrp_commands, render_fhrp_commands
+from .commands import redact_fhrp_commands, redact_fhrp_output, render_fhrp_commands
+from .verification import verify_fhrp_task
 
 
 _CLI_ERROR_MARKERS = (
@@ -47,13 +48,18 @@ def push_fhrp_tasks(
                     cmd_verify=False,
                 )
             )
+            verification = verify_fhrp_task(connection, task)
             reports.append(
                 {
                     "host": host,
                     "member_id": config.get("member_id"),
                     "status": "SUCCESS",
                     "commands": redact_fhrp_commands(commands),
-                    "log": str(output or ""),
+                    "log": "\n".join(
+                        part
+                        for part in (redact_fhrp_output(output, task), verification)
+                        if part
+                    ),
                     "task": task,
                 }
             )
@@ -64,7 +70,7 @@ def push_fhrp_tasks(
                     "member_id": config.get("member_id"),
                     "status": "FAILED",
                     "commands": redact_fhrp_commands(commands),
-                    "log": str(exc),
+                    "log": redact_fhrp_output(str(exc), task),
                     "task": task,
                 }
             )

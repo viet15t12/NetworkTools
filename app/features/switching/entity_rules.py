@@ -42,17 +42,29 @@ def require_immutable_identity(
 def require_active_vlan(
     conn: sqlite3.Connection, host: str, vlan_id: int, field: str = "VLAN"
 ) -> None:
-    """Require a VLAN that exists and is not already staged for deletion."""
+    """Require a VLAN that is locally staged or present on the switch.
+
+    Full device synchronization retains absent rows when another local policy
+    still references them, but marks ``device_present = 0``. Treating such a
+    synchronized tombstone as selectable would reconnect Security/STP/SVI to a
+    VLAN which no longer exists on the device.
+    """
     found = conn.execute(
         """
         SELECT 1 FROM t06_vlan_db
         WHERE host = ? AND vlan_id = ?
-          AND COALESCE(success, 'pending_apply') <> 'pending_delete';
+          AND COALESCE(success, 'pending_apply') <> 'pending_delete'
+          AND (
+              device_present = 1
+              OR COALESCE(success, 'pending_apply') <> 'synchronized'
+          );
         """,
         (host, vlan_id),
     ).fetchone()
     if found is None:
-        raise ValueError(f"{field} {vlan_id} does not exist or is pending deletion")
+        raise ValueError(
+            f"{field} {vlan_id} does not exist on the switch or is pending deletion"
+        )
 
 
 def require_etherchannel_members(
