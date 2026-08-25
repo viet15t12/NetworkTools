@@ -821,10 +821,16 @@ class RoutingGroupAndFhrpTests(unittest.TestCase):
 
     def test_fhrp_worker_verifies_device_state_and_redacts_echoed_secret(self) -> None:
         class Connection:
+            def __init__(self):
+                self.config_calls = 0
+                self.show_calls = 0
+
             def send_config_set(self, _commands, **_kwargs):
+                self.config_calls += 1
                 return "standby 50 authentication shared-key"
 
             def send_command(self, command, **_kwargs):
+                self.show_calls += 1
                 if command.startswith("show running-config interface"):
                     return "interface GigabitEthernet0/0\n standby 50 ip 192.168.10.1"
                 return "Gi0/0 50 Active 192.168.10.1"
@@ -863,6 +869,18 @@ class RoutingGroupAndFhrpTests(unittest.TestCase):
         self.assertNotIn("shared-key", report["log"])
         self.assertIn("<redacted>", report["log"])
         self.assertIn("operational state verified", report["log"])
+
+        shows_before_apply_only = connector.connection.show_calls
+        fast_reports = push_fhrp_tasks(
+            [task, task],
+            "cisco_ios",
+            lambda _host: connector,
+            verify=False,
+        )
+
+        self.assertTrue(all(item["status"] == "SUCCESS" for item in fast_reports))
+        self.assertEqual(connector.connection.config_calls, 2)
+        self.assertEqual(connector.connection.show_calls, shows_before_apply_only)
 
     def test_fhrp_worker_does_not_sync_when_operational_group_is_missing(self) -> None:
         class Connection:
@@ -904,6 +922,50 @@ class RoutingGroupAndFhrpTests(unittest.TestCase):
 
         self.assertEqual(report["status"], "FAILED")
         self.assertIn("operational verification", report["log"])
+
+    def test_deferred_fhrp_verification_advances_the_captured_member(self) -> None:
+        service = FhrpService(self.db)
+        interfaces = service.matching_interfaces(
+            ["10.0.0.1", "10.0.0.2"], "192.168.10.1"
+        )["interfaces"]
+        saved = service.save(
+            {
+                "protocol": "hsrp",
+                "group_number": 52,
+                "default_gateway": "192.168.10.1",
+                "members": [
+                    {"host": row["host"], "iface_id": row["iface_id"]}
+                    for row in interfaces
+                ],
+            }
+        )
+        self.assertTrue(saved["ok"], saved)
+        controller = FhrpViewPushController(self.db)
+        task = controller.collect_pending_tasks("10.0.0.1", "hsrp")[0]
+        context = controller.post_push_context([task], {"ok": True})
+
+        class Connection:
+            def send_command(self, command, **_kwargs):
+                if command.startswith("show running-config interface"):
+                    return (
+                        "interface GigabitEthernet0/0\n"
+                        " standby 52 ip 192.168.10.1"
+                    )
+                return "Gi0/0 52 Active 192.168.10.1"
+
+        verified = controller.verify_after_push(
+            "10.0.0.1",
+            "hsrp",
+            type("Connector", (), {"connection": Connection()})(),
+            context,
+        )
+
+        self.assertTrue(verified["ok"], verified)
+        with self.db._connect() as connection:
+            state = connection.execute(
+                "SELECT sync_status FROM t08_fhrp_members WHERE host = '10.0.0.1';"
+            ).fetchone()[0]
+        self.assertEqual(state, "synchronized")
 
     def test_legacy_fhrp_schema_upgrade_preserves_member_and_aligns_vrrp(self) -> None:
         connection = sqlite3.connect(":memory:")

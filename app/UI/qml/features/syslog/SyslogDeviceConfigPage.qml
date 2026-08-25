@@ -178,6 +178,16 @@ Item {
     Component.onCompleted: load()
     onHostChanged: load()
 
+    Connections {
+        target: typeof dbManager !== "undefined" ? dbManager : null
+
+        function onRunningConfigUpdated(updatedHost) {
+            if (String(updatedHost || "").trim() === String(root.host || "").trim()
+                    && root.formMode === 0 && !root.saving)
+                root.reloadData("backgroundSync")
+        }
+    }
+
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: root.compactLayout ? Theme.spacing12 : Theme.spacing16

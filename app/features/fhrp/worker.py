@@ -29,13 +29,21 @@ def push_fhrp_tasks(
     tasks: list[dict[str, Any]],
     template_folder: str,
     session_provider: Callable[[str], Any],
+    *,
+    verify: bool = True,
 ) -> list[dict[str, Any]]:
-    """Push tasks independently and return one report item per FHRP member."""
+    """Push one combined transaction per host and optionally verify each member."""
     reports: list[dict[str, Any]] = []
+    tasks_by_host: dict[str, list[dict[str, Any]]] = {}
     for task in tasks:
         host = str(task.get("target", {}).get("ip") or "")
-        config = task.get("config") or {}
-        commands = render_fhrp_commands(task, template_folder)
+        tasks_by_host.setdefault(host, []).append(task)
+
+    for host, host_tasks in tasks_by_host.items():
+        rendered = [
+            (task, render_fhrp_commands(task, template_folder))
+            for task in host_tasks
+        ]
         try:
             connector = session_provider(host)
             if connector is None:
@@ -43,35 +51,63 @@ def push_fhrp_tasks(
             connection = getattr(connector, "connection", connector)
             output = _check_cli_output(
                 connection.send_config_set(
-                    commands,
-                    read_timeout=120,
+                    [command for _task, commands in rendered for command in commands],
+                    read_timeout=60,
                     cmd_verify=False,
                 )
             )
-            verification = verify_fhrp_task(connection, task)
-            reports.append(
-                {
-                    "host": host,
-                    "member_id": config.get("member_id"),
-                    "status": "SUCCESS",
-                    "commands": redact_fhrp_commands(commands),
-                    "log": "\n".join(
-                        part
-                        for part in (redact_fhrp_output(output, task), verification)
-                        if part
-                    ),
-                    "task": task,
-                }
-            )
+            show_cache: dict[str, str] = {}
+            for task, commands in rendered:
+                config = task.get("config") or {}
+                try:
+                    verification = (
+                        verify_fhrp_task(
+                            connection,
+                            task,
+                            show_cache=show_cache,
+                        )
+                        if verify
+                        else ""
+                    )
+                    reports.append(
+                        {
+                            "host": host,
+                            "member_id": config.get("member_id"),
+                            "status": "SUCCESS",
+                            "commands": redact_fhrp_commands(commands),
+                            "log": "\n".join(
+                                part
+                                for part in (
+                                    redact_fhrp_output(output, task),
+                                    verification,
+                                )
+                                if part
+                            ),
+                            "task": task,
+                        }
+                    )
+                except Exception as exc:
+                    reports.append(
+                        {
+                            "host": host,
+                            "member_id": config.get("member_id"),
+                            "status": "FAILED",
+                            "commands": redact_fhrp_commands(commands),
+                            "log": redact_fhrp_output(str(exc), task),
+                            "task": task,
+                        }
+                    )
         except Exception as exc:
-            reports.append(
-                {
-                    "host": host,
-                    "member_id": config.get("member_id"),
-                    "status": "FAILED",
-                    "commands": redact_fhrp_commands(commands),
-                    "log": redact_fhrp_output(str(exc), task),
-                    "task": task,
-                }
-            )
+            for task, commands in rendered:
+                config = task.get("config") or {}
+                reports.append(
+                    {
+                        "host": host,
+                        "member_id": config.get("member_id"),
+                        "status": "FAILED",
+                        "commands": redact_fhrp_commands(commands),
+                        "log": redact_fhrp_output(str(exc), task),
+                        "task": task,
+                    }
+                )
     return reports

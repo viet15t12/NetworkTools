@@ -14,6 +14,7 @@ class _Controller:
         self.maximum = 0
         self.apply_only_calls: list[tuple[str, str]] = []
         self.reconcile_calls: list[tuple[str, str]] = []
+        self.reconcile_contexts: list[tuple[str, object]] = []
 
     def push(self, host: str, module: str) -> dict[str, object]:
         with self.lock:
@@ -33,8 +34,11 @@ class _Controller:
             result["postPushPending"] = True
         return result
 
-    def reconcile_after_push(self, host: str, module: str) -> dict[str, object]:
+    def reconcile_after_push(
+        self, host: str, module: str, context: object = None
+    ) -> dict[str, object]:
         self.reconcile_calls.append((host, module))
+        self.reconcile_contexts.append((host, context))
         return {
             "ok": host != "r3",
             "message": f"{module} synchronized for {host}",
@@ -99,6 +103,25 @@ class ViewPushBatchServiceTests(unittest.TestCase):
         self.assertTrue(result["partial"])
         self.assertCountEqual(
             controller.reconcile_calls, [("r1", "ospf"), ("r3", "ospf")]
+        )
+
+    def test_reconcile_forwards_each_hosts_verification_context(self) -> None:
+        controller = _Controller()
+        service = ViewPushBatchService(_Factory(controller), max_concurrent_hosts=2)
+        contexts = {"r1": {"member": 1}, "r3": {"member": 3}}
+
+        service.reconcile(
+            "routing",
+            "ospf",
+            ["r1", "r3"],
+            on_host=lambda *_: None,
+            on_progress=lambda *_: None,
+            contexts=contexts,
+        )
+
+        self.assertCountEqual(
+            controller.reconcile_contexts,
+            [("r1", contexts["r1"]), ("r3", contexts["r3"])],
         )
 
     def test_pushes_up_to_five_hosts_at_the_same_time(self) -> None:

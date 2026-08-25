@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import inspect
 import sqlite3
 import sys
 from abc import ABC, abstractmethod
@@ -33,6 +34,7 @@ def _has_text_bit(action_cfg: str, bit_index_from_right: int) -> bool:
 
 class BaseViewPushController(ABC):
     module_label = "Configuration"
+    push_session_lock_timeout = 1.0
 
     def __init__(self, db: Any, session_registry: Any | None = None) -> None:
         self.db = db
@@ -53,6 +55,50 @@ class BaseViewPushController(ABC):
     def reconciliation_options(self, module_name: str) -> dict[str, Any]:
         """Return controller-specific post-push collection options."""
         return {}
+
+    def post_push_context(
+        self, tasks: list[dict[str, Any]], result: dict[str, Any]
+    ) -> Any:
+        """Capture minimal immutable data needed by controller-specific verification."""
+        return None
+
+    def verify_after_push(
+        self,
+        host: str,
+        module_name: str,
+        connector: Any,
+        context: Any,
+    ) -> dict[str, Any]:
+        """Run optional controller verification in the deferred reconciliation pass."""
+        return {
+            "ok": True,
+            "skipped": True,
+            "message": f"No additional {self.module_label.lower()} verification required.",
+        }
+
+    def _execute_session(
+        self,
+        host: str,
+        operation: Any,
+        *,
+        lock_timeout: float | None = None,
+    ) -> dict[str, Any]:
+        """Use bounded lock waits when supported while retaining test/adapter compatibility."""
+        execute = self._session_registry.execute
+        kwargs: dict[str, Any] = {}
+        if lock_timeout is not None:
+            try:
+                parameters = inspect.signature(execute).parameters.values()
+                supports_timeout = any(
+                    parameter.name == "lock_timeout"
+                    or parameter.kind == inspect.Parameter.VAR_KEYWORD
+                    for parameter in parameters
+                )
+            except (TypeError, ValueError):
+                supports_timeout = False
+            if supports_timeout:
+                kwargs["lock_timeout"] = lock_timeout
+        return execute(host, operation, **kwargs)
 
     def pending_state(self, host: str, module_name: str = "all") -> dict[str, Any]:
         host = self._clean_host(host)
@@ -114,7 +160,7 @@ class BaseViewPushController(ABC):
                 # running state to collect afterward.
                 return dict(self.push_tasks(host, module_name, tasks) or {})
             if self._managed_session:
-                executed = self._session_registry.execute(
+                executed = self._execute_session(
                     host,
                     lambda connector: self._push_and_reconcile(
                         host, module_name, tasks, connector
@@ -149,11 +195,12 @@ class BaseViewPushController(ABC):
             if callable(is_dev_host) and is_dev_host(host):
                 return dict(self.push_tasks(host, module_name, tasks) or {})
             if self._managed_session:
-                executed = self._session_registry.execute(
+                executed = self._execute_session(
                     host,
                     lambda connector: self._push_without_reconcile(
                         host, module_name, tasks, connector
                     ),
+                    lock_timeout=self.push_session_lock_timeout,
                 )
                 if not bool(executed.get("ok")):
                     return {
@@ -166,6 +213,9 @@ class BaseViewPushController(ABC):
             else:
                 result = self._push_without_reconcile(host, module_name, tasks, None)
             if bool(result.get("ok")) and result.get("report"):
+                context = self.post_push_context(tasks, result)
+                if context is not None:
+                    result["postPushContext"] = context
                 result["postPushPending"] = True
                 original = str(result.get("message") or "Push completed.")
                 result["message"] = f"{original} Device synchronization continues in background."
@@ -187,17 +237,22 @@ class BaseViewPushController(ABC):
         """Apply tasks while the host session is owned, without running show commands."""
         return dict(self.push_tasks(host, module_name, tasks) or {})
 
-    def reconcile_after_push(self, host: str, module_name: str = "all") -> dict[str, Any]:
+    def reconcile_after_push(
+        self,
+        host: str,
+        module_name: str = "all",
+        post_push_context: Any = None,
+    ) -> dict[str, Any]:
         """Collect and persist device state after an apply-only batch Push."""
         host = self._clean_host(host)
         if not host:
             return {"ok": False, "message": "Host is empty."}
         try:
             if self._managed_session:
-                executed = self._session_registry.execute(
+                executed = self._execute_session(
                     host,
                     lambda connector: self._reconcile_with_connector(
-                        host, module_name, connector
+                        host, module_name, connector, post_push_context
                     ),
                 )
                 if not bool(executed.get("ok")):
@@ -211,31 +266,62 @@ class BaseViewPushController(ABC):
                 return dict(executed.get("value") or {})
             provider = self._session_provider_for_host(host)
             connector = provider(host) if provider is not None else None
-            return self._reconcile_with_connector(host, module_name, connector)
+            return self._reconcile_with_connector(
+                host, module_name, connector, post_push_context
+            )
         except Exception as exc:
             return {"ok": False, "message": f"Background synchronization failed for {host}: {exc}"}
 
     def _reconcile_with_connector(
-        self, host: str, module_name: str, connector: Any | None
+        self,
+        host: str,
+        module_name: str,
+        connector: Any | None,
+        post_push_context: Any = None,
     ) -> dict[str, Any]:
         reconcile = getattr(self.db, "reconcileViewPushSnapshot", None)
-        if connector is None or not callable(reconcile):
-            return {"ok": True, "message": f"No background synchronization required for {host}."}
-        reconciliation = dict(
-            reconcile(host, connector, **self.reconciliation_options(module_name)) or {}
-        )
-        return {
-            "ok": bool(reconciliation.get("ok")),
-            "severity": "success" if reconciliation.get("ok") else "warning",
-            "message": str(
-                reconciliation.get("message")
-                or (
-                    f"Background synchronization completed for {host}."
-                    if reconciliation.get("ok")
-                    else f"Background synchronization failed for {host}."
+        if connector is None:
+            return {
+                "ok": False,
+                "message": f"Background synchronization failed for {host}: no active session.",
+            }
+        if callable(reconcile):
+            reconciliation = dict(
+                reconcile(
+                    host,
+                    connector,
+                    **self.reconciliation_options(module_name),
                 )
-            ),
+                or {}
+            )
+        else:
+            reconciliation = {
+                "ok": True,
+                "skipped": True,
+                "message": f"No shared background synchronization required for {host}.",
+            }
+        verification = dict(
+            self.verify_after_push(
+                host,
+                module_name,
+                connector,
+                post_push_context,
+            )
+            or {}
+        )
+        reconciliation_ok = bool(reconciliation.get("ok"))
+        verification_ok = bool(verification.get("ok", True))
+        messages = [
+            str(item.get("message") or "").strip()
+            for item in (reconciliation, verification)
+            if str(item.get("message") or "").strip()
+        ]
+        return {
+            "ok": reconciliation_ok and verification_ok,
+            "severity": "success" if reconciliation_ok and verification_ok else "warning",
+            "message": " ".join(messages) or f"Background synchronization completed for {host}.",
             "reconciliation": reconciliation,
+            "verification": verification,
         }
 
     def _push_and_reconcile(
@@ -253,26 +339,25 @@ class BaseViewPushController(ABC):
         if connector is None:
             provider = self._session_provider_for_host(host)
             connector = provider(host) if provider is not None else None
-        reconcile = getattr(self.db, "reconcileViewPushSnapshot", None)
-        if connector is None or not callable(reconcile):
+        if connector is None:
             return result
 
-        reconciliation = dict(
-            reconcile(
-                host,
-                connector,
-                **self.reconciliation_options(module_name),
-            )
-            or {}
+        background = self._reconcile_with_connector(
+            host,
+            module_name,
+            connector,
+            self.post_push_context(tasks, result),
         )
+        reconciliation = dict(background.get("reconciliation") or {})
         result["reconciliation"] = reconciliation
+        result["verification"] = dict(background.get("verification") or {})
         original_message = str(result.get("message") or "Push completed.")
-        if reconciliation.get("ok"):
-            result["message"] = f"{original_message} {reconciliation.get('message', '')}".strip()
+        if background.get("ok"):
+            result["message"] = f"{original_message} {background.get('message', '')}".strip()
         else:
             result["severity"] = "warning"
             detail = str(
-                reconciliation.get("message")
+                background.get("message")
                 or "Post-push persistence and synchronization failed."
             )
             result["message"] = f"{original_message} Warning: {detail}"

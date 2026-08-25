@@ -19,7 +19,7 @@ def apply_interface_commands(connector: Any, commands: list[str]) -> str:
     if connection is None:
         raise RuntimeError("The active device session is unavailable")
     output = str(
-        connection.send_config_set(commands, read_timeout=120, cmd_verify=False)
+        connection.send_config_set(commands, read_timeout=60, cmd_verify=False)
     )
     normalized = output.lower()
     if any(marker in normalized for marker in _ERROR_MARKERS):

@@ -7,7 +7,8 @@ from typing import Any
 from core.view_push import BaseViewPushController
 
 from .device_config.commands import build_cancel_commands, build_enable_commands
-from .device_config.service import SyslogConfigurator
+from .device_config.verifier import verify_destination, verify_source_interface
+from .device_config.worker import CiscoSyslogWorker
 from .repository import SyslogRepository
 
 
@@ -87,39 +88,6 @@ class SyslogViewPushController(BaseViewPushController):
     ) -> dict[str, Any]:
         return self._apply_tasks(host, tasks, self._session_registry)
 
-    def _push_and_reconcile(
-        self,
-        host: str,
-        module_name: str,
-        tasks: list[dict[str, Any]],
-        connector: Any | None,
-    ) -> dict[str, Any]:
-        # BaseViewPushController already owns the host session here. Re-entering
-        # SessionRegistry.execute from SyslogConfigurator would deadlock on the
-        # same per-host lock, so adapt the connector that is already protected.
-        if connector is None:
-            return self.push_tasks(host, module_name, tasks)
-        result = self._apply_tasks(host, tasks, _ConnectorRegistry(connector))
-        if not bool(result.get("ok")) or not result.get("report"):
-            return result
-
-        reconcile = getattr(self.db, "reconcileViewPushSnapshot", None)
-        if not callable(reconcile):
-            return result
-        reconciliation = dict(reconcile(host, connector) or {})
-        result["reconciliation"] = reconciliation
-        original = str(result.get("message") or "Syslog push completed.")
-        if reconciliation.get("ok"):
-            result["message"] = f"{original} {reconciliation.get('message', '')}".strip()
-        else:
-            result["severity"] = "warning"
-            detail = str(
-                reconciliation.get("message")
-                or "Post-push persistence and synchronization failed."
-            )
-            result["message"] = f"{original} Warning: {detail}"
-        return result
-
     def _push_without_reconcile(
         self,
         host: str,
@@ -135,57 +103,150 @@ class SyslogViewPushController(BaseViewPushController):
     def _apply_tasks(
         self, host: str, tasks: list[dict[str, Any]], registry: Any
     ) -> dict[str, Any]:
-        repository = self._repository()
-        configurator = SyslogConfigurator(repository, registry)
-        report: list[dict[str, Any]] = []
-
-        for task in tasks:
-            row = dict(task.get("config") or {})
-            action = str(task.get("action") or "setup")
-            if action == "remove":
-                result = configurator.cancel(
-                    host, str(row["server_ip"]), str(row["protocol"]), int(row["port"])
-                )
-                if bool(result.get("ok")):
-                    repository.delete_configuration_record(
-                        host, str(row["server_ip"]), str(row["protocol"]), int(row["port"])
-                    )
-            else:
-                result = configurator.configure(
-                    host,
-                    str(row["server_ip"]),
-                    str(row["protocol"]),
-                    int(row["port"]),
-                    str(row.get("source_interface") or ""),
-                    int(row.get("trap_severity", 5)),
-                    bool(row.get("timestamps")),
-                    bool(row.get("sequence_numbers")),
-                )
-
-            ok = bool(result.get("ok"))
-            report.append(
-                {
-                    "ip": host,
-                    "module": "syslog",
-                    "entity": task.get("label", "Syslog destination"),
-                    "status": "SUCCESS" if ok else "FAIL",
-                    "success": ok,
-                    "log": str(result.get("message") or ""),
-                    "db_updated": ok,
-                }
-            )
-            if not ok:
-                break
-
-        ok = bool(report) and all(bool(item["success"]) for item in report)
-        detail = next((item["log"] for item in report if not item["success"]), "")
+        commands = [
+            command
+            for task in tasks
+            for command in list(task.get("commands") or [])
+        ]
+        execution = registry.execute(
+            host,
+            lambda connector: CiscoSyslogWorker(connector).send(commands),
+            ensure_open=True,
+        )
+        ok = bool(execution.get("ok"))
+        detail = str(
+            execution.get("message")
+            or ("Syslog commands accepted by the device." if ok else "Syslog apply failed.")
+        )
+        report = [
+            {
+                "ip": host,
+                "module": "syslog",
+                "entity": task.get("label", "Syslog destination"),
+                "status": "SUCCESS" if ok else "FAIL",
+                "success": ok,
+                "log": detail,
+                "db_updated": False,
+            }
+            for task in tasks
+        ]
         return {
             "ok": ok,
             "success": ok,
             "message": (
-                f"Applied {len(report)} Syslog server task(s)."
+                f"Applied {len(report)} Syslog server task(s); verification continues in background."
                 if ok
                 else f"Syslog push stopped: {detail}"
+            ),
+            "report": report,
+        }
+
+    def post_push_context(
+        self, tasks: list[dict[str, Any]], result: dict[str, Any]
+    ) -> list[dict[str, Any]]:
+        return [
+            {
+                "action": str(task.get("action") or "setup"),
+                "label": str(task.get("label") or "Syslog destination"),
+                "config": {
+                    key: (task.get("config") or {}).get(key)
+                    for key in (
+                        "server_ip",
+                        "protocol",
+                        "port",
+                        "source_interface",
+                        "trap_severity",
+                        "timestamps",
+                        "sequence_numbers",
+                    )
+                },
+            }
+            for task in tasks
+        ]
+
+    def verify_after_push(
+        self,
+        host: str,
+        module_name: str,
+        connector: Any,
+        context: Any,
+    ) -> dict[str, Any]:
+        """Verify running/startup Syslog state and commit rows in the background."""
+        tasks = [dict(task) for task in context] if isinstance(context, list) else []
+        if not tasks:
+            return {
+                "ok": True,
+                "skipped": True,
+                "message": "No deferred Syslog verification was required.",
+            }
+        worker = CiscoSyslogWorker(connector)
+        repository = self._repository()
+        try:
+            running = worker.show_logging(startup=False)
+            startup = worker.show_logging(startup=True)
+        except Exception as exc:
+            return {
+                "ok": False,
+                "message": f"Deferred Syslog verification failed for {host}: {exc}",
+                "report": [],
+            }
+
+        report: list[dict[str, Any]] = []
+        for task in tasks:
+            row = dict(task.get("config") or {})
+            action = str(task.get("action") or "setup")
+            server_ip = str(row.get("server_ip") or "")
+            protocol = str(row.get("protocol") or "udp")
+            port = int(row.get("port") or 514)
+            interface = str(row.get("source_interface") or "")
+            expected = action != "remove"
+            messages = [
+                verify_destination(output, server_ip, protocol, port, expected=expected)
+                for output in (running, startup)
+            ]
+            if expected and interface and not all(
+                verify_source_interface(output, interface)
+                for output in (running, startup)
+            ):
+                messages.append(
+                    f"Running/startup config does not contain logging source-interface {interface}."
+                )
+            failure = next((message for message in messages if message), "")
+            if failure:
+                attempt = getattr(repository, "save_device_attempt", None)
+                if callable(attempt):
+                    attempt(host, server_ip, protocol, port, failure)
+                report.append({"ok": False, "message": failure})
+                continue
+            if expected:
+                repository.save_device_state(
+                    host,
+                    server_ip,
+                    protocol,
+                    port,
+                    interface,
+                    True,
+                    "Verified in running-config and startup-config.",
+                    int(row.get("trap_severity") or 5),
+                    bool(row.get("timestamps")),
+                    bool(row.get("sequence_numbers")),
+                )
+            else:
+                repository.delete_configuration_record(
+                    host,
+                    server_ip,
+                    protocol,
+                    port,
+                )
+            report.append({"ok": True, "message": "Syslog state verified."})
+
+        succeeded = sum(1 for item in report if item["ok"])
+        failed = len(report) - succeeded
+        return {
+            "ok": failed == 0,
+            "message": (
+                f"Deferred Syslog verification completed: {succeeded} succeeded, "
+                f"{failed} failed."
             ),
             "report": report,
         }

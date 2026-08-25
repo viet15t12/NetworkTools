@@ -416,7 +416,7 @@ class OspfApi:
 
         result = self.connection.send_config_set(
             commands,
-            read_timeout=120,
+            read_timeout=60,
             cmd_verify=False,
         )
 

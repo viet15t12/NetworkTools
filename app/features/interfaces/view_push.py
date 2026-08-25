@@ -77,10 +77,15 @@ class InterfaceViewPushController(BaseViewPushController):
             raise RuntimeError(f"Could not open a device session for {host}")
 
         report: list[dict[str, Any]] = []
-        for task in tasks:
-            name = str(task["interface"]["interface_name"])
-            try:
-                output = apply_interface_commands(connector, task["commands"])
+        commands = [
+            command
+            for task in tasks
+            for command in list(task.get("commands") or [])
+        ]
+        try:
+            output = apply_interface_commands(connector, commands)
+            for task in tasks:
+                name = str(task["interface"]["interface_name"])
                 mark_interface_task_applied(self.db, task)
                 report.append(
                     {
@@ -91,7 +96,9 @@ class InterfaceViewPushController(BaseViewPushController):
                         "db_updated": True,
                     }
                 )
-            except Exception as exc:
+        except Exception as exc:
+            for task in tasks:
+                name = str(task["interface"]["interface_name"])
                 report.append(
                     {
                         "ip": host,
@@ -101,7 +108,6 @@ class InterfaceViewPushController(BaseViewPushController):
                         "db_updated": False,
                     }
                 )
-                break
 
         ok = bool(report) and all(item["status"] == "SUCCESS" for item in report)
         detail = next(

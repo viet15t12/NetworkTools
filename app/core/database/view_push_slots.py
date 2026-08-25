@@ -90,7 +90,16 @@ class ViewPushSlotsMixin:
             and result.get("postPushPending")
             and host
         ):
-            self._start_post_push_single(controller, host, module)
+            post_push_context = result.get("postPushContext")
+            if post_push_context is None:
+                self._start_post_push_single(controller, host, module)
+            else:
+                self._start_post_push_single(
+                    controller,
+                    host,
+                    module,
+                    post_push_context,
+                )
         if operation == "batch" and isinstance(result, dict):
             deferred_hosts = [
                 str(item.get("host") or "").strip()
@@ -101,10 +110,26 @@ class ViewPushSlotsMixin:
                 and str(item.get("host") or "").strip()
             ]
             if deferred_hosts:
-                self._start_post_push_batch(controller, module, deferred_hosts)
+                contexts = {
+                    str(item.get("host") or "").strip(): item.get("postPushContext")
+                    for item in result.get("results", [])
+                    if isinstance(item, dict)
+                    and str(item.get("host") or "").strip()
+                    and item.get("postPushContext") is not None
+                }
+                self._start_post_push_batch(
+                    controller,
+                    module,
+                    deferred_hosts,
+                    contexts,
+                )
 
     def _start_post_push_single(
-        self, controller: str, host: str, module: str
+        self,
+        controller: str,
+        host: str,
+        module: str,
+        post_push_context: Any = None,
     ) -> bool:
         """Synchronize one successfully applied device without holding its dialog."""
         task_key = (
@@ -112,10 +137,19 @@ class ViewPushSlotsMixin:
         )
 
         def run_reconciliation(progress: Any) -> dict[str, Any]:
+            """Run shared collection plus controller verification off the UI thread."""
             progress(f"Synchronizing device state for {host} in background...")
+            controller_instance = self._view_push.get(controller)
+            if post_push_context is None:
+                result = controller_instance.reconcile_after_push(host, module)
+            else:
+                result = controller_instance.reconcile_after_push(
+                    host,
+                    module,
+                    post_push_context,
+                )
             return dict(
-                self._view_push.get(controller).reconcile_after_push(host, module)
-                or {}
+                result or {}
             )
 
         return self._start_background_task(
@@ -129,7 +163,11 @@ class ViewPushSlotsMixin:
         )
 
     def _start_post_push_batch(
-        self, controller: str, module: str, hosts: list[str]
+        self,
+        controller: str,
+        module: str,
+        hosts: list[str],
+        contexts: dict[str, Any] | None = None,
     ) -> bool:
         """Start deferred show/save/snapshot work after the apply dialog completes."""
         # Keep each deferred pass distinct. A user may start another batch while
@@ -138,13 +176,16 @@ class ViewPushSlotsMixin:
         task_key = f"post-view-push-batch:{controller}:{module}:{id(hosts)}"
 
         def run_reconciliation(progress: Any) -> dict[str, Any]:
+            """Reconcile all successful hosts in the deferred bounded batch."""
             def host_changed(host: str, state: str, _message: str, _value: int) -> None:
+                """Publish the host currently entering its background pass."""
                 if state == "running":
                     progress(f"Synchronizing device state for {host} in background...")
 
             def batch_progress(
                 completed: int, success: int, failed: int, total: int
             ) -> None:
+                """Relay aggregate background progress through the task facade."""
                 progress(
                     f"Background synchronization: {completed}/{total} completed, "
                     f"{success} succeeded, {failed} failed."
@@ -156,6 +197,7 @@ class ViewPushSlotsMixin:
                 hosts,
                 on_host=host_changed,
                 on_progress=batch_progress,
+                contexts=contexts,
             )
 
         return self._start_background_task(

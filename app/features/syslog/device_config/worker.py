@@ -18,7 +18,10 @@ class CiscoSyslogWorker:
 
     def send(self, commands: list[str]) -> str:
         output = str(self.connection.send_config_set(
-            commands, read_timeout=120, error_pattern=CLI_ERROR_PATTERN
+            commands,
+            read_timeout=60,
+            cmd_verify=False,
+            error_pattern=CLI_ERROR_PATTERN,
         ) or "")
         if contains_cli_error(output):
             raise RuntimeError(

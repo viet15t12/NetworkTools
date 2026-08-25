@@ -312,6 +312,16 @@ Rectangle {
         loadGroups()
     }
 
+    Connections {
+        target: typeof dbManager !== "undefined" ? dbManager : null
+
+        function onRunningConfigUpdated(updatedHost) {
+            const host = String(updatedHost || "").trim()
+            if (host !== "" && root.visible)
+                root.reloadData("backgroundSync")
+        }
+    }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 0

@@ -14,7 +14,12 @@ SERVER = "192.0.2.100"
 
 
 class _Connection:
+    def __init__(self) -> None:
+        self.show_commands: list[str] = []
+        self.config_batches: list[list[str]] = []
+
     def send_command(self, command: str) -> str:
+        self.show_commands.append(command)
         if command == "show ip interface brief":
             return (
                 "Interface IP-Address OK? Method Status Protocol\n"
@@ -26,6 +31,7 @@ class _Connection:
         )
 
     def send_config_set(self, commands, **kwargs) -> str:
+        self.config_batches.append(list(commands))
         return "OK"
 
     def save_config(self, **kwargs) -> str:
@@ -74,56 +80,72 @@ class _Database:
 
 
 class SyslogViewPushTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temp = tempfile.TemporaryDirectory()
+        root = Path(self.temp.name)
+        self.info_db = root / "info.db"
+        self.device_db = root / "device.db"
+        sqlite3.connect(self.info_db).close()
+        with sqlite3.connect(self.device_db) as conn:
+            conn.execute(
+                "CREATE TABLE t01_devices (host TEXT, device_name TEXT, "
+                "device_type TEXT, os TEXT, connection_status TEXT)"
+            )
+            conn.execute(
+                "INSERT INTO t01_devices VALUES (?, 'R1', 'router', "
+                "'cisco_ios', 'connected')",
+                (HOST,),
+            )
+            conn.execute(
+                "CREATE TABLE t02_interface_name (host TEXT, ip_address TEXT, "
+                "shutdown INTEGER, sync_status TEXT, iface_id INTEGER, "
+                "interface_name TEXT)"
+            )
+        self.repository = SyslogRepository(self.info_db, self.device_db)
+        self.repository.save_configuration(
+            HOST,
+            {
+                "server_ip": SERVER,
+                "protocol": "udp",
+                "port": 514,
+                "source_interface": "Loopback0",
+                "trap_severity": 5,
+            },
+        )
+        self.registry = _NonReentrantRegistry()
+        self.controller = SyslogViewPushController(
+            _Database(self.info_db, self.device_db), self.registry
+        )
+
+    def tearDown(self) -> None:
+        self.temp.cleanup()
+
     def test_push_reuses_the_already_locked_host_connector(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            root = Path(temp_dir)
-            info_db = root / "info.db"
-            device_db = root / "device.db"
-            sqlite3.connect(info_db).close()
-            with sqlite3.connect(device_db) as conn:
-                conn.execute(
-                    "CREATE TABLE t01_devices (host TEXT, device_name TEXT, "
-                    "device_type TEXT, os TEXT, connection_status TEXT)"
-                )
-                conn.execute(
-                    "INSERT INTO t01_devices VALUES (?, 'R1', 'router', "
-                    "'cisco_ios', 'connected')",
-                    (HOST,),
-                )
-                conn.execute(
-                    "CREATE TABLE t02_interface_name (host TEXT, ip_address TEXT, "
-                    "shutdown INTEGER, sync_status TEXT, iface_id INTEGER, "
-                    "interface_name TEXT)"
-                )
+        preview = self.controller.preview(HOST, "servers")
+        result = self.controller.push(HOST, "servers")
 
-            repository = SyslogRepository(info_db, device_db)
-            repository.save_configuration(
-                HOST,
-                {
-                    "server_ip": SERVER,
-                    "protocol": "udp",
-                    "port": 514,
-                    "source_interface": "Loopback0",
-                    "trap_severity": 5,
-                },
-            )
-            registry = _NonReentrantRegistry()
-            controller = SyslogViewPushController(
-                _Database(info_db, device_db), registry
-            )
+        self.assertTrue(preview["ok"], preview)
+        self.assertIn(f"logging host {SERVER} transport udp port 514", preview["commands"])
+        self.assertIn("logging trap notifications", preview["commands"])
+        self.assertTrue(result["ok"], result)
+        self.assertEqual(self.registry.calls, 1)
+        self.assertEqual(
+            self.repository.device_configurations(HOST)[0]["sync_status"],
+            "synchronized",
+        )
 
-            preview = controller.preview(HOST, "servers")
-            result = controller.push(HOST, "servers")
+    def test_apply_only_defers_all_show_commands_and_database_sync(self) -> None:
+        result = self.controller.push_apply_only(HOST, "servers")
 
-            self.assertTrue(preview["ok"], preview)
-            self.assertIn(f"logging host {SERVER} transport udp port 514", preview["commands"])
-            self.assertIn("logging trap notifications", preview["commands"])
-            self.assertTrue(result["ok"], result)
-            self.assertEqual(registry.calls, 1)
-            self.assertEqual(
-                repository.device_configurations(HOST)[0]["sync_status"],
-                "synchronized",
-            )
+        self.assertTrue(result["ok"], result)
+        self.assertTrue(result["postPushPending"])
+        self.assertIn("postPushContext", result)
+        self.assertEqual(self.registry.connector.connection.show_commands, [])
+        self.assertEqual(len(self.registry.connector.connection.config_batches), 1)
+        self.assertEqual(
+            self.repository.device_configurations(HOST)[0]["sync_status"],
+            "pending_apply",
+        )
 
 
 if __name__ == "__main__":

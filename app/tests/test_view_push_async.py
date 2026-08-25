@@ -46,6 +46,7 @@ class _Harness(ViewPushSlotsMixin):
         self.taskFinished = _Signal()
         self.started = []
         self.deferred = []
+        self.deferred_contexts = []
 
     def _start_background_task(
         self, task_key, controller, host, module, message, callback, operation="push"
@@ -54,8 +55,11 @@ class _Harness(ViewPushSlotsMixin):
         self.callback_result = callback(lambda _message: None)
         return True
 
-    def _start_post_push_single(self, controller, host, module):
+    def _start_post_push_single(
+        self, controller, host, module, post_push_context=None
+    ):
         self.deferred.append((controller, host, module))
+        self.deferred_contexts.append(post_push_context)
         return True
 
 
@@ -93,6 +97,31 @@ class ViewPushAsyncTests(unittest.TestCase):
         )
         self.assertEqual(harness.taskFinished.calls, [(True, "Applied.")])
         self.assertEqual(harness.deferred, [("routing", "192.0.2.1", "ospf")])
+
+    def test_apply_completion_forwards_deferred_verification_context(self) -> None:
+        harness = _Harness()
+        harness._background_tasks["apply"] = {
+            "controller": "fhrp",
+            "host": "192.0.2.1",
+            "module": "hsrp",
+            "operation": "push",
+        }
+        context = [{"config": {"member_id": 7}}]
+
+        harness._handle_background_task_finished(
+            "apply",
+            True,
+            "Applied.",
+            {
+                "ok": True,
+                "message": "Applied.",
+                "postPushPending": True,
+                "postPushContext": context,
+            },
+        )
+
+        self.assertEqual(harness.deferred, [("fhrp", "192.0.2.1", "hsrp")])
+        self.assertEqual(harness.deferred_contexts, [context])
 
     def test_background_completion_updates_snapshot_without_reopening_dialog(self) -> None:
         harness = _Harness()

@@ -114,6 +114,7 @@ class ViewPushBatchService:
         on_host: HostCallback,
         on_progress: ProgressCallback,
         cancel_event: threading.Event | None = None,
+        contexts: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Run deferred post-push show/save/synchronization per successful host."""
         controller_key = str(controller_name or "").strip().lower()
@@ -126,9 +127,18 @@ class ViewPushBatchService:
         with self._lock:
             self._active_cancellations.add(cancellation)
         try:
+            verification_contexts = contexts or {}
             results = self._executor.run(
                 targets,
-                lambda host: controller.reconcile_after_push(host, module),
+                lambda host: (
+                    controller.reconcile_after_push(
+                        host,
+                        module,
+                        verification_contexts.get(host),
+                    )
+                    if host in verification_contexts
+                    else controller.reconcile_after_push(host, module)
+                ),
                 cancel_event=cancellation,
                 on_host=on_host,
                 on_progress=on_progress,

@@ -94,7 +94,12 @@ def handle_ssh_dhcp(task, payload):
     cmds_str = render_dhcp_template(task.host.data["platform_os"], payload)
     cmds_list = [cmd.strip() for cmd in cmds_str.splitlines() if cmd.strip()]
     if not cmds_list: raise Exception("Template không sinh ra mã lệnh CLI nào!")
-    res = task.run(task=netmiko_send_config, config_commands=cmds_list)
+    res = task.run(
+        task=netmiko_send_config,
+        config_commands=cmds_list,
+        read_timeout=60,
+        cmd_verify=False,
+    )
     return res[0].result
 
 def build_dhcp_commands(payload, platform):

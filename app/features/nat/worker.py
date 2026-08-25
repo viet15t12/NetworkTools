@@ -57,19 +57,32 @@ def _ensure_no_cli_error(output: str) -> str:
 
 
 def apply_nat_with_connector(connector: Any, payload: dict[str, Any]) -> str:
+    return apply_nat_batch_with_connector(connector, [payload])
+
+
+def apply_nat_batch_with_connector(
+    connector: Any, payloads: list[dict[str, Any]]
+) -> str:
+    """Apply every pending NAT payload for a host in one config transaction."""
     connection = getattr(connector, "connection", None)
     if connection is None:
         raise RuntimeError("Active tab session has no Netmiko connection.")
     device_type = str(getattr(connector, "device_type", "") or "cisco_ios")
     platform = "cisco_ios" if device_type == "cisco_ios_telnet" else device_type
-    commands = _with_logging_guard(render_nat_payload(payload, platform))
+    commands = _with_logging_guard(
+        [
+            command
+            for payload in payloads
+            for command in render_nat_payload(payload, platform)
+        ]
+    )
     if not commands:
         return "No NAT commands were rendered."
     check_enable = getattr(connection, "check_enable_mode", None)
     enable = getattr(connection, "enable", None)
     if callable(check_enable) and callable(enable) and not check_enable():
         enable()
-    output = str(connection.send_config_set(commands, read_timeout=120, cmd_verify=False))
+    output = str(connection.send_config_set(commands, read_timeout=60, cmd_verify=False))
     return _ensure_no_cli_error(output)
 
 
@@ -110,8 +123,8 @@ def _run_with_sessions(tasks: list[dict[str, Any]], session_provider: Callable[[
             output.append({"target": ip, "status": "failed", "message": "No active tab session. Reopen the device tab before pushing NAT configuration."})
             continue
         try:
-            messages = [apply_nat_with_connector(connector, task) for task in host_tasks]
-            output.append({"target": ip, "status": "success", "message": "\n".join(messages)})
+            message = apply_nat_batch_with_connector(connector, host_tasks)
+            output.append({"target": ip, "status": "success", "message": message})
         except Exception as exc:
             output.append({"target": ip, "status": "failed", "message": str(exc)})
     return output
@@ -166,7 +179,7 @@ def _task_push_nat(task):
     commands = _with_logging_guard(render_nat_payload(payload, platform))
     if not commands:
         return Result(host=task.host, result="No NAT commands were rendered.")
-    response = task.run(task=netmiko_send_config, config_commands=commands, read_timeout=120)
+    response = task.run(task=netmiko_send_config, config_commands=commands, read_timeout=60)
     return Result(host=task.host, result=_ensure_no_cli_error(str(response[0].result)))
 
 

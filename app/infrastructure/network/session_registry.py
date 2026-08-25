@@ -203,6 +203,7 @@ class DeviceSessionRegistry:
         operation: Callable[[Any], Any],
         *,
         ensure_open: bool = True,
+        lock_timeout: float | None = None,
     ) -> dict[str, Any]:
         """Serialize CLI access for host and optionally create its session."""
         host = (host or "").strip()
@@ -212,7 +213,22 @@ class DeviceSessionRegistry:
         # established connector through the former get_connector() contract.
         existing = self.get_connector(host)
         entry = self._entry(host)
-        with entry.operation_lock:
+        acquired = (
+            entry.operation_lock.acquire()
+            if lock_timeout is None
+            else entry.operation_lock.acquire(timeout=max(0.0, float(lock_timeout)))
+        )
+        if not acquired:
+            return {
+                "ok": False,
+                "severity": "warning",
+                "code": "session_busy",
+                "message": (
+                    f"Device session for {host} is busy with another operation. "
+                    "Wait for its background synchronization to finish, then try Push again."
+                ),
+            }
+        try:
             if existing is not None and entry.connector is not existing:
                 previous = entry.connector
                 entry.connector = existing
@@ -264,3 +280,5 @@ class DeviceSessionRegistry:
                     "message": f"Operation failed for {host}: {exc}",
                     "generation": generation,
                 }
+        finally:
+            entry.operation_lock.release()

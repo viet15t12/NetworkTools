@@ -87,7 +87,7 @@ def apply_acl_with_connector(connector: Any, host_tasks: list[dict[str, Any]]) -
     enable = getattr(connection, "enable", None)
     if callable(check_enable) and callable(enable) and not check_enable():
         enable()
-    return _check_output(str(connection.send_config_set(commands, read_timeout=120, cmd_verify=False)))
+    return _check_output(str(connection.send_config_set(commands, read_timeout=60, cmd_verify=False)))
 
 
 def _target_ips(tasks: list[dict[str, Any]]) -> list[str]:
@@ -202,7 +202,7 @@ def _task_push_acl(task):
     commands = _guarded(commands)
     if not commands:
         return Result(host=task.host, result="No ACL commands were rendered.")
-    response = task.run(task=netmiko_send_config, config_commands=commands, read_timeout=120)
+    response = task.run(task=netmiko_send_config, config_commands=commands, read_timeout=60)
     return Result(host=task.host, result=_check_output(str(response[0].result)))
 
 

@@ -9,6 +9,7 @@ from core.view_push import BaseViewPushController, _variant_list
 from .collector import collect_fhrp_tasks
 from .commands import redact_fhrp_commands, render_fhrp_commands
 from .push_state import apply_fhrp_success
+from .verification import verify_fhrp_task
 from .worker import push_fhrp_tasks
 
 
@@ -54,10 +55,15 @@ class FhrpViewPushController(BaseViewPushController):
                 "message": "FHRP RESTCONF push is not integrated.",
                 "report": [],
             }
-        reports = push_fhrp_tasks(tasks, context["template_folder"], provider)
-        for report in reports:
-            if report["status"] == "SUCCESS":
-                apply_fhrp_success(self.db, report["task"])
+        # The foreground transaction only sends configuration and checks CLI
+        # rejection. Operational show commands and DB advancement run later in
+        # verify_after_push(), outside the user's Push dialog.
+        reports = push_fhrp_tasks(
+            tasks,
+            context["template_folder"],
+            provider,
+            verify=False,
+        )
         ok = bool(reports) and all(row["status"] == "SUCCESS" for row in reports)
         detail = next(
             (row["log"] for row in reports if row["status"] != "SUCCESS"),
@@ -73,4 +79,68 @@ class FhrpViewPushController(BaseViewPushController):
             "report": _variant_list(
                 [{key: value for key, value in row.items() if key != "task"} for row in reports]
             ),
+        }
+
+    def post_push_context(
+        self, tasks: list[dict[str, Any]], result: dict[str, Any]
+    ) -> list[dict[str, Any]]:
+        """Retain only fields needed for safe deferred verification and DB update."""
+        context: list[dict[str, Any]] = []
+        for task in tasks:
+            config = dict(task.get("config") or {})
+            context.append(
+                {
+                    "target": {"ip": str(task.get("target", {}).get("ip") or "")},
+                    "action": str(task.get("action") or "setup"),
+                    "sub_type": str(task.get("sub_type") or ""),
+                    "config": {
+                        "member_id": config.get("member_id"),
+                        "fhrp_id": config.get("fhrp_id"),
+                        "interface_name": config.get("interface_name"),
+                        "protocol": config.get("protocol"),
+                        "group_number": config.get("group_number"),
+                        "virtual_ip": config.get("virtual_ip"),
+                    },
+                }
+            )
+        return context
+
+    def verify_after_push(
+        self,
+        host: str,
+        module_name: str,
+        connector: Any,
+        context: Any,
+    ) -> dict[str, Any]:
+        """Verify FHRP state and advance pending rows during background sync."""
+        tasks = [dict(task) for task in context] if isinstance(context, list) else []
+        if not tasks:
+            return {
+                "ok": True,
+                "skipped": True,
+                "message": "No deferred FHRP verification was required.",
+            }
+        connection = getattr(connector, "connection", connector)
+        report: list[dict[str, Any]] = []
+        show_cache: dict[str, str] = {}
+        for task in tasks:
+            try:
+                detail = verify_fhrp_task(
+                    connection,
+                    task,
+                    show_cache=show_cache,
+                )
+                apply_fhrp_success(self.db, task)
+                report.append({"ok": True, "message": detail})
+            except Exception as exc:
+                report.append({"ok": False, "message": str(exc)})
+        succeeded = sum(1 for item in report if item["ok"])
+        failed = len(report) - succeeded
+        return {
+            "ok": failed == 0,
+            "message": (
+                f"Deferred FHRP verification completed: {succeeded} succeeded, "
+                f"{failed} failed."
+            ),
+            "report": report,
         }

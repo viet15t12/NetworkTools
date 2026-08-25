@@ -93,6 +93,34 @@ class SessionRegistryConcurrencyTests(unittest.TestCase):
         self.assertTrue(self.registry.has_session("r1"))
         self.assertTrue(self.registry.has_session("r2"))
 
+    def test_bounded_wait_returns_busy_instead_of_blocking_forever(self) -> None:
+        entered = threading.Event()
+        release = threading.Event()
+
+        def hold_session(_connector) -> None:
+            entered.set()
+            release.wait(timeout=1)
+
+        worker = threading.Thread(
+            target=lambda: self.registry.execute("r1", hold_session)
+        )
+        worker.start()
+        self.assertTrue(entered.wait(timeout=1))
+
+        started = time.monotonic()
+        result = self.registry.execute(
+            "r1",
+            lambda _connector: self.fail("busy operation must not run"),
+            lock_timeout=0.01,
+        )
+        elapsed = time.monotonic() - started
+        release.set()
+        worker.join(timeout=1)
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], "session_busy")
+        self.assertLess(elapsed, 0.2)
+
     def test_dev_host_is_rejected_before_connector_or_operation_is_used(self) -> None:
         factory_called = False
         operation_called = False
