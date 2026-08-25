@@ -17,35 +17,6 @@ Quá trình đo đạc và kiểm thử được tiến hành trên môi trườ
   - Thiết bị chuyển mạch: Cisco vIOS-L2 (Cisco IOS Software, vIOS-L2 Software Version 15.2).
 - *Mạng quản trị ngoại băng (Out-of-band Management Network):* Toàn bộ cổng quản trị `Gi0/0` của các thiết bị được nối vào phân mạng `192.168.122.0/24`. Ứng dụng NetworkTools kết nối tới cổng quản trị này qua SSH/Telnet để thu thập trạng thái và đẩy cấu hình.
 
-== Kết quả kiểm thử tự động (Automated Testing)
-
-Bộ kiểm thử tự động của NetworkTools được xây dựng nhằm đảm bảo tính toàn vẹn của dữ liệu, tính ổn định của giao diện và tính an toàn của các tiến trình mạng. Toàn bộ test suite được thực thi trực tiếp từ thư mục `app/` thông qua lệnh:
-
-```bash
-uv run python -m unittest discover -s tests -q
-```
-
-Hệ thống kiểm thử bao gồm 5 nhóm chuyên biệt:
-+ *Persistence Tests:* Kiểm tra các thao tác CRUD, ràng buộc khóa ngoại, tính toàn vẹn dữ liệu cho DHCP, ACL, NAT, Interfaces, Switching trên SQLite tạm.
-+ *Routing Contract & View-Push Tests:* Kiểm tra tính khớp nối giữa lược đồ cơ sở dữ liệu `device_network.db` và mã nguồn render Jinja2 cho Static Route, OSPF, EIGRP.
-+ *Worker Safety & Dev-mode Tests:* Kiểm tra cơ chế khóa chặn kết nối thật khi bật cờ `dev = 1`, cơ chế khóa theo thiết bị (Host Lock) và cô lập lỗi giữa các luồng.
-+ *Workspace Package & Crypto Tests:* Kiểm tra tính toàn vẹn của gói dự án `.ntp`, quy trình mã hóa Argon2id + AES-256-GCM, cơ chế tạo Snapshot và khôi phục Rollback.
-+ *UI Contract & QML Smoke Tests:* Kiểm tra khả năng nạp của 256 tệp QML, khớp nối tín hiệu Signal/Slot và các Context Property.
-
-#report-table(
-  columns: (22%, 18%, 60%),
-  header: ([Nhóm kết quả], [Số lượng test], [Đánh giá chi tiết và nguyên nhân]),
-  rows: (
-    ([Đạt (Passed)], [504], [Toàn bộ các bài kiểm tra logic lưu trữ, quy trình sinh mã Jinja2, View & Push, an toàn Dev-mode, quản lý Workspace .ntp, Syslog và SFTP đều vượt qua thành công.]),
-    ([Thất bại (Failed)], [16], [Tập trung ở một số kiểm thử hợp đồng UI đối chiếu tài nguyên biểu tượng SVG cũ và các bài test công cụ ngoài phụ thuộc môi trường Registry của Windows khi chạy trên host Linux.]),
-    ([Lỗi (Error)], [1], [Thiếu tệp chứng chỉ bản quyền `app/UI/resources/licenses/LUCIDE.txt` theo yêu cầu kiểm tra tĩnh.]),
-    ([Bỏ qua (Skipped)], [2], [Các bài kiểm tra chuyên biệt cho cơ chế mã hóa Windows DPAPI tự động được bỏ qua trên nền tảng Linux.]),
-  ),
-  caption: [Bảng tổng hợp kết quả chạy bộ kiểm thử tự động của NetworkTools],
-) <tab-automated-test-summary>
-
-Tổng thời gian thực thi toàn bộ 523 bài kiểm tra là 17,398 giây. Tỷ lệ thành công đạt 96,75% khẳng định độ bao phủ và tính ổn định cao của hệ thống mã nguồn trước khi tiến hành thử nghiệm trên thiết bị thật.
-
 == Kịch bản kiểm thử thực nghiệm trên phòng Lab
 
 Quá trình thử nghiệm thực nghiệm được thiết kế xoay quanh 4 kịch bản (Test Clusters) có độ phức tạp tăng dần, bao quát toàn bộ các nghiệp vụ mạng từ Lớp 2 đến Lớp 3. Mỗi kịch bản đều tuân thủ quy trình 3 giai đoạn: *Thiết lập & Xem trước trên Giao diện GUI \rightarrow Đẩy cấu hình bất đồng bộ (Push) \rightarrow Xác minh trạng thái qua Terminal nhúng (Verify)*.
