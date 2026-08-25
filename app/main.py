@@ -226,7 +226,19 @@ def main() -> int:
     system_appearance = SystemAppearance()
     window_settings = WindowSettings()
     welcome_controller = WelcomeController()
-    workspace_save_controller = WorkspaceSaveController(welcome_controller)
+
+    def prepare_workspace_close() -> None:
+        """Disconnect devices and persist their offline state before packaging."""
+        # This callback runs on the workspace writer thread, so a slow network
+        # disconnect never blocks QML. Unlike application shutdown, an explicit
+        # workspace close waits for every disconnect before rebuilding .ntp.
+        session_registry.close_all(timeout=None)
+        device_repository.reset_connected_to_waiting()
+
+    workspace_save_controller = WorkspaceSaveController(
+        welcome_controller,
+        workspace_close_preparer=prepare_workspace_close,
+    )
     app_paths = AppPaths()
     external_tools = ExternalToolsManager()
     # NOTE: chuc nang chua phat trien xong, khong tam quan tam nieu viet bao cao

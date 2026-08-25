@@ -172,6 +172,35 @@ class SessionRegistryConcurrencyTests(unittest.TestCase):
         connector = self.registry.get_connector("r1")
         self.assertEqual(connector.connection.exit_calls, 1)
 
+    def test_unbounded_close_waits_for_every_disconnect(self) -> None:
+        release = threading.Event()
+        disconnected = threading.Event()
+
+        class SlowConnector(_Connector):
+            def disconnect(self) -> None:
+                release.wait(timeout=1)
+                super().disconnect()
+                disconnected.set()
+
+        registry = DeviceSessionRegistry(
+            lambda host: {
+                "host": host, "method": "ssh", "port": 22,
+                "username": "user", "password": "secret",
+                "device_type": "cisco_ios", "dev": 0,
+            },
+            connector_factory=lambda _device: SlowConnector(),
+        )
+        self.assertTrue(registry.open("r1")["ok"])
+        closer = threading.Thread(target=lambda: registry.close_all(timeout=None))
+        closer.start()
+        time.sleep(0.02)
+        self.assertTrue(closer.is_alive())
+        release.set()
+        closer.join(timeout=1)
+
+        self.assertFalse(closer.is_alive())
+        self.assertTrue(disconnected.is_set())
+
 
 if __name__ == "__main__":
     unittest.main()

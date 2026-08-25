@@ -29,7 +29,8 @@ StatefulWindow {
     property bool statusTaskOk: true
     property string statusTaskMessage: ""
     property string activeDatabaseTable: ""
-    property string workspaceDisplayName: "NetworkTools Workspace"
+    // Populated only after a real .ntp project has been opened or created.
+    property string workspaceDisplayName: ""
     property string workspacePath: ""
     property string pendingRollbackSnapshotId: ""
     property bool nativePresenterFailed: false

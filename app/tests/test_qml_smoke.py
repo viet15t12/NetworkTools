@@ -1902,19 +1902,20 @@ class QmlSmokeTests(unittest.TestCase):
         self.assertEqual(information.property("lastLoadedHost"), "192.0.2.10")
         self.assertEqual(self.warnings, [])
 
-    def test_activity_bar_console_is_reserved_and_operational_tools_are_active(self) -> None:
+    def test_activity_bar_hides_unavailable_tools_and_keeps_operational_tools_active(self) -> None:
         activity_bar = self._create("UI/qml/layout/ActivityBar.qml")
         activity_bar.setProperty("width", 48)
         activity_bar.setProperty("height", 480)
         self.app.processEvents()
 
         console_item = activity_bar.findChild(QObject, "consoleSerialActivityItem")
-        self.assertIsNotNone(console_item)
-        self.assertTrue(console_item.property("visible"))
-        self.assertFalse(console_item.property("enabled"))
-        self.assertFalse(console_item.property("isActive"))
-        self.assertAlmostEqual(console_item.property("opacity"), 0.35)
-        self.assertEqual(console_item.parent().objectName(), "activityTopGroup")
+        self.assertIsNone(console_item)
+        activity_source = (
+            Path(__file__).resolve().parents[1]
+            / "UI/qml/layout/ActivityBar.qml"
+        ).read_text(encoding="utf-8")
+        self.assertNotIn("navigationTopology", activity_source)
+        self.assertNotIn("navigationConsoleSerial", activity_source)
 
         sftp_item = activity_bar.findChild(QObject, "sftpActivityItem")
         self.assertIsNotNone(sftp_item)
@@ -2701,6 +2702,9 @@ class QmlSmokeTests(unittest.TestCase):
         self.engine.loadFromModule("UI", "Main")
         self.app.processEvents()
         self.assertEqual(len(self.engine.rootObjects()), 1)
+        window = self.engine.rootObjects()[0]
+        self.assertEqual(window.property("workspaceDisplayName"), "")
+        self.assertEqual(window.property("title"), "NetworkTools")
         self.assertEqual(self.warnings, [])
 
     def test_welcome_module_loads_as_independent_entry_window(self) -> None:

@@ -137,24 +137,6 @@ Rectangle {
         }
 
         ActivityBarItem {
-            iconSource:  AppAssets.navigationTopology
-            tooltipText: "Topology (Coming soon)"
-            isActive:    false
-            enabled:     false
-            opacity:     0.35
-        }
-
-        // Console Serial remains reserved until its UI contract is implemented.
-        ActivityBarItem {
-            objectName:  "consoleSerialActivityItem"
-            iconSource:  AppAssets.navigationConsoleSerial
-            tooltipText: "Console Serial (Coming soon)"
-            enabled:     false
-            isActive:    false
-            opacity:     0.35
-        }
-
-        ActivityBarItem {
             objectName:  "sftpActivityItem"
             iconSource:  AppAssets.navigationSftp
             tooltipText: (activityBar.usesExternalSftp

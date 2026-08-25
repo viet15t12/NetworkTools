@@ -452,6 +452,34 @@ class WorkspaceSaveControllerTests(unittest.TestCase):
                     ("saved on close",),
                 )
 
+    def test_close_disconnects_then_repacks_then_releases_workspace(self) -> None:
+        events: list[str] = []
+        original_save = self.service.save_project
+
+        def prepare_close() -> None:
+            events.append("disconnect")
+
+        def save_with_event(*args, **kwargs):
+            events.append("pack")
+            self.assertTrue(kwargs["force"])
+            return original_save(*args, **kwargs)
+
+        controller = WorkspaceSaveController(
+            self.welcome,
+            workspace_service=self.service,
+            autosave_interval_ms=60_000,
+            workspace_close_preparer=prepare_close,
+        )
+        closed = QSignalSpy(controller.workspaceCloseCompleted)
+        controller.workspaceCloseCompleted.connect(lambda: events.append("close"))
+        try:
+            with patch.object(self.service, "save_project", side_effect=save_with_event):
+                self.assertTrue(controller.requestCloseWorkspace())
+                self.assertTrue(closed.wait(5_000))
+            self.assertEqual(events, ["disconnect", "pack", "close"])
+        finally:
+            controller.shutdown()
+
 
 if __name__ == "__main__":
     unittest.main()

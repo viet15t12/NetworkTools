@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
@@ -54,6 +55,7 @@ class _WorkspaceOperation(QRunnable):
         request: _OperationRequest,
         session_lease: object,
         operation_token: object,
+        workspace_close_preparer: Callable[[], None] | None,
     ) -> None:
         super().__init__()
         self.service = service
@@ -61,6 +63,7 @@ class _WorkspaceOperation(QRunnable):
         self.request = request
         self.session_lease = session_lease
         self.operation_token = operation_token
+        self.workspace_close_preparer = workspace_close_preparer
         self.signals = _WorkerSignals()
         self.setAutoDelete(True)
 
@@ -69,6 +72,13 @@ class _WorkspaceOperation(QRunnable):
         result: SaveResult | RollbackResult | None = None
         error: Exception | None = None
         try:
+            if (
+                self.request.kind == "close"
+                and self.workspace_close_preparer is not None
+            ):
+                # Closing a workspace is a strict transaction: device sessions
+                # must be gone before the extracted databases are packaged.
+                self.workspace_close_preparer()
             if self.request.kind == "rollback":
                 result = self.service.rollback_project(
                     self.session,
@@ -118,10 +128,12 @@ class WorkspaceSaveController(QObject):
         *,
         workspace_service: WorkspaceService | None = None,
         autosave_interval_ms: int = 3 * 60 * 1000,
+        workspace_close_preparer: Callable[[], None] | None = None,
     ) -> None:
         super().__init__(parent)
         self._welcome = welcome_controller
         self._service = workspace_service or welcome_controller.workspace_service
+        self._workspace_close_preparer = workspace_close_preparer
         self._pool = QThreadPool(self)
         self._pool.setMaxThreadCount(1)
         self._watcher = QFileSystemWatcher(self)
@@ -215,7 +227,9 @@ class WorkspaceSaveController(QObject):
             _OperationRequest(
                 kind="close",
                 reason="close",
-                force=False,
+                # Always rebuild and verify the .ntp package on an explicit
+                # Close Workspace, even when no file watcher marked it dirty.
+                force=True,
                 generation=self._generation,
             )
         )
@@ -270,7 +284,12 @@ class WorkspaceSaveController(QObject):
             return False
         operation_token = object()
         worker = _WorkspaceOperation(
-            self._service, session, request, session_lease, operation_token
+            self._service,
+            session,
+            request,
+            session_lease,
+            operation_token,
+            self._workspace_close_preparer,
         )
         worker.signals.finished.connect(self._operation_finished)
         self._workers[operation_token] = worker
@@ -281,6 +300,7 @@ class WorkspaceSaveController(QObject):
             "manual": "Saving workspace…",
             "snapshot": "Creating snapshot…",
             "rollback": "Rolling back workspace…",
+            "close": "Disconnecting devices and packing workspace…",
         }.get(request.reason, "Saving workspace…")
         self._set_state("saving", message)
         try:

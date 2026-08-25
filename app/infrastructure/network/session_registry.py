@@ -147,8 +147,8 @@ class DeviceSessionRegistry:
             self._sessions.pop(host, None)
         return {"ok": True, "severity": "success" if connector else "info", "message": f"Session closed for {host}."}
 
-    def close_all(self, timeout: float = 1.0) -> None:
-        """Close sessions concurrently with one shared shutdown deadline."""
+    def close_all(self, timeout: float | None = 1.0) -> None:
+        """Close sessions concurrently, optionally waiting for every disconnect."""
         with self._lock:
             entries = list(self._sessions.values())
             self._sessions.clear()
@@ -167,6 +167,10 @@ class DeviceSessionRegistry:
         ]
         for worker in workers:
             worker.start()
+        if timeout is None:
+            for worker in workers:
+                worker.join()
+            return
         deadline = time.monotonic() + max(0.0, timeout)
         for worker in workers:
             worker.join(max(0.0, deadline - time.monotonic()))
