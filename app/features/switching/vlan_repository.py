@@ -8,6 +8,7 @@ from .common import choice, failed, integer, ok, text
 from .entity_rules import require_immutable_identity
 from .lifecycle import is_device_backed
 from .schema import ensure_switch_schema
+from .vtp_membership import require_vlan_configuration_owner
 
 
 def get_vlans(db: Any, host: str) -> list[dict[str, Any]]:
@@ -26,6 +27,10 @@ def get_vlans(db: Any, host: str) -> list[dict[str, Any]]:
             LEFT JOIN t06_interface_l2 AS i ON i.id = a.iface_id AND i.host = v.host
             WHERE v.host = ?
               AND COALESCE(v.success, 'pending_apply') <> 'pending_delete'
+              AND (
+                  v.device_present = 1
+                  OR COALESCE(v.success, 'pending_apply') <> 'synchronized'
+              )
             GROUP BY v.id
             ORDER BY v.vlan_id;
             """,
@@ -40,6 +45,7 @@ def save_vlan(db: Any, host: str, payload: dict[str, Any]) -> dict[str, Any]:
         return failed("Host is required")
     try:
         ensure_switch_schema(db)
+        require_vlan_configuration_owner(db, target)
         row_id = int(payload.get("id") or 0)
         vlan_id = integer(payload.get("vlan_id"), "VLAN ID", 1, 4094)
         name = text(payload.get("vlan_name"))
@@ -86,6 +92,7 @@ def delete_vlan(db: Any, host: str, row_id: int) -> dict[str, Any]:
         return failed("Host is required")
     try:
         ensure_switch_schema(db)
+        require_vlan_configuration_owner(db, target)
         vlan_row_id = int(row_id)
         if vlan_row_id <= 0:
             raise ValueError("A valid VLAN is required")

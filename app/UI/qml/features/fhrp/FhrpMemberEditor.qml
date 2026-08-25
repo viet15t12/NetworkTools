@@ -20,7 +20,7 @@ Rectangle {
 
     signal fieldChanged(int memberIndex, string field, var value)
 
-    readonly property bool hasMatchingInterface: (interfaceOptions || []).length > 0
+    readonly property bool hasMatchingInterface: interfaceOptionCount() > 0
 
     Layout.fillWidth: true
     implicitHeight: layout.implicitHeight + Theme.spacing32
@@ -31,14 +31,34 @@ Rectangle {
                   ? Theme.contentPanelBorder : Theme.alertWarning
     border.width: Theme.borderWidth
 
+    function interfaceOptionCount() {
+        if (!interfaceOptions)
+            return 0
+        if (typeof interfaceOptions.count === "number")
+            return interfaceOptions.count
+        return interfaceOptions.length || 0
+    }
+
+    function interfaceOptionAt(index) {
+        return typeof interfaceOptions.get === "function"
+               ? interfaceOptions.get(index) : interfaceOptions[index]
+    }
+
     function interfaceLabels() {
-        return (interfaceOptions || []).map(
-                    item => item.interface_name + " · " + item.ip_address
-                            + " (" + item.network + ")")
+        const labels = []
+        for (let i = 0; i < interfaceOptionCount(); i++) {
+            const item = interfaceOptionAt(i)
+            labels.push(item.interface_name + " · " + item.ip_address
+                        + " (" + item.network + ")")
+        }
+        return labels
     }
 
     function interfaceIds() {
-        return (interfaceOptions || []).map(item => String(item.iface_id))
+        const ids = []
+        for (let i = 0; i < interfaceOptionCount(); i++)
+            ids.push(String(interfaceOptionAt(i).iface_id))
+        return ids
     }
 
     ColumnLayout {
@@ -80,7 +100,7 @@ Rectangle {
                 Text {
                     Layout.fillWidth: true
                     text: root.hasMatchingInterface
-                          ? root.interfaceOptions.length + " eligible interface(s)"
+                          ? root.interfaceOptionCount() + " eligible interface(s)"
                           : "No interface reaches the virtual gateway"
                     color: root.hasMatchingInterface
                            ? Theme.textSecondary : Theme.alertWarning

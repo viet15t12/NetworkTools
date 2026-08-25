@@ -101,8 +101,11 @@ StandardDialog {
             previewText = msg
         }
         pushCompleted(ok, msg)
-        if (ok)
-            close()
+        if (ownerForm && ownerForm.reloadData)
+            ownerForm.reloadData("pushCompleted")
+        notify(ok ? msg : "Configuration push failed.",
+               ok ? "success" : "warning")
+        close()
     }
 
     Connections {
@@ -154,6 +157,13 @@ StandardDialog {
             maximumLineCount: 3
             elide: Text.ElideRight
             clip: true
+        }
+
+        ProgressBar {
+            objectName: "viewPushProgress"
+            Layout.fillWidth: true
+            visible: dialog.isPreviewing || dialog.isPushing
+            indeterminate: true
         }
 
         ConfigurationPreviewPane {

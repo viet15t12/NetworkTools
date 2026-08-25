@@ -129,6 +129,34 @@ class FhrpRepository:
         members = payload["members"]
         with closing(self.db._connect()) as conn:
             with conn:
+                member_hosts = [member["host"] for member in members]
+                placeholders = ",".join("?" for _ in member_hosts)
+                conflict = conn.execute(
+                    f"""
+                    SELECT g.protocol, g.group_number, m.host
+                    FROM t08_fhrp_groups AS g
+                    JOIN t08_fhrp_members AS m ON m.fhrp_id = g.fhrp_id
+                    WHERE g.virtual_ip = ?
+                      AND g.address_family = 'ipv4'
+                      AND m.host IN ({placeholders})
+                      AND NOT (g.protocol = ? AND g.group_number = ?)
+                    LIMIT 1;
+                    """,
+                    (
+                        payload["virtual_ip"],
+                        *member_hosts,
+                        protocol,
+                        payload["group_number"],
+                    ),
+                ).fetchone()
+                if conflict is not None:
+                    raise ValueError(
+                        f"Virtual gateway {payload['virtual_ip']} on "
+                        f"{conflict['host']} is already managed by "
+                        f"{str(conflict['protocol']).upper()} group "
+                        f"{conflict['group_number']}. Remove and push that "
+                        "group before changing FHRP protocol."
+                    )
                 existing = conn.execute(
                     """
                     SELECT fhrp_id
@@ -227,40 +255,20 @@ class FhrpRepository:
                     (fhrp_id,),
                 ).fetchall()
                 hosts = [row["host"] for row in members]
-                local_member_ids = [
-                    int(row["member_id"])
-                    for row in members
-                    if row["sync_status"] not in {"synchronized", "pending_delete"}
-                ]
-                device_member_ids = [
-                    int(row["member_id"])
-                    for row in members
-                    if row["sync_status"] in {"synchronized", "pending_delete"}
-                ]
+                member_ids = [int(row["member_id"]) for row in members]
 
-                # Local-only members never existed on the device. Deleting
-                # them cancels their pending apply and must not create a
-                # synthetic `no standby/vrrp/glbp` push task.
-                if local_member_ids:
-                    placeholders = ",".join("?" for _ in local_member_ids)
-                    conn.execute(
-                        f"DELETE FROM t08_fhrp_members "
-                        f"WHERE member_id IN ({placeholders});",
-                        local_member_ids,
-                    )
-
-                # Preserve the established removal flow only for members that
-                # may already exist on their device. This also handles a group
-                # whose multi-host push succeeded only on some members.
-                if device_member_ids:
-                    placeholders = ",".join("?" for _ in device_member_ids)
+                # A failed CLI batch can still apply every command preceding
+                # the rejected line. Treat every saved member as potentially
+                # present on the device and reconcile deletion explicitly.
+                if member_ids:
+                    placeholders = ",".join("?" for _ in member_ids)
                     conn.execute(
                         f"""
                         UPDATE t08_fhrp_members
                         SET sync_status = 'pending_delete'
                         WHERE member_id IN ({placeholders});
                         """,
-                        device_member_ids,
+                        member_ids,
                     )
                     conn.execute(
                         f"""
@@ -268,17 +276,7 @@ class FhrpRepository:
                         SET sync_status = 'pending_delete'
                         WHERE member_id IN ({placeholders});
                         """,
-                        device_member_ids,
-                    )
-
-                remaining = conn.execute(
-                    "SELECT 1 FROM t08_fhrp_members WHERE fhrp_id = ? LIMIT 1;",
-                    (fhrp_id,),
-                ).fetchone()
-                if remaining is None:
-                    conn.execute(
-                        "DELETE FROM t08_fhrp_groups WHERE fhrp_id = ?;",
-                        (fhrp_id,),
+                        member_ids,
                     )
         return hosts
 

@@ -151,6 +151,17 @@ def _module_is_pending(db: _Database, host: str, module: str) -> bool:
 
 
 def _sync_vlans(conn: sqlite3.Connection, host: str, rows: list[dict[str, Any]]) -> int:
+    # A collected VLAN table is authoritative for device presence. Keep rows
+    # that may still be referenced by local policy, but make absent VLANs
+    # invisible as device state until a later snapshot advertises them again.
+    conn.execute(
+        """
+        UPDATE t06_vlan_db
+        SET success = 'synchronized', device_present = 0
+        WHERE host = ?;
+        """,
+        (host,),
+    )
     for row in rows:
         conn.execute(
             """

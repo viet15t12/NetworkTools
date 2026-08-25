@@ -58,6 +58,7 @@ Rectangle {
     property var matchingInterfaces: []
     property string errorText: ""
     property int viewPushRevision: 0
+    property bool operationBusy: false
     property alias savedGroupModel: groupModel
     readonly property int maxHosts: 5
     readonly property bool isViewLoading: false
@@ -103,8 +104,21 @@ Rectangle {
         const result = dbManager.getFhrpGroups(currentHostIp)
         const rows = result && result.groups ? result.groups : []
         for (let i = 0; i < rows.length; i++) {
-            if (String(rows[i].protocol || "").toLowerCase() === root.protocol)
-                groupModel.append(rows[i])
+            const row = rows[i]
+            if (String(row.protocol || "").toLowerCase() === root.protocol) {
+                groupModel.append({
+                    fhrp_id: Number(row.fhrp_id || 0),
+                    protocol: String(row.protocol || ""),
+                    group_number: Number(row.group_number || 0),
+                    virtual_ip: String(row.virtual_ip || ""),
+                    address_family: String(row.address_family || "ipv4"),
+                    description: row.description === undefined
+                                 || row.description === null
+                                 ? "" : String(row.description),
+                    updated_at: String(row.updated_at || ""),
+                    members: row.members || []
+                })
+            }
         }
         viewPushRevision++
     }
@@ -130,8 +144,7 @@ Rectangle {
                 priority: "100",
                 preempt: true,
                 authType: "none",
-                authSecret: "",
-                interfaceOptions: []
+                authSecret: ""
             })
         } else if (!selected && index >= 0) {
             memberModel.remove(index)
@@ -150,15 +163,19 @@ Rectangle {
     function matchedHostCount() {
         let count = 0
         for (let i = 0; i < memberModel.count; i++) {
-            if ((memberModel.get(i).interfaceOptions || []).length > 0)
+            if (interfaceOptionsForHost(memberModel.get(i).host).length > 0)
                 count++
         }
         return count
     }
 
+    function interfaceOptionsForHost(host) {
+        return (matchingInterfaces || []).filter(
+                    item => item.host === host)
+    }
+
     function clearMemberMatches() {
         for (let i = 0; i < memberModel.count; i++) {
-            memberModel.setProperty(i, "interfaceOptions", [])
             memberModel.setProperty(i, "ifaceId", 0)
         }
     }
@@ -191,8 +208,7 @@ Rectangle {
         matchingInterfaces = result.interfaces || []
         for (let i = 0; i < memberModel.count; i++) {
             const host = memberModel.get(i).host
-            const options = matchingInterfaces.filter(item => item.host === host)
-            memberModel.setProperty(i, "interfaceOptions", options)
+            const options = interfaceOptionsForHost(host)
             const current = Number(memberModel.get(i).ifaceId || 0)
             if (!options.some(item => Number(item.iface_id) === current))
                 memberModel.setProperty(i, "ifaceId",
@@ -224,6 +240,15 @@ Rectangle {
 
     function saveGroup(pushAfterSave) {
         errorText = ""
+        if (groupField.text.trim() === "") {
+            errorText = root.protocol === "vrrp"
+                        ? "Enter a VRID." : "Enter a group number."
+            return
+        }
+        if (gatewayField.text.trim() === "") {
+            errorText = "Enter a Default Gateway IP."
+            return
+        }
         if (memberModel.count < 2) {
             errorText = "Select at least two hosts."
             return
@@ -248,8 +273,10 @@ Rectangle {
         }
         notify(String(result.message || ""), "success")
         loadGroups()
-        if (pushAfterSave)
+        if (pushAfterSave) {
+            operationBusy = true
             batchDialog.openPreview(result.hosts || [], root.protocol)
+        }
     }
 
     function deleteGroup(fhrpId) {
@@ -257,6 +284,7 @@ Rectangle {
         notify(String(result.message || ""), result.ok ? "success" : "error")
         if (result.ok) {
             loadGroups()
+            operationBusy = true
             batchDialog.openPreview(result.hosts || [], root.protocol)
         }
     }
@@ -320,6 +348,10 @@ Rectangle {
             handle: StandardSplitHandle { orientation: workspaceSplit.orientation }
 
             SplitFormPane {
+                id: fhrpFormPane
+                objectName: "fhrpFormPane"
+                width: 560
+                height: 420
                 SplitView.fillWidth: !root.compactLayout
                 SplitView.fillHeight: root.compactLayout
                 SplitView.preferredWidth: root.compactLayout
@@ -327,6 +359,15 @@ Rectangle {
                                           : workspaceSplit.width * 0.68
                 SplitView.minimumWidth: root.compactLayout ? 0 : 560
                 SplitView.minimumHeight: root.compactLayout ? 420 : 0
+
+                Binding on width {
+                    when: root.compactLayout
+                    value: workspaceSplit.width
+                }
+                Binding on height {
+                    when: !root.compactLayout
+                    value: workspaceSplit.height
+                }
 
                 Rectangle {
                     Layout.fillWidth: true
@@ -553,15 +594,19 @@ Rectangle {
                     Repeater {
                         model: memberModel
                         delegate: FhrpMemberEditor {
+                            id: memberEditor
                             required property int index
-                            required property string host
-                            required property var interfaceOptions
-                            required property int ifaceId
-                            required property string priority
-                            required property bool preempt
-                            required property string authType
-                            required property string authSecret
-                            memberIndex: index
+                            required property var model
+
+                            memberIndex: memberEditor.index
+                            host: memberEditor.model.host
+                            interfaceOptions: root.interfaceOptionsForHost(
+                                                  memberEditor.model.host)
+                            ifaceId: memberEditor.model.ifaceId
+                            priority: memberEditor.model.priority
+                            preempt: memberEditor.model.preempt
+                            authType: memberEditor.model.authType
+                            authSecret: memberEditor.model.authSecret
                             protocol: root.protocol
                             onFieldChanged: function(memberIndex, field, value) {
                                 root.updateMember(memberIndex, field, value)
@@ -596,24 +641,29 @@ Rectangle {
                         onClicked: root.resetDraft()
                     }
                     StandardButton {
+                        objectName: "fhrpSaveButton"
                         text: "Save"
                         icon.source: AppAssets.actionSave
                         type: "Secondary"
-                        enabled: root.readyToSave
+                        enabled: !root.operationBusy
                         onClicked: root.saveGroup(false)
                     }
                     StandardButton {
+                        objectName: "fhrpSavePushButton"
                         text: "Save & Push"
                         icon.source: AppAssets.actionSave
                         type: "Primary"
-                        enabled: root.readyToSave
+                        enabled: !root.operationBusy
                         onClicked: root.saveGroup(true)
                     }
                 }
             }
 
             FhrpSavedGroupsPanel {
+                id: savedGroupsPanel
                 objectName: "fhrpSavedGroupsPanel"
+                width: 340
+                height: 220
                 SplitView.fillWidth: root.compactLayout
                 SplitView.fillHeight: !root.compactLayout
                 SplitView.preferredWidth: root.compactLayout
@@ -624,6 +674,15 @@ Rectangle {
                                            ? Math.min(320, workspaceSplit.height * 0.38)
                                            : workspaceSplit.height
                 SplitView.minimumHeight: root.compactLayout ? 220 : 0
+
+                Binding on width {
+                    when: root.compactLayout
+                    value: workspaceSplit.width
+                }
+                Binding on height {
+                    when: !root.compactLayout
+                    value: workspaceSplit.height
+                }
                 groupModel: root.savedGroupModel
                 protocolLabel: root.protocol
                 onRemoveRequested: function(fhrpId) {
@@ -646,5 +705,6 @@ Rectangle {
         controllerName: "fhrp"
         featureLabel: "FHRP"
         ownerForm: root
+        onClosed: root.operationBusy = false
     }
 }

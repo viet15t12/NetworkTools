@@ -11,6 +11,8 @@ from .interface_task_builder import build_interface_tasks
 from .policy_task_builder import build_security_tasks, build_stp_tasks
 from .schema import ensure_switch_schema
 from .success_repository import mark_task_success
+from .sync import parse_vtp_status, sync_switch_state
+from .vtp_membership import vlan_vtp_clients, vlan_vtp_context
 from .worker import apply_commands
 
 
@@ -72,6 +74,9 @@ class SwitchingViewPushController(BaseViewPushController):
         }
 
     def _vlan_tasks(self, host: str) -> list[dict[str, Any]]:
+        context = vlan_vtp_context(self.db, host)
+        if context is not None and str(context["mode"]).lower() == "client":
+            return []
         with closing(self.db._connect()) as conn:
             rows = conn.execute(
                 """
@@ -322,6 +327,160 @@ class SwitchingViewPushController(BaseViewPushController):
         result = super().push(host, module_name)
         result["success"] = bool(result.get("ok"))
         return result
+
+    def reconcile_after_push(
+        self, host: str, module_name: str = "all"
+    ) -> dict[str, Any]:
+        """Reconcile the server first, then its clients after a VLAN Push."""
+        result = super().reconcile_after_push(host, module_name)
+        return self._append_vtp_client_reconciliation(host, module_name, result)
+
+    def _push_and_reconcile(
+        self,
+        host: str,
+        module_name: str,
+        tasks: list[dict[str, Any]],
+        connector: Any | None,
+    ) -> dict[str, Any]:
+        """Preserve the synchronous Push path's server-before-client ordering."""
+        result = super()._push_and_reconcile(
+            host, module_name, tasks, connector
+        )
+        return self._append_vtp_client_reconciliation(host, module_name, result)
+
+    def _append_vtp_client_reconciliation(
+        self, host: str, module_name: str, result: dict[str, Any]
+    ) -> dict[str, Any]:
+        normalized_module = str(module_name or "all").strip().lower()
+        own_reconciliation = result.get("reconciliation")
+        if (
+            normalized_module not in {"all", "vlan"}
+            or not bool(result.get("ok"))
+            or not isinstance(own_reconciliation, dict)
+            or not bool(own_reconciliation.get("ok"))
+        ):
+            return result
+
+        context = vlan_vtp_context(self.db, host)
+        if context is None or str(context["mode"]).lower() != "server":
+            return result
+
+        client_sync = self._reconcile_vtp_clients(
+            host, str(context["domain_name"])
+        )
+        result["vtpClientReconciliation"] = client_sync
+        if client_sync["total"] == 0:
+            return result
+
+        original = str(result.get("message") or "VLAN Push synchronized.")
+        if client_sync["ok"]:
+            result["message"] = (
+                f"{original} Synchronized {client_sync['success']} VTP client(s) "
+                f"in domain {context['domain_name']}."
+            )
+        else:
+            result["severity"] = "warning"
+            result["message"] = (
+                f"{original} Warning: synchronized {client_sync['success']} of "
+                f"{client_sync['total']} VTP client(s) in domain "
+                f"{context['domain_name']}."
+            )
+        return result
+
+    def _reconcile_vtp_clients(
+        self, server_host: str, expected_domain: str
+    ) -> dict[str, Any]:
+        results: list[dict[str, Any]] = []
+        for client_host in vlan_vtp_clients(self.db, server_host):
+            try:
+                if self._managed_session:
+                    executed = self._session_registry.execute(
+                        client_host,
+                        lambda connector, target=client_host: self._sync_vtp_client(
+                            target, expected_domain, connector
+                        ),
+                    )
+                    if not bool(executed.get("ok")):
+                        raise RuntimeError(
+                            str(
+                                executed.get("message")
+                                or f"Could not collect VTP client {client_host}"
+                            )
+                        )
+                    detail = dict(executed.get("value") or {})
+                else:
+                    provider = self._session_provider_for_host(client_host)
+                    if provider is None:
+                        raise ValueError(
+                            "Layer 2 RESTCONF client synchronization is not implemented"
+                        )
+                    connector = provider(client_host)
+                    if connector is None:
+                        raise RuntimeError(
+                            f"Could not open a device session for {client_host}"
+                        )
+                    detail = self._sync_vtp_client(
+                        client_host, expected_domain, connector
+                    )
+                results.append(
+                    {"host": client_host, "ok": True, "summary": detail}
+                )
+            except Exception as exc:
+                results.append(
+                    {"host": client_host, "ok": False, "message": str(exc)}
+                )
+
+        succeeded = sum(1 for item in results if item["ok"])
+        return {
+            "ok": succeeded == len(results),
+            "domain": expected_domain,
+            "total": len(results),
+            "success": succeeded,
+            "failed": len(results) - succeeded,
+            "results": results,
+        }
+
+    def _sync_vtp_client(
+        self, host: str, expected_domain: str, connector: Any
+    ) -> dict[str, Any]:
+        collected = dict(
+            connector.collect_switch_state(("vtp_status", "vlan_brief")) or {}
+        )
+        if not bool(collected.get("ok")):
+            raise RuntimeError(
+                str(
+                    collected.get("message")
+                    or f"Could not collect VTP client state from {host}"
+                )
+            )
+        snapshot = dict(collected.get("outputs") or {})
+        status = parse_vtp_status(snapshot.get("vtp_status", ""))
+        if status is None:
+            raise ValueError(f"{host} did not return a configured VTP domain")
+        actual_domain = str(status["domain_name"])
+        if actual_domain.casefold() != expected_domain.casefold():
+            raise ValueError(
+                f"{host} reported VTP domain {actual_domain}, expected {expected_domain}"
+            )
+        if str(status["mode"]).lower() != "client":
+            raise ValueError(
+                f"{host} reported VTP mode {status['mode']}, expected client"
+            )
+
+        db_path = getattr(self.db, "db_path", None) or getattr(
+            self.db, "path", None
+        )
+        if db_path is None:
+            raise RuntimeError("The active device database path is unavailable")
+        return dict(
+            sync_switch_state(
+                db_path,
+                host,
+                snapshot,
+                mode="force_device_state",
+            )
+            or {}
+        )
 
     def push_tasks(
         self, host: str, module_name: str, tasks: list[dict[str, Any]]

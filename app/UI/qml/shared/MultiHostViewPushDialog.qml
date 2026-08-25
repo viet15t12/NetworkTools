@@ -20,7 +20,18 @@ StandardDialog {
     property string previewText: ""
     property string messageText: ""
     property bool isPushing: false
+    property int pushTargetCount: 0
     property var ownerForm: null
+    readonly property int pendingPreviewCount:
+        Object.keys(pendingPreviews).length
+    readonly property int completedStepCount: isPushing || pushTargetCount > 0
+                                              ? results.length
+                                              : Math.max(0, hosts.length
+                                                             - pendingPreviewCount)
+    readonly property int totalStepCount: Math.max(
+        1, isPushing || pushTargetCount > 0 ? pushTargetCount : hosts.length)
+
+    signal pushCompleted(bool ok, string message)
 
     preferredWidth: 880
     height: Math.min(parent ? parent.height - 48 : 650, 680)
@@ -37,6 +48,7 @@ StandardDialog {
         hosts = targetHosts || []
         moduleName = String(module || "all").toLowerCase()
         results = []
+        pushTargetCount = 0
         pendingHosts = ({})
         previewResults = ({})
         const pending = {}
@@ -84,10 +96,15 @@ StandardDialog {
     }
 
     function pushNow() {
+        if (isPushing)
+            return
         const readyHosts = hosts.filter(host => previewResults[String(host)]
                                         && previewResults[String(host)].ok)
+        if (readyHosts.length === 0)
+            return
         const pending = {}
         results = []
+        pushTargetCount = readyHosts.length
         for (let i = 0; i < readyHosts.length; i++)
             pending[String(readyHosts[i])] = true
         pendingHosts = pending
@@ -115,8 +132,13 @@ StandardDialog {
             messageText = "Push completed: " + succeeded.length + " succeeded, "
                     + failed.length + " failed."
             if (failed.length > 0)
-                messageText += " " + failed.map(item => item.host + ": " + item.message).join("; ")
+                messageText += " Failed: "
+                        + failed.map(item => item.host).join(", ") + "."
             notify(messageText, failed.length === 0 ? "success" : "warning")
+            if (ownerForm && ownerForm.reloadData)
+                ownerForm.reloadData("pushCompleted")
+            pushCompleted(failed.length === 0, messageText)
+            close()
         }
     }
 
@@ -142,6 +164,26 @@ StandardDialog {
             busy: dialog.isPushing
             severity: dialog.results.some(item => !item.ok) ? "warning" : "info"
         }
+        RowLayout {
+            Layout.fillWidth: true
+            visible: dialog.hosts.length > 0
+            spacing: Theme.spacing8
+
+            ProgressBar {
+                id: batchProgress
+                objectName: "multiHostViewPushProgress"
+                Layout.fillWidth: true
+                from: 0
+                to: dialog.totalStepCount
+                value: dialog.completedStepCount
+            }
+            Text {
+                text: dialog.completedStepCount + " / " + dialog.totalStepCount
+                color: Theme.textSecondary
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeSmall
+            }
+        }
         ConfigurationPreviewPane {
             objectName: "multiHostViewPushConfigurationPreview"
             Layout.fillWidth: true
@@ -153,12 +195,14 @@ StandardDialog {
             Layout.fillWidth: true
             Item { Layout.fillWidth: true }
             StandardButton {
+                objectName: "multiHostViewPushCloseButton"
                 text: "Close"
                 type: "Text"
                 enabled: !dialog.isPushing
                 onClicked: dialog.close()
             }
             StandardButton {
+                objectName: "multiHostViewPushPushButton"
                 text: dialog.isPushing ? "Pushing..." : "Push"
                 icon.source: AppAssets.actionPush
                 type: "Primary"

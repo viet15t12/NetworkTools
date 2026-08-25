@@ -579,10 +579,83 @@ class QmlSmokeTests(unittest.TestCase):
             {"protocol": "hsrp", "width": 1100, "height": 760},
         )
 
+        result, is_undefined = QQmlExpression(
+            QQmlEngine.contextForObject(page),
+            page,
+            """
+            toggleHost("192.0.2.1", true);
+            toggleHost("192.0.2.2", true);
+            matchingInterfaces = [{
+                iface_id: 1,
+                host: "192.0.2.1",
+                interface_name: "GigabitEthernet0/1",
+                ip_address: "192.168.4.1",
+                network: "192.168.4.0/24"
+            }, {
+                iface_id: 2,
+                host: "192.0.2.2",
+                interface_name: "GigabitEthernet0/1",
+                ip_address: "192.168.4.2",
+                network: "192.168.4.0/24"
+            }];
+            savedGroupModel.append({
+                fhrp_id: 1,
+                protocol: "hsrp",
+                group_number: 1,
+                virtual_ip: "192.168.4.10",
+                address_family: "ipv4",
+                description: "",
+                updated_at: "",
+                members: [{host: "192.0.2.1", sync_status: "pending_apply"},
+                          {host: "192.0.2.2", sync_status: "synchronized"}]
+            });
+            ({matched: matchedHostCount(), payload: memberPayload()})
+            """,
+        ).evaluate()
+        self.app.processEvents()
+
         self.assertFalse(page.property("compactLayout"))
+        form_pane = page.findChild(QObject, "fhrpFormPane")
+        self.assertIsNotNone(form_pane)
+        pane_scroll = form_pane.findChild(QObject, "splitFormPaneScroll")
+        self.assertIsNotNone(pane_scroll)
+        self.assertGreater(float(form_pane.property("height")), 0)
+        self.assertTrue(form_pane.property("contentOverflow"))
+        self.assertGreater(
+            float(form_pane.property("scrollContentHeight")),
+            float(form_pane.property("viewportHeight")),
+        )
+        self.assertGreater(
+            float(pane_scroll.property("contentHeight")),
+            float(pane_scroll.property("availableHeight")),
+        )
         self.assertIsNotNone(page.findChild(QObject, "fhrpSummaryGrid"))
         self.assertIsNotNone(page.findChild(QObject, "fhrpHostPicker"))
         self.assertIsNotNone(page.findChild(QObject, "fhrpSavedGroupsPanel"))
+        save_button = page.findChild(QObject, "fhrpSaveButton")
+        save_push_button = page.findChild(QObject, "fhrpSavePushButton")
+        self.assertIsNotNone(save_button)
+        self.assertIsNotNone(save_push_button)
+        self.assertTrue(save_button.property("enabled"))
+        self.assertTrue(save_push_button.property("enabled"))
+        page.setProperty("operationBusy", True)
+        self.app.processEvents()
+        self.assertFalse(save_button.property("enabled"))
+        self.assertFalse(save_push_button.property("enabled"))
+        page.setProperty("operationBusy", False)
+        self.app.processEvents()
+        self.assertTrue(save_button.property("enabled"))
+        self.assertTrue(save_push_button.property("enabled"))
+        self.assertFalse(is_undefined)
+        result_map = result.toVariant()
+        self.assertEqual(result_map["matched"], 2)
+        self.assertEqual(len(result_map["payload"]), 2)
+
+        page.setProperty("width", 600)
+        self.app.processEvents()
+        self.assertTrue(page.property("compactLayout"))
+        self.assertGreater(float(form_pane.property("width")), 0)
+        self.assertGreater(float(form_pane.property("height")), 0)
         self.assertEqual(self.warnings, [])
 
     def test_nqv_easter_egg_switches_brand_logo_to_hidden_asset(self) -> None:
@@ -2551,6 +2624,37 @@ class QmlSmokeTests(unittest.TestCase):
         status = dialog.findChild(QObject, "viewPushStatusMessage")
         self.assertIsNotNone(status)
         self.assertLessEqual(status.property("lineCount"), 3)
+        self.assertEqual(self.warnings, [])
+
+    def test_multi_host_view_push_tracks_progress_and_locks_actions(self) -> None:
+        dialog = self._create("UI/qml/shared/MultiHostViewPushDialog.qml")
+        expression = QQmlExpression(
+            QQmlEngine.contextForObject(dialog),
+            dialog,
+            """
+            hosts = ["r1", "r2", "r3"];
+            pendingPreviews = ({r1: true, r2: true, r3: true});
+            recordPreview("r1", true, "Ready", "show running-config");
+            pushTargetCount = 3;
+            pendingHosts = ({r1: true, r2: true, r3: true});
+            isPushing = true;
+            recordResult("r1", true, "Done");
+            """,
+        )
+        expression.evaluate()
+        self.app.processEvents()
+
+        self.assertFalse(expression.hasError(), expression.error().toString())
+        progress = dialog.findChild(QObject, "multiHostViewPushProgress")
+        push_button = dialog.findChild(QObject, "multiHostViewPushPushButton")
+        close_button = dialog.findChild(QObject, "multiHostViewPushCloseButton")
+        self.assertIsNotNone(progress)
+        self.assertIsNotNone(push_button)
+        self.assertIsNotNone(close_button)
+        self.assertEqual(progress.property("value"), 1)
+        self.assertEqual(progress.property("to"), 3)
+        self.assertFalse(push_button.property("enabled"))
+        self.assertFalse(close_button.property("enabled"))
         self.assertEqual(self.warnings, [])
 
     def test_main_module_loads(self) -> None:

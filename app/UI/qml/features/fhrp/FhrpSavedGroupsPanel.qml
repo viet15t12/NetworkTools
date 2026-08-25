@@ -16,13 +16,34 @@ SavedListPanel {
     emptyText: "No " + protocolLabel.toUpperCase()
                + " group includes this device yet."
 
+    function memberCount(members) {
+        if (!members)
+            return 0
+        if (typeof members.count === "number")
+            return members.count
+        return members.length || 0
+    }
+
+    function memberAt(members, index) {
+        return typeof members.get === "function"
+               ? members.get(index) : members[index]
+    }
+
     function memberHosts(members) {
-        return (members || []).map(item => item.host).join("  ·  ")
+        const hosts = []
+        for (let i = 0; i < memberCount(members); i++)
+            hosts.push(memberAt(members, i).host)
+        return hosts.join("  ·  ")
     }
 
     function pendingMembers(members) {
-        return (members || []).filter(
-                    item => String(item.sync_status || "") !== "synchronized").length
+        let count = 0
+        for (let i = 0; i < memberCount(members); i++) {
+            if (String(memberAt(members, i).sync_status || "")
+                    !== "synchronized")
+                count++
+        }
+        return count
     }
 
     ListView {

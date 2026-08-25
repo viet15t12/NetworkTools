@@ -30,11 +30,9 @@ Rectangle {
         Item {
             id: scrollContent
             width: paneScroll.availableWidth
-            height: Math.max(
-                paneScroll.availableHeight,
-                paneLayout.implicitHeight
-                + root.paneTopMargin + root.paneMargins
-            )
+            implicitHeight: paneLayout.implicitHeight
+                            + root.paneTopMargin + root.paneMargins
+            height: Math.max(paneScroll.height, implicitHeight)
 
             ColumnLayout {
                 id: paneLayout
@@ -43,7 +41,7 @@ Rectangle {
                 width: Math.max(0, parent.width - root.paneMargins * 2)
                 height: Math.max(
                     implicitHeight,
-                    paneScroll.availableHeight
+                    paneScroll.height
                     - root.paneTopMargin - root.paneMargins
                 )
                 spacing: 14

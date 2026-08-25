@@ -2,11 +2,14 @@
 interface {{ config.interface_name }}
 {% if mode == 'remove' %}
 {% if config.protocol == 'hsrp' %}
- no standby {{ config.group_number }}
+ no standby {{ config.group_number }} preempt
+ no standby {{ config.group_number }} ip {{ config.virtual_ip }}
 {% elif config.protocol == 'vrrp' %}
- no vrrp {{ config.group_number }}
+ no vrrp {{ config.group_number }} preempt
+ no vrrp {{ config.group_number }} ip {{ config.virtual_ip }}
 {% else %}
- no glbp {{ config.group_number }}
+ no glbp {{ config.group_number }} preempt
+ no glbp {{ config.group_number }} ip {{ config.virtual_ip }}
 {% endif %}
 {% else %}
 {% set options = config.options %}
@@ -19,7 +22,13 @@ interface {{ config.interface_name }}
 {% else %}
  no standby {{ config.group_number }} preempt
 {% endif %}
+{% if options.hello_ms != 3000 or options.hold_ms != 10000 %}
+{% if options.hello_ms % 1000 == 0 and options.hold_ms % 1000 == 0 %}
+ standby {{ config.group_number }} timers {{ options.hello_ms // 1000 }} {{ options.hold_ms // 1000 }}
+{% else %}
  standby {{ config.group_number }} timers msec {{ options.hello_ms }} msec {{ options.hold_ms }}
+{% endif %}
+{% endif %}
 {% if options.auth_type == 'plain' %}
  standby {{ config.group_number }} authentication {{ options.auth_secret }}
 {% elif options.auth_type == 'md5-key' %}
@@ -41,7 +50,9 @@ interface {{ config.interface_name }}
 {% else %}
  no vrrp {{ config.group_number }} preempt
 {% endif %}
+{% if options.advertisement_ms != 1000 %}
  vrrp {{ config.group_number }} timers advertise msec {{ options.advertisement_ms }}
+{% endif %}
 {% if options.auth_type != 'none' %}
  vrrp {{ config.group_number }} authentication text {{ options.auth_secret }}
 {% endif %}
@@ -56,7 +67,13 @@ interface {{ config.interface_name }}
 {% else %}
  no glbp {{ config.group_number }} preempt
 {% endif %}
+{% if options.hello_ms != 3000 or options.hold_ms != 10000 %}
+{% if options.hello_ms % 1000 == 0 and options.hold_ms % 1000 == 0 %}
+ glbp {{ config.group_number }} timers {{ options.hello_ms // 1000 }} {{ options.hold_ms // 1000 }}
+{% else %}
  glbp {{ config.group_number }} timers msec {{ options.hello_ms }} msec {{ options.hold_ms }}
+{% endif %}
+{% endif %}
  glbp {{ config.group_number }} load-balancing {{ options.load_balancing }}
  glbp {{ config.group_number }} weighting {{ options.weighting_max }}
 {% if options.auth_type == 'plain' %}

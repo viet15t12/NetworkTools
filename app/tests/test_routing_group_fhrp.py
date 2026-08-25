@@ -9,6 +9,7 @@ from core.database.conversion import ConversionMixin
 from features.fhrp.collector import collect_fhrp_tasks
 from features.fhrp.commands import redact_fhrp_commands, render_fhrp_commands
 from features.fhrp.service import FhrpService
+from features.fhrp.view_push import FhrpViewPushController
 from features.fhrp.worker import push_fhrp_tasks
 from features.routing.group_service import RoutingGroupService
 from infrastructure.database.paths import DEVICE_NETWORK_SCHEMA_DIR
@@ -281,21 +282,30 @@ class RoutingGroupAndFhrpTests(unittest.TestCase):
         self.assertEqual(len(tasks), 1)
         commands = render_fhrp_commands(tasks[0])
         self.assertIn("standby 10 ip 192.168.10.1", commands)
+        self.assertFalse(
+            any(command.startswith("standby 10 timers") for command in commands)
+        )
         preview = "\n".join(redact_fhrp_commands(commands))
         self.assertNotIn("private-key", preview)
         self.assertIn("<redacted>", preview)
 
         deleted = service.delete(result["fhrp_id"])
         self.assertTrue(deleted["ok"], deleted)
-        self.assertEqual(collect_fhrp_tasks(self.db, "10.0.0.1"), [])
-        self.assertEqual(collect_fhrp_tasks(self.db, "10.0.0.2"), [])
+        for host in ("10.0.0.1", "10.0.0.2"):
+            delete_tasks = collect_fhrp_tasks(self.db, host)
+            self.assertEqual(len(delete_tasks), 1)
+            self.assertEqual(delete_tasks[0]["action"], "remove")
+            self.assertIn(
+                "no standby 10 ip 192.168.10.1",
+                render_fhrp_commands(delete_tasks[0]),
+            )
         with self.db._connect() as connection:
             self.assertEqual(
                 connection.execute(
                     "SELECT COUNT(*) FROM t08_fhrp_groups WHERE fhrp_id = ?",
                     (result["fhrp_id"],),
                 ).fetchone()[0],
-                0,
+                1,
             )
 
     def test_fhrp_retry_replaces_only_the_local_pending_draft(self) -> None:
@@ -344,6 +354,66 @@ class RoutingGroupAndFhrpTests(unittest.TestCase):
                 ).fetchone()[0],
                 120,
             )
+
+    def test_fhrp_rejects_protocol_mixing_for_the_same_gateway_and_host(self) -> None:
+        service = FhrpService(self.db)
+        candidates = service.matching_interfaces(
+            ["10.0.0.1", "10.0.0.2"], "192.168.10.1"
+        )["interfaces"]
+        members = [
+            {"host": row["host"], "iface_id": row["iface_id"], "preempt": True}
+            for row in candidates
+        ]
+
+        first = service.save(
+            {
+                "protocol": "hsrp",
+                "group_number": 1,
+                "default_gateway": "192.168.10.1",
+                "members": members,
+            }
+        )
+        mixed = service.save(
+            {
+                "protocol": "glbp",
+                "group_number": 2,
+                "default_gateway": "192.168.10.1",
+                "members": members,
+            }
+        )
+
+        self.assertTrue(first["ok"], first)
+        self.assertFalse(mixed["ok"])
+        self.assertIn("already managed by HSRP group 1", mixed["message"])
+
+    def test_fhrp_view_push_filters_tasks_by_selected_protocol(self) -> None:
+        service = FhrpService(self.db)
+        for protocol, group_number, gateway in (
+            ("hsrp", 1, "192.168.10.1"),
+            ("glbp", 2, "192.168.10.254"),
+        ):
+            candidates = service.matching_interfaces(
+                ["10.0.0.1", "10.0.0.2"], gateway
+            )["interfaces"]
+            result = service.save(
+                {
+                    "protocol": protocol,
+                    "group_number": group_number,
+                    "default_gateway": gateway,
+                    "members": [
+                        {"host": row["host"], "iface_id": row["iface_id"]}
+                        for row in candidates
+                    ],
+                }
+            )
+            self.assertTrue(result["ok"], result)
+
+        controller = FhrpViewPushController(self.db)
+        hsrp_tasks = controller.collect_pending_tasks("10.0.0.1", "hsrp")
+        glbp_tasks = controller.collect_pending_tasks("10.0.0.1", "glbp")
+
+        self.assertEqual([task["sub_type"] for task in hsrp_tasks], ["hsrp"])
+        self.assertEqual([task["sub_type"] for task in glbp_tasks], ["glbp"])
 
     def test_fhrp_rejects_more_than_five_hosts(self) -> None:
         result = FhrpService(self.db).save(
@@ -435,7 +505,11 @@ class RoutingGroupAndFhrpTests(unittest.TestCase):
             tasks = collect_fhrp_tasks(self.db, host)
             self.assertEqual(len(tasks), 1)
             self.assertEqual(tasks[0]["action"], "remove")
-            self.assertIn("no vrrp 20", render_fhrp_commands(tasks[0]))
+            self.assertIn(
+                "no vrrp 20 ip 192.168.10.1",
+                render_fhrp_commands(tasks[0]),
+            )
+            self.assertIn("no vrrp 20 preempt", render_fhrp_commands(tasks[0]))
 
     def test_fhrp_delete_handles_partially_pushed_multi_host_group(self) -> None:
         service = FhrpService(self.db)
@@ -462,10 +536,13 @@ class RoutingGroupAndFhrpTests(unittest.TestCase):
 
         self.assertTrue(service.delete(result["fhrp_id"])["ok"])
 
-        pushed_tasks = collect_fhrp_tasks(self.db, "10.0.0.1")
-        self.assertEqual(len(pushed_tasks), 1)
-        self.assertEqual(pushed_tasks[0]["action"], "remove")
-        self.assertEqual(collect_fhrp_tasks(self.db, "10.0.0.2"), [])
+        for host in ("10.0.0.1", "10.0.0.2"):
+            pushed_tasks = collect_fhrp_tasks(self.db, host)
+            self.assertEqual(len(pushed_tasks), 1)
+            self.assertEqual(pushed_tasks[0]["action"], "remove")
+            commands = render_fhrp_commands(pushed_tasks[0])
+            self.assertIn("no glbp 30 preempt", commands)
+            self.assertIn("no glbp 30 ip 192.168.10.1", commands)
 
     def test_gateway_cannot_equal_a_member_interface_address(self) -> None:
         result = FhrpService(self.db).matching_interfaces(

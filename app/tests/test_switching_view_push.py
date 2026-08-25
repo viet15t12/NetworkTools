@@ -17,6 +17,8 @@ from features.switching import (  # noqa: E402
     delete_l2_vlan_security,
     delete_static_mac,
     delete_stp_config,
+    delete_vlan,
+    save_vlan,
 )
 from scripts.build_databases import combine_sql  # noqa: E402
 
@@ -35,6 +37,24 @@ class FakeConnection:
 class FakeConnector:
     def __init__(self) -> None:
         self.connection = FakeConnection()
+
+
+class FakeSwitchStateConnector(FakeConnector):
+    def __init__(self, outputs, events=None) -> None:
+        super().__init__()
+        self.outputs = dict(outputs)
+        self.events = events
+        self.state_calls = []
+
+    def collect_switch_state(self, state_keys=None):
+        requested = tuple(self.outputs) if state_keys is None else tuple(state_keys)
+        self.state_calls.append(requested)
+        if self.events is not None:
+            self.events.append("client")
+        return {
+            "ok": True,
+            "outputs": {key: self.outputs[key] for key in requested},
+        }
 
 
 class DatabaseAdapter:
@@ -58,12 +78,13 @@ class DatabaseAdapter:
 class TestController(SwitchingViewPushController):
     __test__ = False
 
-    def __init__(self, db, connector):
+    def __init__(self, db, connector, connectors=None):
         super().__init__(db)
         self.connector = connector
+        self.connectors = dict(connectors or {})
 
-    def _session_provider_for_host(self, _host):
-        return lambda _target: self.connector
+    def _session_provider_for_host(self, host):
+        return lambda target: self.connectors.get(target, self.connector)
 
 
 class SwitchingViewPushTests(unittest.TestCase):
@@ -345,6 +366,139 @@ class SwitchingViewPushTests(unittest.TestCase):
         self.assertEqual(pushed["report"][0]["entity"], "vlan:10")
         self.assertNotIn("interface GigabitEthernet0/1", self.connector.connection.commands)
         self.assertFalse(self.controller.has_pending("sw2.local", "vlan"))
+
+    def test_vtp_client_cannot_save_or_push_local_vlan_configuration(self) -> None:
+        with closing(self.db._connect()) as conn:
+            conn.execute(
+                """
+                UPDATE t09_vtp_database_modes
+                SET mode = 'client'
+                WHERE vtp_switch_id = (
+                    SELECT vtp_switch_id FROM t09_vtp_switches
+                    WHERE host = 'sw2.local'
+                );
+                """
+            )
+            conn.commit()
+
+        preview = self.controller.preview("sw2.local", "vlan")
+        saved = save_vlan(
+            self.db,
+            "sw2.local",
+            {"vlan_id": 20, "vlan_name": "voice", "state": "active"},
+        )
+        deleted = delete_vlan(self.db, "sw2.local", 2)
+
+        self.assertTrue(preview["success"], preview)
+        self.assertEqual(preview["tasks"], [])
+        self.assertEqual(preview["commands"], "")
+        self.assertFalse(saved["ok"], saved)
+        self.assertIn("VTP client", saved["message"])
+        self.assertFalse(deleted["ok"], deleted)
+        self.assertIn("VTP client", deleted["message"])
+
+    def test_vlan_push_reconciles_server_before_clients_in_same_vtp_domain(self) -> None:
+        events = []
+        client = FakeSwitchStateConnector(
+            {
+                "vtp_status": """VTP version running : 2
+VTP Domain Name : LAB
+VTP Operating Mode : Client
+VTP Pruning Mode : Enabled
+""",
+                "vlan_brief": """VLAN Name Status Ports
+1 default active
+10 users active
+20 voice active
+""",
+            },
+            events,
+        )
+        with closing(self.db._connect()) as conn:
+            conn.execute(
+                """
+                INSERT INTO t01_devices(host, role, os, method, device_type)
+                VALUES ('sw3.local', 'sw2', 'cisco_ios', 'SSH', 'switch');
+                """
+            )
+            switch_id = conn.execute(
+                """
+                INSERT INTO t09_vtp_switches(vtp_domain_id, host, pruning)
+                SELECT vtp_domain_id, 'sw3.local', 1
+                FROM t09_vtp_domains WHERE domain_name = 'LAB';
+                """
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO t09_vtp_database_modes(
+                    vtp_switch_id, database_type, mode
+                ) VALUES (?, 'vlan', 'client');
+                """,
+                (switch_id,),
+            )
+            conn.execute(
+                """
+                INSERT INTO t06_vlan_db(
+                    host, vlan_id, vlan_name, success, device_present
+                ) VALUES ('sw3.local', 30, 'stale', 'synchronized', 1);
+                """
+            )
+            conn.commit()
+
+        def reconcile_server(host, connector, **_options):
+            self.assertEqual(host, "sw2.local")
+            self.assertIs(connector, self.connector)
+            events.append("server")
+            return {"ok": True, "message": "server synchronized"}
+
+        self.db.reconcileViewPushSnapshot = reconcile_server
+        controller = TestController(
+            self.db,
+            self.connector,
+            {"sw3.local": client},
+        )
+        tasks = controller.collect_pending_tasks("sw2.local", "vlan")
+
+        result = controller._push_and_reconcile(
+            "sw2.local", "vlan", tasks, self.connector
+        )
+
+        self.assertTrue(result["ok"], result)
+        self.assertEqual(events, ["server", "client"])
+        self.assertEqual(
+            client.state_calls, [("vtp_status", "vlan_brief")]
+        )
+        self.assertEqual(
+            result["vtpClientReconciliation"]["success"], 1
+        )
+        with closing(self.db._connect()) as conn:
+            vlans = conn.execute(
+                """
+                SELECT vlan_id, device_present
+                FROM t06_vlan_db
+                WHERE host = 'sw3.local'
+                ORDER BY vlan_id;
+                """
+            ).fetchall()
+        self.assertEqual(
+            [(row["vlan_id"], row["device_present"]) for row in vlans],
+            [(1, 1), (10, 1), (20, 1), (30, 0)],
+        )
+
+    def test_vtp_client_snapshot_is_rejected_when_device_reports_other_domain(self) -> None:
+        client = FakeSwitchStateConnector(
+            {
+                "vtp_status": """VTP version running : 2
+VTP Domain Name : OTHER
+VTP Operating Mode : Client
+VTP Pruning Mode : Disabled
+""",
+                "vlan_brief": "1 default active\n20 foreign active\n",
+            }
+        )
+
+        with self.assertRaisesRegex(ValueError, "expected LAB"):
+            self.controller._sync_vtp_client("sw3.local", "LAB", client)
 
     def test_synchronized_success_rows_are_not_rendered_or_reapplied(self) -> None:
         with closing(self.db._connect()) as conn:
