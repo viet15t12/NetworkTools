@@ -146,14 +146,154 @@ Security Violation Count   : 0
 
 
 
-=== Kịch bản 2: Định tuyến liên vùng (DHCP & OSPFv2)
+=== Kịch bản 2: Định tuyến động đa vùng theo nhóm và Tái phân phối tuyến liên chi nhánh (OSPF Group & Route Redistribution)
 
-*Mục tiêu kịch bản:* Thiết lập dịch vụ cấp phát địa chỉ IP tự động (DHCP Server) trên Router vùng trung tâm và cấu hình giao thức định tuyến động OSPFv2 liên kết giữa hai chi nhánh để thông suốt toàn bộ luồng lưu lượng mạng.
+*Mục tiêu kịch bản:* Thiết lập hạ tầng định tuyến động OSPFv2 liên kết hai chi nhánh doanh nghiệp (Chi nhánh A và Chi nhánh B) thông qua mạng đường trục ISP (Backbone Area 0). Ứng dụng tính năng *Routing Group - OSPF* của NetworkTools để tự động hóa quá trình cấu hình đồng loạt trên 6 bộ định tuyến (`R1`, `R2`, `R3`, `ISP1`, `ISP2`, `R6`), đồng thời kích hoạt cơ chế *Tái phân phối tuyến (Route Redistribution)* nhằm quảng bá các dải mạng LAN cục bộ vào miền OSPF, đảm bảo lưu lượng giữa các phòng ban thuộc hai chi nhánh được thông suốt 100%.
 
 #figure(
-  image("diagrams/LAB_2.svg", width: 90%),
-  caption: [Sơ đồ Topo Kịch bản 2: Dịch vụ IP động DHCP và Định tuyến động OSPFv2],
+  image("diagrams/LAB_2.svg", width: 95%),
+  caption: [Sơ đồ Topo Kịch bản 2: Định tuyến OSPF đa vùng liên kết hai chi nhánh qua mạng Backbone],
 ) <fig-topo-scenario-2>
+
+*Quy hoạch địa chỉ IP và Phân vùng Định tuyến:*
+
+Mô hình kịch bản được chia làm 3 phân vùng định tuyến chính với bảng quy hoạch địa chỉ IP cụ thể như sau:
+
+#report-table(
+  columns: (20%, 20%, 25%, 35%),
+  header: ([Phân vùng mạng], [Thiết bị / Node], [Dải IP / Subnet], [Ghi chú kiến trúc]),
+  rows: (
+    ([Chi nhánh A], [VPC11 (A1_VLAN)], [192.168.10.10/24], [Gateway: 192.168.10.1 (R2 Gi0/4)]),
+    ([Chi nhánh A], [VPC12 (A2_VLAN)], [192.168.20.10/24], [Gateway: 192.168.20.1 (R3 Gi0/4)]),
+    ([Chi nhánh A], [R1, R2, R3], [10.1.12.0/24, 10.1.13.0/24, 10.1.23.0/24], [Miền định tuyến OSPF Area 1]),
+    ([Đường trục ISP], [R1, ISP1, ISP2, R6], [10.0.0.0/24, 10.0.1.0/24, 10.0.2.0/24, 10.0.3.0/24], [Miền đường trục OSPF Backbone Area 0]),
+    ([Chi nhánh B], [VPC14 (B1_VLAN)], [192.168.30.10/24], [Gateway: 192.168.30.1 (R6 Gi0/1)]),
+    ([Chi nhánh B], [VPC15 (B2_VLAN)], [192.168.40.10/24], [Gateway: 192.168.40.1 (R6 Gi0/1)]),
+    ([Mạng Quản trị], [Toàn bộ Router/SW], [192.168.122.101 -- 109/24], [Kênh Out-of-Band kết nối NetworkTools]),
+  ),
+  caption: [Bảng quy hoạch địa chỉ IP và phân vùng OSPF cho Kịch bản 2],
+) <tab-ip-planning-lab2>
+
+*Quy trình thực hiện trên phần mềm NetworkTools:*
+
+*Bước 1: Cấu hình Giao diện Lớp 3 và gán địa chỉ IP trên các Router*
+
+Trước khi triển khai định tuyến, quản trị viên sử dụng phân hệ *Interfaces* trên NetworkTools để thiết lập các thông số IP, Subnet Mask và kích hoạt trạng thái hoạt động cho từng cổng vật lý (`GigabitEthernet`) trên các thiết bị.
+
+#figure(
+  image("diagrams/Chuong_5_lab2/1.png", width: 85%),
+  caption: [Giao diện phân hệ Interfaces quản lý và cấu hình tham số Lớp 3 cho các cổng Router],
+) <fig-k2-interfaces>
+*Giải thích Hình @fig-k2-interfaces:* Bảng điều khiển bên trái liệt kê trực quan trạng thái IP của tất cả cổng mạng trên router `R1`. Ngăn thuộc tính bên phải cho phép chọn cấu hình nhanh IP Address, Subnet Mask, gán nhãn mô tả đường truyền và chuyển đổi trạng thái cổng (`Up/Down`) chỉ qua vài thao tác chuột.
+
+*Bước 2: Cấu hình nhóm OSPF hàng loạt qua tính năng Routing Group*
+
+Thay vì phải truy cập thủ công vào từng router để gõ từng dòng lệnh OSPF, quản trị viên sử dụng tính năng *Routing Group - OSPF* để cấu hình tự động cho toàn bộ 6 Router (`R1`, `R2`, `R3`, `ISP1`, `ISP2`, `R6`).
+
+#figure(
+  image("diagrams/Chuong_5_lab2/10.png", width: 80%),
+  caption: [Cửa sổ Routing Group - OSPF (Bước 1: Chọn đồng thời 6 Router tham gia cấu hình nhóm)],
+) <fig-k2-group-hosts>
+*Giải thích Hình @fig-k2-group-hosts:* Quản trị viên chỉ cần tích chọn danh sách các router cần cấu hình trong không gian làm việc `LAB_KICH_BAN_2`. Hệ thống tự động xác định các giao diện kết nối và địa chỉ IP tương ứng trên từng thiết bị.
+
+Tiếp theo, tại bước *Networks*, quản trị viên gán các dải mạng kết nối trực tiếp vào từng vùng định tuyến phù hợp (Area 0 cho các liên kết Backbone ISP và Area 1 cho các liên kết nội bộ Chi nhánh A).
+
+#figure(
+  image("diagrams/Chuong_5_lab2/11.png", width: 80%),
+  caption: [Cửa sổ Routing Group - OSPF (Bước 4: Khai báo phân vùng mạng và gán OSPF Area tương ứng)],
+) <fig-k2-group-networks>
+*Giải thích Hình @fig-k2-group-networks:* Giao diện tự động phân nhóm các cổng của từng router (`R1: 10.1.12.0/24 -> Area 1`, `10.1.13.0/24 -> Area 1`, `10.0.0.0/24 -> Area 0`; `R2: 10.1.12.0/24 -> Area 1`, `10.1.23.0/24 -> Area 1`). Sau khi hoàn tất, quản trị viên nhấn *Save & Push* để hệ thống đẩy cấu hình song song xuống toàn bộ các router.
+
+*Bước 3: Cấu hình Tái phân phối tuyến (Route Redistribution) cho mạng LAN người dùng*
+
+Để các dải mạng người dùng (`192.168.10.0/24`, `192.168.20.0/24` ở Chi nhánh A và `192.168.30.0/24`, `192.168.40.0/24` ở Chi nhánh B) được quảng bá xuyên suốt qua mạng OSPF mà không cần chạy OSPF trực tiếp xuống Switch mạng truy cập, quản trị viên cấu hình tính năng *Redistribute Connected Subnets* trên các router biên `R2`, `R3` và `R6`.
+
+#figure(
+  image("diagrams/Chuong_5_lab2/16.png", width: 85%),
+  caption: [Giao diện thiết lập tham số Tái phân phối tuyến (OSPF Redistribute) trên Router biên R6],
+) <fig-k2-redistribute-gui>
+*Giải thích Hình @fig-k2-redistribute-gui:* Quản trị viên mở tab `R6`, chọn phân hệ *Routing* $arrow$ thẻ *OSPF* $arrow$ tiểu mục *Redistribute*. Tại đây, người dùng thực hiện:
+- Chọn tiến trình định tuyến: `192.168.122.106 / PID 1`.
+- Chọn giao thức nguồn cần tái phân phối: `connected` (hoặc `static`).
+- Nhập Process ID nguồn: `1`.
+- Tích chọn `Subnets`: Cho phép tái phân phối cả các mạng con VLSM không nằm trong lớp mạng chuẩn (Classless).
+- Nhấn *+ Add Redistribute* để lưu vào danh sách chờ thực thi (hiển thị nhãn trạng thái `connected 1 subnets`).
+
+Sau khi lưu cấu hình trên giao diện, quản trị viên nhấn nút *View & Push* để kiểm duyệt khối lệnh chuẩn bị đẩy xuống router.
+
+#figure(
+  image("diagrams/Chuong_5_lab2/14.png", width: 80%),
+  caption: [Cửa sổ View & Push OSPF tự động sinh khối lệnh tái phân phối tuyến cho Router R2],
+) <fig-k2-redistribute-push>
+*Giải thích Hình @fig-k2-redistribute-push:* Cửa sổ kiểm duyệt hiển thị khối lệnh Cisco IOS sinh ra:
+```text
+# Cấu hình OSPF và Redistribution sinh tự động cho R2
+router ospf 1
+ router-id 2.2.2.2
+ network 10.1.12.0 0.0.0.255 area 1
+ network 10.1.23.0 0.0.0.255 area 1
+ network 2.2.2.0 0.0.0.255 area 1
+ redistribute connected subnets
+ no default-information originate
+ no passive-interface default
+ exit
+```
+Lệnh `redistribute connected subnets` giúp router biên chuyển đổi các tuyến mạng LAN kết nối trực tiếp thành các tuyến ngoại vi OSPF External Type 2 (`O E2`) để phát tán vào toàn bộ miền định tuyến.
+
+*Bước 4: Xác minh cấu hình OSPF đa thiết bị trên Terminal Alacritty nhúng*
+
+Sau khi hoàn tất tiến trình đẩy cấu hình từ phần mềm, quản trị viên mở các cửa sổ Terminal tích hợp để kiểm tra trực tiếp tệp cấu hình chạy trên cả 6 router.
+
+#figure(
+  image("diagrams/Chuong_5_lab2/12.png", width: 90%),
+  caption: [Xác minh đồng thời cấu hình OSPF trên 6 Router (R1, R2, R3, ISP1, ISP2, R6) qua Terminal nhúng],
+) <fig-k2-multi-terminal-ospf>
+*Giải thích Hình @fig-k2-multi-terminal-ospf:* Lệnh `show run | section ospf` trên từng cửa sổ chứng minh tất cả 6 router đã nhận đầy đủ tiến trình OSPF Process 1, Router-ID duy nhất (`1.1.1.1` đến `6.6.6.6`) và các dải mạng được gán chính xác vào Area 0 và Area 1 đúng theo thiết kế ban đầu.
+
+*Bước 5: Kiểm tra Bảng định tuyến OSPF (show ip route)*
+
+Quản trị viên thực hiện lệnh `show ip route` trên router trung tâm `R1` để kiểm tra khả năng hội tụ của hệ thống định tuyến:
+
+#figure(
+  image("diagrams/Chuong_5_lab2/18.png", width: 85%),
+  caption: [Bảng định tuyến trên Router R1 hiển thị đầy đủ các tuyến nội vùng và tuyến ngoại vi O E2],
+) <fig-k2-route-table-r1>
+*Giải thích Hình @fig-k2-route-table-r1:* Bảng định tuyến của `R1` ghi nhận đầy đủ:
+- Các tuyến nội vùng OSPF (`O`): `2.2.2.2/32`, `3.3.3.3/32`, `4.4.4.4/32`, `5.5.5.5/32`, `6.6.6.6/32` và các mạng liên kết `10.0.2.0/24`, `10.0.3.0/24`, `10.1.23.0/24`.
+- Toàn bộ 4 dải mạng LAN của hai chi nhánh được học qua cơ chế tái phân phối tuyến ngoại vi:
+  - `O E2 192.168.10.0/24 [110/20] via 10.1.12.2 (R2)`
+  - `O E2 192.168.20.0/24 [110/20] via 10.1.13.2 (R3)`
+  - `O E2 192.168.30.0/24 [110/20] via 10.0.0.2 (ISP1 -> R6)`
+  - `O E2 192.168.40.0/24 [110/20] via 10.0.0.2 (ISP1 -> R6)`
+
+*Bước 6: Kiểm tra truyền thông liên chi nhánh thực tế (ICMP Ping Test)*
+
+Để chứng minh hai chi nhánh đã hoàn toàn thông suốt, quản trị viên mở terminal trên các máy trạm đầu cuối (VPC) để thực hiện kiểm tra ping chéo giữa hai chi nhánh:
+
+#figure(
+  image("diagrams/Chuong_5_lab2/25.png", width: 75%),
+  caption: [Kết quả kiểm tra Ping từ VPC11 (Chi nhánh A) sang VPC14 (Chi nhánh B) thành công 100%],
+) <fig-k2-ping-vpc11-vpc14>
+*Giải thích Hình @fig-k2-ping-vpc11-vpc14:* Từ máy trạm `VPC11` (`192.168.10.10` thuộc phân vùng `A1_VLAN` tại Chi nhánh A), lệnh `ping 192.168.30.10` (máy trạm `VPC14` thuộc phân vùng `B1_VLAN` tại Chi nhánh B) đạt tỷ lệ phản hồi 5/5 gói tin thành công, thời gian trễ trung bình cực thấp (~6.9 ms), gói tin đi qua 5 hop định tuyến (`ttl=59`).
+
+Ngoài ra, kết quả kiểm tra từ máy trạm `VPC15` (`192.168.40.10` thuộc phân vùng `B2_VLAN` tại Chi nhánh B) gửi ping tới tất cả các dải mạng tại Chi nhánh A đều đạt kết quả tuyệt đối:
+```text
+VPCS> ping 192.168.10.10
+84 bytes from 192.168.10.10 icmp_seq=1 ttl=59 time=8.198 ms
+84 bytes from 192.168.10.10 icmp_seq=2 ttl=59 time=12.808 ms
+84 bytes from 192.168.10.10 icmp_seq=3 ttl=59 time=7.955 ms
+84 bytes from 192.168.10.10 icmp_seq=4 ttl=59 time=12.856 ms
+84 bytes from 192.168.10.10 icmp_seq=5 ttl=59 time=6.671 ms
+
+VPCS> ping 192.168.20.10
+84 bytes from 192.168.20.10 icmp_seq=1 ttl=59 time=9.799 ms
+84 bytes from 192.168.20.10 icmp_seq=2 ttl=59 time=8.915 ms
+84 bytes from 192.168.20.10 icmp_seq=3 ttl=59 time=6.835 ms
+84 bytes from 192.168.20.10 icmp_seq=4 ttl=59 time=6.497 ms
+84 bytes from 192.168.20.10 icmp_seq=5 ttl=59 time=10.691 ms
+```
+
+*Đánh giá kết quả Kịch bản 2:* Giải pháp cấu hình định tuyến động theo nhóm *Routing Group - OSPF* kết hợp cùng cơ chế *Route Redistribution* trên phần mềm NetworkTools đã hoàn thành xuất sắc bài toán kết nối mạng liên chi nhánh đa vùng. Toàn bộ các router tự động thiết lập quan hệ láng giềng, học đầy đủ bảng định tuyến và truyền thông dữ liệu hai chiều giữa tất cả các máy trạm đạt độ ổn định và tin cậy 100%.
 
 
 
