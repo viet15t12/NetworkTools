@@ -15,6 +15,11 @@ Rectangle {
     property int nextLocalId: -1
     property var pendingDeletes: []
     property var aclNames: []
+    property var interfaceNames: []
+    property var poolNames: []
+    property var poolNatNames: ({})
+    property var sourceTypeLabels: []
+    property var sourceTypeValues: []
     property bool hasPendingLocalChanges: false
     signal dataChanged()
 
@@ -29,24 +34,87 @@ Rectangle {
     function clearForm() {
         editingPatId = -1
         patAclCombo.currentIndex = aclNames.length > 0 ? 0 : -1
-        interfaceField.text = ""
-        patPoolField.text = ""
-        overloadCheck.checked = true
-        sourceTypeCombo.currentIndex = 0
+        interfaceCombo.currentIndex = interfaceNames.length > 0 ? 0 : -1
+        patPoolCombo.currentIndex = poolNames.length > 0 ? 0 : -1
+        sourceTypeCombo.currentIndex = sourceTypeValues.length > 0 ? 0 : -1
     }
 
     function editRule(row) {
         editingPatId = row.nat_pat_id
         patAclCombo.currentIndex = indexOfValue(aclNames, row.acl_name)
-        sourceTypeCombo.currentIndex = row.source_type === "Pool" ? 1 : 0
-        interfaceField.text = row.source_type === "Interface" ? row.source_value : ""
-        patPoolField.text = row.source_type === "Pool" ? row.source_value : ""
-        overloadCheck.checked = Boolean(row.overload)
+        if (row.source_type === "Interface" && indexOfValue(interfaceNames, row.source_value) < 0)
+            interfaceNames = interfaceNames.concat([row.source_value])
+        if (row.source_type === "Pool" && indexOfValue(poolNames, row.source_value) < 0)
+            poolNames = poolNames.concat([row.source_value])
+        rebuildSourceTypes(row.source_type)
+        interfaceCombo.currentIndex = row.source_type === "Interface"
+                ? indexOfValue(interfaceNames, row.source_value) : (interfaceNames.length > 0 ? 0 : -1)
+        patPoolCombo.currentIndex = row.source_type === "Pool"
+                ? indexOfValue(poolNames, row.source_value) : (poolNames.length > 0 ? 0 : -1)
     }
 
     function reloadAclNames() {
         aclNames = currentHostIp === "" ? [] : dbManager.getNatAclNames(currentHostIp)
         if (!isEditing()) patAclCombo.currentIndex = aclNames.length > 0 ? 0 : -1
+    }
+
+    function reloadSourceOptions() {
+        interfaceNames = []
+        poolNames = []
+        poolNatNames = ({})
+        if (currentHostIp === "") return
+
+        const interfaces = dbManager.getNatInterfaces(currentHostIp)
+        for (let i = 0; i < interfaces.length; i++) {
+            const name = String(interfaces[i].interface_name || "")
+            if (interfaces[i].direction === "outside" && name !== ""
+                    && indexOfValue(interfaceNames, name) < 0)
+                interfaceNames = interfaceNames.concat([name])
+        }
+
+        const pools = dbManager.getNatDynamicPools(currentHostIp)
+        const natNames = ({})
+        for (let i = 0; i < pools.length; i++) {
+            const name = String(pools[i].pool_name || "")
+            if (name === "" || indexOfValue(poolNames, name) >= 0) continue
+            poolNames = poolNames.concat([name])
+            natNames[name] = String(pools[i].nat_name || "")
+        }
+        poolNatNames = natNames
+        rebuildSourceTypes("")
+        if (!isEditing()) {
+            interfaceCombo.currentIndex = interfaceNames.length > 0 ? 0 : -1
+            patPoolCombo.currentIndex = poolNames.length > 0 ? 0 : -1
+        }
+    }
+
+    function rebuildSourceTypes(preferredValue) {
+        let labels = []
+        let values = []
+        if (interfaceNames.length > 0) {
+            labels.push("Outside Interface")
+            values.push("Interface")
+        }
+        if (poolNames.length > 0) {
+            labels.push("Dynamic Pool")
+            values.push("Pool")
+        }
+        sourceTypeLabels = labels
+        sourceTypeValues = values
+        const preferredIndex = indexOfValue(values, preferredValue)
+        sourceTypeCombo.currentIndex = preferredIndex >= 0
+                ? preferredIndex : (values.length > 0 ? 0 : -1)
+    }
+
+    function selectedSourceValue() {
+        return sourceTypeCombo.currentValue === "Interface"
+                ? interfaceCombo.currentValue : patPoolCombo.currentValue
+    }
+
+    function selectedNatName() {
+        return sourceTypeCombo.currentValue === "Pool"
+                ? String(poolNatNames[selectedSourceValue()] || "")
+                : "pat_" + currentHostIp
     }
 
     function refreshDirtyFlag() {
@@ -79,8 +147,8 @@ Rectangle {
     function stageRule() {
         const values = {
             acl_name: patAclCombo.currentValue, source_type: sourceTypeCombo.currentValue,
-            source_value: sourceTypeCombo.currentValue === "Interface" ? interfaceField.text.trim() : patPoolField.text.trim(),
-            overload: overloadCheck.checked
+            source_value: selectedSourceValue(), nat_name: selectedNatName(),
+            overload: true
         }
         if (isEditing()) {
             for (let i = 0; i < patModel.count; i++) {
@@ -90,9 +158,11 @@ Rectangle {
                 break
             }
         } else {
-            patModel.append({ nat_pat_id: nextLocalId--, acl_name: values.acl_name,
+            patModel.append({ nat_pat_id: nextLocalId--, nat_id: 0,
+                nat_name: values.nat_name, nat_acl_id: 0, acl_name: values.acl_name,
                 source_type: values.source_type, source_value: values.source_value,
-                overload: values.overload, _isNew: true, _isEdited: false })
+                overload: values.overload, description: "", sync_status: "pending_apply",
+                _isNew: true, _isEdited: false })
         }
         clearForm()
         refreshDirtyFlag()
@@ -115,6 +185,7 @@ Rectangle {
         }
         reloadRules()
         reloadAclNames()
+        reloadSourceOptions()
         if (ok) dataChanged()
         notify(ok ? "Saved PAT changes." : "Save PAT changes failed.", ok ? "success" : "error")
     }
@@ -122,9 +193,10 @@ Rectangle {
     onCurrentHostIpChanged: {
         clearForm()
         reloadAclNames()
+        reloadSourceOptions()
         reloadRules()
     }
-    Component.onCompleted: { reloadAclNames(); reloadRules() }
+    Component.onCompleted: { reloadAclNames(); reloadSourceOptions(); reloadRules() }
 
     ListModel { id: patModel }
 
@@ -173,7 +245,7 @@ Rectangle {
                 StandardComboBox {
                     id: patAclCombo
                     Layout.fillWidth: true
-                    labelText: "ACL Name"
+                    labelText: "NAT ACL Name"
                     model: natPatForm.aclNames
                     valueModel: natPatForm.aclNames
                     emptyText: "No NAT ACL available"
@@ -185,51 +257,32 @@ Rectangle {
                     id:               sourceTypeCombo
                     Layout.fillWidth: true
                     labelText:        "Source Type"
-                    model:            ["Interface", "Pool"]
-                    valueModel:       ["Interface", "Pool"]
+                    model:            natPatForm.sourceTypeLabels
+                    valueModel:       natPatForm.sourceTypeValues
+                    emptyText:        "No PAT source available"
+                    emptyWarningText: "Save an outside NAT interface or a Dynamic NAT pool first."
                 }
 
-                // Interface name
-                ColumnLayout {
+                StandardComboBox {
+                    id: interfaceCombo
                     Layout.fillWidth: true
-                    spacing: 4
                     visible: sourceTypeCombo.currentValue === "Interface"
-                    Text {
-                        text:           "Interface"
-                        color:          Theme.textSecondary
-                        font.pixelSize: Theme.fontSizeSmall
-                        font.family:    Theme.fontFamily
-                    }
-                    StandardTextField {
-                        id:               interfaceField
-                        Layout.fillWidth: true
-                        placeholderText:  "e.g., GigabitEthernet0/1"
-                    }
+                    labelText: "Outside Interface"
+                    model: natPatForm.interfaceNames
+                    valueModel: natPatForm.interfaceNames
+                    emptyText: "No outside interface available"
+                    emptyWarningText: "Add and save an outside interface in the NAT Interfaces tab first."
                 }
 
-                // Pool name (khi dùng pool)
-                ColumnLayout {
+                StandardComboBox {
+                    id: patPoolCombo
                     Layout.fillWidth: true
-                    spacing: 4
                     visible: sourceTypeCombo.currentValue === "Pool"
-                    Text {
-                        text:           "Pool Name"
-                        color:          Theme.textSecondary
-                        font.pixelSize: Theme.fontSizeSmall
-                        font.family:    Theme.fontFamily
-                    }
-                    StandardTextField {
-                        id:               patPoolField
-                        Layout.fillWidth: true
-                        placeholderText:  "e.g., NAT_POOL"
-                    }
-                }
-
-                // Overload checkbox
-                StandardCheckBox {
-                    id:   overloadCheck
-                    text: "Overload (PAT)"
-                    checked: true
+                    labelText: "Pool Name"
+                    model: natPatForm.poolNames
+                    valueModel: natPatForm.poolNames
+                    emptyText: "No dynamic NAT pool available"
+                    emptyWarningText: "Add and save a pool in the Dynamic tab first."
                 }
 
                 Item { Layout.fillHeight: true }
@@ -250,7 +303,9 @@ Rectangle {
                         type: "Primary"
                         text: natPatForm.isEditing() ? "Apply Edit" : "Add Locally"
                         enabled: patAclCombo.currentIndex >= 0 && currentHostIp !== "" &&
-                                 (sourceTypeCombo.currentValue === "Interface" ? interfaceField.text.trim() !== "" : patPoolField.text.trim() !== "")
+                                 sourceTypeCombo.currentIndex >= 0 &&
+                                 (sourceTypeCombo.currentValue === "Interface"
+                                  ? interfaceCombo.currentIndex >= 0 : patPoolCombo.currentIndex >= 0)
                         onClicked: natPatForm.stageRule()
                     }
                 }
@@ -277,9 +332,14 @@ Rectangle {
                         spacing: Theme.spacing8
 
                         DataTableCell {
+                            Layout.preferredWidth: 125
+                            header: true
+                            text: "NAT Name"
+                        }
+                        DataTableCell {
                             Layout.preferredWidth: 110
                             header: true
-                            text: "ACL"
+                            text: "NAT ACL"
                         }
                         DataTableCell {
                             Layout.preferredWidth: 100
@@ -291,11 +351,7 @@ Rectangle {
                             header: true
                             text: "Interface / Pool"
                         }
-                        DataTableCell {
-                            Layout.fillWidth: true
-                            header: true
-                            text: "Overload"
-                        }
+                        Item { Layout.fillWidth: true }
                         DataTableCell { Layout.preferredWidth: 64; header: true; text: "Actions" }
                     }
                 }
@@ -318,8 +374,12 @@ Rectangle {
                         spacing: Theme.spacing8
 
                         DataTableCell {
-                            Layout.preferredWidth: 110
+                            Layout.preferredWidth: 125
                             primary: true
+                            text: model.nat_name
+                        }
+                        DataTableCell {
+                            Layout.preferredWidth: 110
                             text: model.acl_name
                         }
                         DataTableCell {
@@ -330,11 +390,7 @@ Rectangle {
                             Layout.preferredWidth: 180
                             text: model.source_value
                         }
-                        DataTableCell {
-                            Layout.fillWidth: true
-                            text: model.overload ? "Yes" : "No"
-                            color: model.overload ? Theme.statusConnected : Theme.textSecondary
-                        }
+                        Item { Layout.fillWidth: true }
 
                         Item {
                             Layout.preferredWidth: 64
@@ -371,7 +427,7 @@ Rectangle {
             text: "Cancel Changes"
             type: "Text"
             enabled: hasPendingLocalChanges
-            onClicked: { natPatForm.clearForm(); natPatForm.reloadRules(); natPatForm.notify("Discarded local PAT changes.", "info") }
+            onClicked: { natPatForm.clearForm(); natPatForm.reloadAclNames(); natPatForm.reloadSourceOptions(); natPatForm.reloadRules(); natPatForm.notify("Discarded local PAT changes.", "info") }
         }
         StandardButton {
             text: "Reload UI"
@@ -383,6 +439,7 @@ Rectangle {
             onClicked: {
                 natPatForm.clearForm()
                 natPatForm.reloadAclNames()
+                natPatForm.reloadSourceOptions()
                 natPatForm.reloadRules()
                 natPatForm.notify("Reloaded PAT rules from database.", "info")
             }

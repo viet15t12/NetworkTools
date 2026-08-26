@@ -7,6 +7,8 @@
 
   <p><strong>Nền tảng desktop quản lý, cấu hình và giám sát thiết bị mạng tập trung.</strong></p>
 
+  <p><a href="https://github.com/viet15t12/NetworkTools.git">Kho mã nguồn chính thức</a></p>
+
   <p>
     <img alt="Python" src="https://img.shields.io/badge/Python-%E2%89%A53.11-3776AB?logo=python&logoColor=white">
     <img alt="PyQt6" src="https://img.shields.io/badge/UI-PyQt6%20%2B%20QML-41CD52?logo=qt&logoColor=white">
@@ -55,7 +57,7 @@ Dự án được phát triển trong khuôn khổ nghiên cứu:
 ### 1. Lấy mã nguồn
 
 ```bash
-git clone https://github.com/ntdatphu/NetworkTools.git
+git clone https://github.com/viet15t12/NetworkTools.git
 cd NetworkTools/app
 ```
 

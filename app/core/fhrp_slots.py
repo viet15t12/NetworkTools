@@ -42,3 +42,8 @@ class FhrpSlotsMixin:
     def deleteFhrpGroup(self, fhrp_id: int) -> dict[str, Any]:
         """Stage one logical FHRP group for removal from all member hosts."""
         return FhrpService(self).delete(fhrp_id)
+
+    @pyqtSlot(int, result="QVariant")
+    def cancelFhrpGroupDelete(self, fhrp_id: int) -> dict[str, Any]:
+        """Cancel a staged group removal before it is pushed to devices."""
+        return FhrpService(self).cancel_delete(fhrp_id)

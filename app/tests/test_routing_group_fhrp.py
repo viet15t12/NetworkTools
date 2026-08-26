@@ -511,6 +511,7 @@ class RoutingGroupAndFhrpTests(unittest.TestCase):
                 render_fhrp_commands(tasks[0]),
             )
             self.assertIn("no vrrp 20 preempt", render_fhrp_commands(tasks[0]))
+            self.assertIn("no vrrp 20", render_fhrp_commands(tasks[0]))
 
     def test_fhrp_delete_handles_partially_pushed_multi_host_group(self) -> None:
         service = FhrpService(self.db)
@@ -544,6 +545,96 @@ class RoutingGroupAndFhrpTests(unittest.TestCase):
             commands = render_fhrp_commands(pushed_tasks[0])
             self.assertIn("no glbp 30 preempt", commands)
             self.assertIn("no glbp 30 ip 192.168.10.1", commands)
+            self.assertIn("no glbp 30", commands)
+
+    def test_fhrp_delete_can_be_cancelled_without_losing_previous_states(self) -> None:
+        service = FhrpService(self.db)
+        candidates = service.matching_interfaces(
+            ["10.0.0.1", "10.0.0.2"], "192.168.10.1"
+        )["interfaces"]
+        result = service.save({
+            "protocol": "hsrp",
+            "group_number": 31,
+            "default_gateway": "192.168.10.1",
+            "members": [
+                {
+                    "host": row["host"],
+                    "iface_id": row["iface_id"],
+                    "tracks": [{"track_object": "1", "decrement_value": 10}],
+                }
+                for row in candidates
+            ],
+        })
+        self.assertTrue(result["ok"], result)
+        with self.db._connect() as connection:
+            connection.execute(
+                "UPDATE t08_fhrp_members SET sync_status = 'synchronized' "
+                "WHERE fhrp_id = ? AND host = '10.0.0.1'",
+                (result["fhrp_id"],),
+            )
+            connection.execute(
+                """
+                UPDATE t08_fhrp_tracks
+                SET sync_status = 'synchronized'
+                WHERE member_id IN (
+                    SELECT member_id FROM t08_fhrp_members
+                    WHERE fhrp_id = ? AND host = '10.0.0.1'
+                );
+                """,
+                (result["fhrp_id"],),
+            )
+            connection.commit()
+
+        self.assertTrue(service.delete(result["fhrp_id"])["ok"])
+        with self.db._connect() as connection:
+            staged = connection.execute(
+                """
+                SELECT host, sync_status, delete_restore_status
+                FROM t08_fhrp_members
+                WHERE fhrp_id = ? ORDER BY host;
+                """,
+                (result["fhrp_id"],),
+            ).fetchall()
+        self.assertEqual(
+            [tuple(row) for row in staged],
+            [
+                ("10.0.0.1", "pending_delete", "synchronized"),
+                ("10.0.0.2", "pending_delete", "pending_apply"),
+            ],
+        )
+
+        cancelled = service.cancel_delete(result["fhrp_id"])
+
+        self.assertTrue(cancelled["ok"], cancelled)
+        with self.db._connect() as connection:
+            restored = connection.execute(
+                """
+                SELECT host, sync_status, delete_restore_status
+                FROM t08_fhrp_members
+                WHERE fhrp_id = ? ORDER BY host;
+                """,
+                (result["fhrp_id"],),
+            ).fetchall()
+            track_states = connection.execute(
+                """
+                SELECT m.host, t.sync_status, t.delete_restore_status
+                FROM t08_fhrp_tracks AS t
+                JOIN t08_fhrp_members AS m ON m.member_id = t.member_id
+                WHERE m.fhrp_id = ? ORDER BY m.host;
+                """,
+                (result["fhrp_id"],),
+            ).fetchall()
+        expected = [
+            ("10.0.0.1", "synchronized", None),
+            ("10.0.0.2", "pending_apply", None),
+        ]
+        self.assertEqual([tuple(row) for row in restored], expected)
+        self.assertEqual([tuple(row) for row in track_states], expected)
+        self.assertEqual(collect_fhrp_tasks(self.db, "10.0.0.1"), [])
+        self.assertEqual(
+            collect_fhrp_tasks(self.db, "10.0.0.2")[0]["action"], "setup"
+        )
+        self.assertFalse(service.cancel_delete(result["fhrp_id"])["ok"])
 
     def test_gateway_cannot_equal_a_member_interface_address(self) -> None:
         result = FhrpService(self.db).matching_interfaces(
@@ -816,6 +907,7 @@ class RoutingGroupAndFhrpTests(unittest.TestCase):
             "no standby 45 timers",
             "no standby 45 priority",
             "no standby 45 preempt",
+            "no standby 45",
         ):
             self.assertIn(command, commands)
 

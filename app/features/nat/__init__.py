@@ -24,6 +24,7 @@ from .nat_db import (
     get_nat_interfaces,
     get_nat_pat_rules,
     get_nat_route_map_entries,
+    get_nat_route_map_names,
     get_nat_static_entries,
 )
 
@@ -46,5 +47,6 @@ __all__ = [
     "get_nat_interfaces",
     "get_nat_pat_rules",
     "get_nat_route_map_entries",
+    "get_nat_route_map_names",
     "get_nat_static_entries",
 ]

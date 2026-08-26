@@ -254,10 +254,9 @@ def main() -> int:
             return
         session = welcome_controller.active_session()
         if session is None:
-            # closeProject() removes its extracted /tmp directory before this
-            # signal is delivered.  Drop every reference to that workspace DB
-            # immediately so a later application shutdown never touches a
-            # path that no longer exists.
+            # closeProject() emits this signal before removing its extracted
+            # directory. Drop every database reference first so Windows does
+            # not retain locks that prevent temporary-workspace cleanup.
             if not db_manager.set_workspace_databases(
                 DEVICE_NETWORK_DB, INFO_COLLECTED_DB
             ):

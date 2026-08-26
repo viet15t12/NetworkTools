@@ -14,6 +14,7 @@ Rectangle {
     property int editingRuleId: -1
     property int nextLocalId: -1
     property var pendingDeletes: []
+    property var aclNames: []
     property bool hasPendingLocalChanges: false
     signal dataChanged()
 
@@ -22,17 +23,49 @@ Rectangle {
     function clearForm() {
         editingRuleId = -1
         aclNameField.text = ""
+        aclNameCombo.currentIndex = 0
         sourceNetField.text = ""
         wildcardField.text = ""
+        sourceKindCombo.currentIndex = 0
         actionCombo.currentIndex = 0
     }
 
     function editAcl(row) {
         editingRuleId = row.rule_id
-        aclNameField.text = row.acl_name || ""
+        const aclIndex = indexOfValue(aclNames, row.acl_name)
+        aclNameCombo.currentIndex = aclIndex >= 0 ? aclIndex + 1 : 0
+        aclNameField.text = aclIndex >= 0 ? "" : (row.acl_name || "")
         actionCombo.currentIndex = row.action === "deny" ? 1 : 0
-        sourceNetField.text = row.source_network || ""
-        wildcardField.text = row.wildcard || ""
+        if (String(row.source_network || "").toLowerCase() === "any") {
+            sourceKindCombo.currentIndex = 2
+            sourceNetField.text = ""
+            wildcardField.text = ""
+        } else if (String(row.wildcard || "") === "") {
+            sourceKindCombo.currentIndex = 1
+            sourceNetField.text = row.source_network || ""
+            wildcardField.text = ""
+        } else {
+            sourceKindCombo.currentIndex = 0
+            sourceNetField.text = row.source_network || ""
+            wildcardField.text = row.wildcard || ""
+        }
+    }
+
+    function indexOfValue(values, value) {
+        for (let i = 0; i < values.length; i++)
+            if (String(values[i]) === String(value)) return i
+        return -1
+    }
+
+    function selectedAclName() {
+        return aclNameCombo.currentIndex > 0
+                ? aclNameCombo.currentValue
+                : aclNameField.text.trim()
+    }
+
+    function reloadAclNames() {
+        aclNames = currentHostIp === "" ? [] : dbManager.getNatAclNames(currentHostIp)
+        if (!isEditing()) aclNameCombo.currentIndex = 0
     }
 
     function refreshDirtyFlag() {
@@ -62,8 +95,10 @@ Rectangle {
     }
 
     function stageAcl() {
-        const values = { acl_name: aclNameField.text.trim(), action: actionCombo.currentValue,
-            source_network: sourceNetField.text.trim(), wildcard: wildcardField.text.trim() }
+        const sourceKind = sourceKindCombo.currentValue
+        const values = { acl_name: selectedAclName(), action: actionCombo.currentValue,
+            source_network: sourceKind === "any" ? "any" : sourceNetField.text.trim(),
+            wildcard: sourceKind === "network" ? wildcardField.text.trim() : "" }
         if (isEditing()) {
             for (let i = 0; i < aclModel.count; i++) {
                 if (aclModel.get(i).rule_id !== editingRuleId) continue
@@ -71,9 +106,15 @@ Rectangle {
                 if (!aclModel.get(i)._isNew) aclModel.setProperty(i, "_isEdited", true)
                 break
             }
-        } else aclModel.append({ rule_id: nextLocalId--, acl_name: values.acl_name, action: values.action,
-            source_network: values.source_network, wildcard: values.wildcard, _isNew: true, _isEdited: false })
+        } else aclModel.append({ nat_acl_id: 0, rule_id: nextLocalId--,
+            acl_name: values.acl_name, acl_type: "standard", host: currentHostIp,
+            description: "", sequence: 0, action: values.action,
+            source_network: values.source_network, wildcard: values.wildcard,
+            sync_status: "pending_apply", _isNew: true, _isEdited: false })
+        if (indexOfValue(aclNames, values.acl_name) < 0)
+            aclNames = aclNames.concat([values.acl_name])
         clearForm()
+        aclNameCombo.currentIndex = indexOfValue(aclNames, values.acl_name) + 1
         refreshDirtyFlag()
     }
 
@@ -93,15 +134,17 @@ Rectangle {
             if (ok && (row._isNew || row._isEdited)) ok = dbManager.addNatAcl(currentHostIp, row.acl_name, row.action, row.source_network, row.wildcard)
         }
         reloadAcls()
+        reloadAclNames()
         if (ok) dataChanged()
         notify(ok ? "Saved NAT ACL changes." : "Save NAT ACL changes failed.", ok ? "success" : "error")
     }
 
     onCurrentHostIpChanged: {
         clearForm()
+        reloadAclNames()
         reloadAcls()
     }
-    Component.onCompleted:  reloadAcls()
+    Component.onCompleted: { reloadAclNames(); reloadAcls() }
 
     ListModel { id: aclModel }
 
@@ -138,12 +181,21 @@ Rectangle {
                     color:            Theme.splitHandleColor
                 }
 
-                // ACL Name
+                StandardComboBox {
+                    id: aclNameCombo
+                    Layout.fillWidth: true
+                    labelText: "NAT ACL Name"
+                    model: ["Create new NAT ACL"].concat(natAclForm.aclNames)
+                    valueModel: [""].concat(natAclForm.aclNames)
+                }
+
+                // New ACL Name
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 4
+                    visible: aclNameCombo.currentIndex === 0
                     Text {
-                        text:           "ACL Name"
+                        text:           "New NAT ACL Name"
                         color:          Theme.textSecondary
                         font.pixelSize: Theme.fontSizeSmall
                         font.family:    Theme.fontFamily
@@ -164,12 +216,21 @@ Rectangle {
                     valueModel:       ["permit", "deny"]
                 }
 
+                StandardComboBox {
+                    id: sourceKindCombo
+                    Layout.fillWidth: true
+                    labelText: "Source Type"
+                    model: ["Network", "Host", "Any"]
+                    valueModel: ["network", "host", "any"]
+                }
+
                 // Source Network
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 4
+                    visible: sourceKindCombo.currentValue !== "any"
                     Text {
-                        text:           "Source Network"
+                        text: sourceKindCombo.currentValue === "host" ? "Source Host" : "Source Network"
                         color:          Theme.textSecondary
                         font.pixelSize: Theme.fontSizeSmall
                         font.family:    Theme.fontFamily
@@ -186,6 +247,7 @@ Rectangle {
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 4
+                    visible: sourceKindCombo.currentValue === "network"
                     Text {
                         text:           "Wildcard Mask"
                         color:          Theme.textSecondary
@@ -209,7 +271,11 @@ Rectangle {
                     StandardButton {
                         Layout.fillWidth: true; Layout.preferredHeight: 36; type: "Primary"
                         text: natAclForm.isEditing() ? "Apply Edit" : "Add Locally"
-                        enabled: aclNameField.text.trim() !== "" && sourceNetField.text.trim() !== "" && wildcardField.text.trim() !== "" && currentHostIp !== ""
+                        enabled: natAclForm.selectedAclName() !== "" && currentHostIp !== ""
+                                 && (sourceKindCombo.currentValue === "any"
+                                     || sourceNetField.text.trim() !== "")
+                                 && (sourceKindCombo.currentValue !== "network"
+                                     || wildcardField.text.trim() !== "")
                         onClicked: natAclForm.stageAcl()
                     }
                 }
@@ -356,7 +422,7 @@ Rectangle {
             text: "Cancel Changes"
             type: "Text"
             enabled: hasPendingLocalChanges
-            onClicked: { natAclForm.clearForm(); natAclForm.reloadAcls(); natAclForm.notify("Discarded local NAT ACL changes.", "info") }
+            onClicked: { natAclForm.clearForm(); natAclForm.reloadAclNames(); natAclForm.reloadAcls(); natAclForm.notify("Discarded local NAT ACL changes.", "info") }
         }
         StandardButton {
             text: "Reload UI"
@@ -365,7 +431,7 @@ Rectangle {
             autoCompact: false
             Layout.minimumWidth: expandedImplicitWidth
             enabled: currentHostIp !== ""
-            onClicked: { natAclForm.clearForm(); natAclForm.reloadAcls(); natAclForm.notify("Reloaded NAT ACL entries from database.", "info") }
+            onClicked: { natAclForm.clearForm(); natAclForm.reloadAclNames(); natAclForm.reloadAcls(); natAclForm.notify("Reloaded NAT ACL entries from database.", "info") }
         }
         StandardButton {
             text: "Save"

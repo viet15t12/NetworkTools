@@ -138,6 +138,10 @@ class NatQmlBridgeContractTests(unittest.TestCase):
     def test_dynamic_nat_uses_acl_combo_and_nat_tabs_auto_reload(self) -> None:
         nat_dir = Path(__file__).resolve().parents[1] / "UI" / "qml" / "features" / "nat"
         dynamic_source = (nat_dir / "NatDynamicForm.qml").read_text(encoding="utf-8")
+        interface_source = (nat_dir / "NatInterfaceForm.qml").read_text(encoding="utf-8")
+        acl_source = (nat_dir / "NatAclForm.qml").read_text(encoding="utf-8")
+        static_source = (nat_dir / "NatStaticForm.qml").read_text(encoding="utf-8")
+        subbar_source = (nat_dir / "NatSubBar.qml").read_text(encoding="utf-8")
         route_map_source = (nat_dir / "NatRouteMapForm.qml").read_text(encoding="utf-8")
         view_source = (nat_dir / "NatView.qml").read_text(encoding="utf-8")
 
@@ -149,6 +153,27 @@ class NatQmlBridgeContractTests(unittest.TestCase):
         self.assertIn("model: [\"No ACL\"].concat(routeMapForm.aclNames)", route_map_source)
         self.assertIn("dbManager.getNatAclNames(currentHostIp)", route_map_source)
         self.assertNotIn("id: aclNameField", route_map_source)
+        self.assertIn("id: routeMapNameCombo", route_map_source)
+        self.assertIn("dbManager.getNatRouteMapNames(currentHostIp)", route_map_source)
+        pat_source = (nat_dir / "NatPatForm.qml").read_text(encoding="utf-8")
+        self.assertIn("id: interfaceCombo", pat_source)
+        self.assertIn("id: patPoolCombo", pat_source)
+        self.assertNotIn("id:               interfaceField", pat_source)
+        self.assertNotIn("id:               patPoolField", pat_source)
+        self.assertIn("id: intfNameCombo", interface_source)
+        self.assertIn("dbManager.getRouterInterfaces(currentHostIp)", interface_source)
+        self.assertNotIn("id:               intfNameField", interface_source)
+        self.assertIn('tabs: ["Interfaces", "ACL", "Static", "Dynamic", "PAT", "Route Map", "Info"]', subbar_source)
+        self.assertIn('activeTab: "Interfaces"', subbar_source)
+        self.assertIn("id: sourceKindCombo", acl_source)
+        self.assertIn('valueModel: ["network", "host", "any"]', acl_source)
+        self.assertIn("id: localPortSpin", static_source)
+        self.assertIn("id: globalPortSpin", static_source)
+        self.assertNotIn("id:               localPortField", static_source)
+        self.assertNotIn("id:               globalPortField", static_source)
+        self.assertIn("property var sourceTypeValues: []", pat_source)
+        self.assertIn("function rebuildSourceTypes(preferredValue)", pat_source)
+        self.assertNotIn("id:   overloadCheck", pat_source)
         self.assertIn("function reloadSelectedNatTab()", view_source)
         self.assertIn("dynamicLoader.item.reloadAclNames()", view_source)
         self.assertIn("dynamicLoader.item.reloadPools()", view_source)
@@ -480,6 +505,10 @@ class ButtonIconContractTests(unittest.TestCase):
         self.assertIn('text: "Reload UI"', page)
         self.assertIn("autoCompact: false", page)
         self.assertIn("width: Math.ceil(expandedImplicitWidth)", page)
+        self.assertIn("cancelFhrpGroupDelete", page)
+        self.assertIn('text: "Cancel Delete"', (
+            fhrp_root / "FhrpSavedGroupsPanel.qml"
+        ).read_text(encoding="utf-8"))
         self.assertIn("FhrpProtocolOptionsEditor {", page)
         self.assertIn("advertisement_ms: root.advertisementMs", page)
         self.assertIn("load_balancing: root.loadBalancing", page)
@@ -1156,6 +1185,11 @@ class QmlModuleContractTests(unittest.TestCase):
             self.ui_root / "qml" / "layout" / "ActivityBar.qml"
         ).read_text(encoding="utf-8")
 
+        self.assertIn("function transitionToWelcome(mode)", main)
+        self.assertIn('root.transitionToWelcome("create")', main)
+        self.assertIn('root.transitionToWelcome("open")', main)
+        self.assertIn("root.workspaceBackend.requestCloseWorkspace()", main)
+
         self.assertIn("CommandRegistry 1.0 qml/shared/CommandRegistry.qml", qmldir)
         self.assertIn("AppCommand 1.0 qml/shared/AppCommand.qml", qmldir)
         for command_id in (
@@ -1274,6 +1308,11 @@ class QmlModuleContractTests(unittest.TestCase):
         about = (
             self.ui_root / "qml" / "app" / "AboutWindow.qml"
         ).read_text(encoding="utf-8")
+        self.assertIn(
+            'repositoryUrl: "https://github.com/viet15t12/NetworkTools.git"',
+            about,
+        )
+        self.assertIn("Qt.openUrlExternally(link)", about)
         main = (self.ui_root / "qml" / "app" / "Main.qml").read_text(
             encoding="utf-8"
         )

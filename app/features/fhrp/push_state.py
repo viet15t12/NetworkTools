@@ -31,7 +31,7 @@ def apply_fhrp_success(db: Any, task: dict[str, Any]) -> None:
             conn.execute(
                 """
                 UPDATE t08_fhrp_members
-                SET sync_status = 'synchronized'
+                SET sync_status = 'synchronized', delete_restore_status = NULL
                 WHERE member_id = ?;
                 """,
                 (member_id,),
@@ -39,7 +39,7 @@ def apply_fhrp_success(db: Any, task: dict[str, Any]) -> None:
             conn.execute(
                 """
                 UPDATE t08_fhrp_tracks
-                SET sync_status = 'synchronized'
+                SET sync_status = 'synchronized', delete_restore_status = NULL
                 WHERE member_id = ? AND sync_status = 'pending_apply';
                 """,
                 (member_id,),

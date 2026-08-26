@@ -14,6 +14,7 @@ Rectangle {
     property int editingInterfaceId: -1
     property int nextLocalId: -1
     property var pendingDeletes: []
+    property var interfaceNames: []
     property bool hasPendingLocalChanges: false
     signal dataChanged()
 
@@ -21,14 +22,36 @@ Rectangle {
 
     function clearForm() {
         editingInterfaceId = -1
-        intfNameField.text = ""
+        intfNameCombo.currentIndex = interfaceNames.length > 0 ? 0 : -1
         directionCombo.currentIndex = 0
     }
 
     function editInterface(row) {
         editingInterfaceId = row.nat_intf_id
-        intfNameField.text = row.interface_name || ""
+        if (indexOfValue(interfaceNames, row.interface_name) < 0)
+            interfaceNames = interfaceNames.concat([row.interface_name])
+        intfNameCombo.currentIndex = indexOfValue(interfaceNames, row.interface_name)
         directionCombo.currentIndex = row.direction === "outside" ? 1 : 0
+    }
+
+    function indexOfValue(values, value) {
+        for (let i = 0; i < values.length; i++)
+            if (String(values[i]) === String(value)) return i
+        return -1
+    }
+
+    function reloadInterfaceNames() {
+        interfaceNames = []
+        if (currentHostIp === "") return
+        const rows = dbManager.getRouterInterfaces(currentHostIp)
+        let names = []
+        for (let i = 0; i < rows.length; i++) {
+            const name = String(rows[i].interface_name || "")
+            if (name !== "" && indexOfValue(names, name) < 0)
+                names.push(name)
+        }
+        interfaceNames = names
+        if (!isEditing()) intfNameCombo.currentIndex = names.length > 0 ? 0 : -1
     }
 
     function refreshDirtyFlag() {
@@ -58,7 +81,7 @@ Rectangle {
     }
 
     function stageInterface() {
-        const values = { interface_name: intfNameField.text.trim(), direction: directionCombo.currentValue }
+        const values = { interface_name: intfNameCombo.currentValue, direction: directionCombo.currentValue }
         if (isEditing()) {
             for (let i = 0; i < interfaceModel.count; i++) {
                 if (interfaceModel.get(i).nat_intf_id !== editingInterfaceId) continue
@@ -67,7 +90,9 @@ Rectangle {
                 if (!interfaceModel.get(i)._isNew) interfaceModel.setProperty(i, "_isEdited", true)
                 break
             }
-        } else interfaceModel.append({ nat_intf_id: nextLocalId--, interface_name: values.interface_name, direction: values.direction, _isNew: true, _isEdited: false })
+        } else interfaceModel.append({ nat_intf_id: nextLocalId--, nat_id: 0,
+            interface_name: values.interface_name, direction: values.direction,
+            sync_status: "pending_apply", _isNew: true, _isEdited: false })
         clearForm()
         refreshDirtyFlag()
     }
@@ -94,9 +119,10 @@ Rectangle {
 
     onCurrentHostIpChanged: {
         clearForm()
+        reloadInterfaceNames()
         reloadInterfaces()
     }
-    Component.onCompleted:  reloadInterfaces()
+    Component.onCompleted: { reloadInterfaceNames(); reloadInterfaces() }
 
     ListModel { id: interfaceModel }
 
@@ -142,28 +168,21 @@ Rectangle {
                     color:            Theme.splitHandleColor
                 }
 
-                // Interface Name
-                ColumnLayout {
+                StandardComboBox {
+                    id: intfNameCombo
                     Layout.fillWidth: true
-                    spacing: 4
-                    Text {
-                        text:           "Interface Name"
-                        color:          Theme.textSecondary
-                        font.pixelSize: Theme.fontSizeSmall
-                        font.family:    Theme.fontFamily
-                    }
-                    StandardTextField {
-                        id:               intfNameField
-                        Layout.fillWidth: true
-                        placeholderText:  "e.g., GigabitEthernet0/0"
-                    }
+                    labelText: "Interface Name"
+                    model: natInterfaceForm.interfaceNames
+                    valueModel: natInterfaceForm.interfaceNames
+                    emptyText: "No router interface available"
+                    emptyWarningText: "No interface exists for this device. Add or synchronize router interfaces first."
                 }
 
                 // Direction
                 StandardComboBox {
                     id:               directionCombo
                     Layout.fillWidth: true
-                    labelText:        "Direction"
+                    labelText:        "NAT Role"
                     model:            ["Inside", "Outside"]
                     valueModel:       ["inside", "outside"]
                 }
@@ -177,7 +196,7 @@ Rectangle {
                     StandardButton {
                         Layout.fillWidth: true; Layout.preferredHeight: 36; type: "Primary"
                         text: natInterfaceForm.isEditing() ? "Apply Edit" : "Add Locally"
-                        enabled: intfNameField.text.trim() !== "" && currentHostIp !== ""
+                        enabled: intfNameCombo.currentIndex >= 0 && currentHostIp !== ""
                         onClicked: natInterfaceForm.stageInterface()
                     }
                 }
@@ -211,7 +230,7 @@ Rectangle {
                         DataTableCell {
                             Layout.preferredWidth: 120
                             header: true
-                            text: "Direction"
+                            text: "NAT Role"
                         }
                         DataTableCell { Layout.preferredWidth: 64; header: true; text: "Actions" }
                     }
@@ -303,7 +322,7 @@ Rectangle {
             text: "Cancel Changes"
             type: "Text"
             enabled: hasPendingLocalChanges
-            onClicked: { natInterfaceForm.clearForm(); natInterfaceForm.reloadInterfaces(); natInterfaceForm.notify("Discarded local NAT interface changes.", "info") }
+            onClicked: { natInterfaceForm.clearForm(); natInterfaceForm.reloadInterfaceNames(); natInterfaceForm.reloadInterfaces(); natInterfaceForm.notify("Discarded local NAT interface changes.", "info") }
         }
         StandardButton {
             text: "Reload UI"
@@ -312,7 +331,7 @@ Rectangle {
             autoCompact: false
             Layout.minimumWidth: expandedImplicitWidth
             enabled: currentHostIp !== ""
-            onClicked: { natInterfaceForm.clearForm(); natInterfaceForm.reloadInterfaces(); natInterfaceForm.notify("Reloaded NAT interfaces from database.", "info") }
+            onClicked: { natInterfaceForm.clearForm(); natInterfaceForm.reloadInterfaceNames(); natInterfaceForm.reloadInterfaces(); natInterfaceForm.notify("Reloaded NAT interfaces from database.", "info") }
         }
         StandardButton {
             text: "Save"

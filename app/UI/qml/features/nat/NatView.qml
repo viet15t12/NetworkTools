@@ -9,12 +9,12 @@ Rectangle {
     color: Theme.contentBackground
 
     property string currentHostIp: ""
-    property string currentTab:    "Static"
+    property string currentTab:    "Interfaces"
     property int viewPushRevision: 0
-    property bool staticLoaded: true
+    property bool staticLoaded: false
     property bool dynamicLoaded: false
     property bool patLoaded: false
-    property bool interfacesLoaded: false
+    property bool interfacesLoaded: true
     property bool aclLoaded: false
     property bool routeMapLoaded: false
     property bool infoLoaded: false
@@ -108,12 +108,15 @@ Rectangle {
         } else if (currentTab === "PAT" && item.reloadAclNames && item.reloadRules) {
             item.reloadAclNames()
             item.reloadRules()
-        } else if (currentTab === "Interfaces" && item.reloadInterfaces) {
+        } else if (currentTab === "Interfaces" && item.reloadInterfaceNames && item.reloadInterfaces) {
+            item.reloadInterfaceNames()
             item.reloadInterfaces()
-        } else if (currentTab === "ACL" && item.reloadAcls) {
-            item.reloadAcls()
-        } else if (currentTab === "Route Map" && item.reloadAclNames && item.reloadEntries) {
+        } else if (currentTab === "ACL" && item.reloadAclNames && item.reloadAcls) {
             item.reloadAclNames()
+            item.reloadAcls()
+        } else if (currentTab === "Route Map" && item.reloadAclNames && item.reloadRouteMapNames && item.reloadEntries) {
+            item.reloadAclNames()
+            item.reloadRouteMapNames()
             item.reloadEntries()
         } else {
             return false
@@ -168,10 +171,17 @@ Rectangle {
             patLoader.item.reloadAclNames()
             patLoader.item.reloadRules()
         }
-        if (interfacesLoader.item) interfacesLoader.item.reloadInterfaces()
-        if (aclLoader.item) aclLoader.item.reloadAcls()
+        if (interfacesLoader.item) {
+            interfacesLoader.item.reloadInterfaceNames()
+            interfacesLoader.item.reloadInterfaces()
+        }
+        if (aclLoader.item) {
+            aclLoader.item.reloadAclNames()
+            aclLoader.item.reloadAcls()
+        }
         if (routeMapLoader.item) {
             routeMapLoader.item.reloadAclNames()
+            routeMapLoader.item.reloadRouteMapNames()
             routeMapLoader.item.reloadEntries()
         }
         refreshViewPush()

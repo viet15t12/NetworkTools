@@ -329,6 +329,11 @@ class WorkspaceSession:
     def is_closed(self) -> bool:
         return self._close_requested
 
+    @property
+    def is_cleaned(self) -> bool:
+        with self._state_lock:
+            return self._cleaned
+
     def set_password(self, password: str | None) -> None:
         with self._state_lock:
             self._clear_password()
@@ -667,16 +672,52 @@ class WorkspacePackageCodec:
         if not members or members[0].filename != MANIFEST_NAME:
             raise InvalidWorkspacePackage("manifest.json must be the first archive entry.")
 
-        seen: set[str] = set()
+        # Model the member list as a case-insensitive path tree before writing
+        # anything.  Exact duplicate checks alone do not catch archives such
+        # as ``backup/router`` plus ``backup/router/config.txt`` (or a file and
+        # directory with the same spelling).  Those archives otherwise fail
+        # halfway through extraction with a platform-specific FileExistsError.
+        seen_paths: set[tuple[str, ...]] = set()
+        file_paths: set[tuple[str, ...]] = set()
+        parent_paths: set[tuple[str, ...]] = set()
+        path_spellings: dict[tuple[str, ...], tuple[str, ...]] = {}
         total_size = 0
         for member in members:
             normalized = self._validate_member(member)
-            collision_key = unicodedata.normalize("NFC", normalized).casefold()
-            if collision_key in seen:
+            original_parts = PurePosixPath(normalized).parts
+            collision_key = tuple(
+                unicodedata.normalize("NFC", part).casefold()
+                for part in original_parts
+            )
+            if collision_key in seen_paths:
                 raise InvalidWorkspacePackage(
                     f"Duplicate or case-colliding archive path: {member.filename!r}."
                 )
-            seen.add(collision_key)
+            if any(
+                collision_key[:depth] in file_paths
+                for depth in range(1, len(collision_key))
+            ):
+                raise InvalidWorkspacePackage(
+                    f"Archive path is nested below a file: {member.filename!r}."
+                )
+            if not member.is_dir() and collision_key in parent_paths:
+                raise InvalidWorkspacePackage(
+                    f"Archive file conflicts with a directory tree: {member.filename!r}."
+                )
+            for depth in range(1, len(collision_key) + 1):
+                prefix = collision_key[:depth]
+                spelling = original_parts[:depth]
+                previous_spelling = path_spellings.get(prefix)
+                if previous_spelling is not None and previous_spelling != spelling:
+                    raise InvalidWorkspacePackage(
+                        f"Case-colliding archive path component: {member.filename!r}."
+                    )
+                path_spellings[prefix] = spelling
+            seen_paths.add(collision_key)
+            if not member.is_dir():
+                file_paths.add(collision_key)
+            for depth in range(1, len(collision_key)):
+                parent_paths.add(collision_key[:depth])
             if (
                 self.limits.max_entry_size is not None
                 and member.file_size > self.limits.max_entry_size

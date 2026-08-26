@@ -21,6 +21,7 @@ Window {
     flags: Qt.Dialog | Qt.FramelessWindowHint
 
     property bool ownsWindowLock: false
+    readonly property string repositoryUrl: "https://github.com/viet15t12/NetworkTools.git"
 
     function open() {
         if (!root.visible) {
@@ -77,7 +78,7 @@ Window {
             DialogTitleBar {
                 Layout.fillWidth: true
                 title: qsTr("About NetworkTools")
-                subtitle: qsTr("Desktop network operations workspace")
+                subtitle: qsTr("Centralized network management and automation workspace")
                 closeTooltip: qsTr("Close About NetworkTools")
                 onCloseRequested: root.close()
             }
@@ -109,7 +110,8 @@ Window {
 
                     Text {
                         Layout.fillWidth: true
-                        text: qsTr("Developed by Team 3TM\nPTIT - Ho Chi Minh City")
+                        text: qsTr("Developed by the 3TM Research Team\n"
+                                   + "PTIT – Ho Chi Minh City Campus")
                         color: Theme.textSecondary
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSizeNormal
@@ -118,11 +120,18 @@ Window {
 
                     Text {
                         Layout.fillWidth: true
-                        text: "https://github.com/ntdatphu/NetworkTools/"
-                        color: Theme.accentColor
+                        text: "<a href=\"" + root.repositoryUrl + "\">"
+                              + root.repositoryUrl + "</a>"
+                        textFormat: Text.RichText
+                        linkColor: Theme.accentColor
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSizeSmall
                         elide: Text.ElideRight
+                        onLinkActivated: link => Qt.openUrlExternally(link)
+
+                        HoverHandler {
+                            cursorShape: Qt.PointingHandCursor
+                        }
                     }
                 }
             }

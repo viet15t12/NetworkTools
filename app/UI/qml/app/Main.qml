@@ -33,6 +33,7 @@ StatefulWindow {
     property string workspaceDisplayName: ""
     property string workspacePath: ""
     property string pendingRollbackSnapshotId: ""
+    property string pendingWelcomeMode: ""
     property bool nativePresenterFailed: false
     property var terminalStates: ({})
 
@@ -56,6 +57,13 @@ StatefulWindow {
             return false
         root.welcomeBackend.requestWelcome(mode)
         return true
+    }
+
+    function transitionToWelcome(mode) {
+        root.pendingWelcomeMode = mode || ""
+        if (root.workspaceBackend !== null && root.workspaceBackend.hasWorkspace)
+            return root.workspaceBackend.requestCloseWorkspace()
+        return root.requestWelcome(root.pendingWelcomeMode)
     }
 
     function prepareForWindowHide() {
@@ -111,7 +119,9 @@ StatefulWindow {
         }
 
         function onWorkspaceCloseCompleted() {
-            root.requestWelcome("")
+            const mode = root.pendingWelcomeMode
+            root.pendingWelcomeMode = ""
+            root.requestWelcome(mode)
         }
     }
 
@@ -448,8 +458,8 @@ StatefulWindow {
         systemLogsAvailable: true
         databaseAvailable: activityBar.canActivateDatabase
 
-        newProjectHandler: function() { return root.requestWelcome("create") }
-        openProjectHandler: function() { return root.requestWelcome("open") }
+        newProjectHandler: function() { return root.transitionToWelcome("create") }
+        openProjectHandler: function() { return root.transitionToWelcome("open") }
         saveHandler: function() { return root.workspaceBackend.requestManualSave() }
         createSnapshotHandler: function() {
             snapshotHistoryDialog.openForCreate()
@@ -460,9 +470,7 @@ StatefulWindow {
             return true
         }
         closeWorkspaceHandler: function() {
-            if (root.workspaceBackend === null)
-                return root.requestWelcome("")
-            return root.workspaceBackend.requestCloseWorkspace()
+            return root.transitionToWelcome("")
         }
         reloadHandler: function() {
             if (root.isSftpMode && sftpWorkspaceLoader.item)

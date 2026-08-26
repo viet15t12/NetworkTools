@@ -30,6 +30,7 @@ from features.nat import (
     get_nat_interfaces,
     get_nat_pat_rules,
     get_nat_route_map_entries,
+    get_nat_route_map_names,
     get_nat_static_entries,
 )
 
@@ -137,6 +138,10 @@ class NatSlotsMixin:
     @pyqtSlot(str, result="QVariant")
     def getNatRouteMapEntries(self, host: str) -> list[dict[str, Any]]:
         return get_nat_route_map_entries(self, host)
+
+    @pyqtSlot(str, result="QVariant")
+    def getNatRouteMapNames(self, host: str) -> list[str]:
+        return get_nat_route_map_names(self, host)
 
     @pyqtSlot(str, str, str, int, str, str, result=bool)
     def addNatRouteMapEntry(

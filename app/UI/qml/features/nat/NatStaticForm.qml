@@ -23,8 +23,8 @@ Rectangle {
         editingStaticId = -1
         insideLocalField.text = ""
         insideGlobalField.text = ""
-        localPortField.text = ""
-        globalPortField.text = ""
+        localPortSpin.value = 80
+        globalPortSpin.value = 8080
         protocolCombo.currentIndex = 0
     }
 
@@ -32,8 +32,8 @@ Rectangle {
         editingStaticId = row.nat_static_id
         insideLocalField.text = row.inside_local || ""
         insideGlobalField.text = row.inside_global || ""
-        localPortField.text = row.local_port || ""
-        globalPortField.text = row.global_port || ""
+        localPortSpin.value = Number(row.local_port || 80)
+        globalPortSpin.value = Number(row.global_port || 8080)
         protocolCombo.currentIndex = String(row.protocol || "").toUpperCase() === "TCP" ? 1 : (String(row.protocol || "").toUpperCase() === "UDP" ? 2 : 0)
     }
 
@@ -66,7 +66,8 @@ Rectangle {
     function stageEntry() {
         const values = { inside_local: insideLocalField.text.trim(), inside_global: insideGlobalField.text.trim(),
             protocol: protocolCombo.currentValue === "Any" ? "" : protocolCombo.currentValue,
-            local_port: localPortField.text.trim(), global_port: globalPortField.text.trim() }
+            local_port: protocolCombo.currentValue === "Any" ? "" : String(localPortSpin.value),
+            global_port: protocolCombo.currentValue === "Any" ? "" : String(globalPortSpin.value) }
         if (isEditing()) {
             for (let i = 0; i < entryModel.count; i++) {
                 if (entryModel.get(i).nat_static_id !== editingStaticId) continue
@@ -74,9 +75,11 @@ Rectangle {
                 if (!entryModel.get(i)._isNew) entryModel.setProperty(i, "_isEdited", true)
                 break
             }
-        } else entryModel.append({ nat_static_id: nextLocalId--, inside_local: values.inside_local,
+        } else entryModel.append({ nat_static_id: nextLocalId--, nat_id: 0,
+            inside_local: values.inside_local,
             inside_global: values.inside_global, protocol: values.protocol, local_port: values.local_port,
-            global_port: values.global_port, _isNew: true, _isEdited: false })
+            global_port: values.global_port, is_extendable: 0, description: "",
+            sync_status: "pending_apply", _isNew: true, _isEdited: false })
         clearForm()
         refreshDirtyFlag()
     }
@@ -162,8 +165,9 @@ Rectangle {
                         font.pixelSize: Theme.fontSizeSmall
                         font.family:    Theme.fontFamily
                     }
-                    StandardTextField {
+                    StandardNetworkField {
                         id:               insideLocalField
+                        inputKind:        "ipv4"
                         Layout.fillWidth: true
                         placeholderText:  "e.g., 192.168.1.10"
                     }
@@ -179,8 +183,9 @@ Rectangle {
                         font.pixelSize: Theme.fontSizeSmall
                         font.family:    Theme.fontFamily
                     }
-                    StandardTextField {
+                    StandardNetworkField {
                         id:               insideGlobalField
+                        inputKind:        "ipv4"
                         Layout.fillWidth: true
                         placeholderText:  "e.g., 203.0.113.10"
                     }
@@ -201,36 +206,24 @@ Rectangle {
                     spacing:          8
                     visible:          protocolCombo.currentValue !== "Any"
 
-                    ColumnLayout {
+                    StandardSpinBox {
+                        id: localPortSpin
                         Layout.fillWidth: true
-                        spacing: 4
-                        Text {
-                            text:           "Local Port"
-                            color:          Theme.textSecondary
-                            font.pixelSize: Theme.fontSizeSmall
-                            font.family:    Theme.fontFamily
-                        }
-                        StandardTextField {
-                            id:               localPortField
-                            Layout.fillWidth: true
-                            placeholderText:  "e.g., 80"
-                        }
+                        labelText: "Inside Local Port"
+                        from: 1
+                        to: 65535
+                        value: 80
+                        stepSize: 1
                     }
 
-                    ColumnLayout {
+                    StandardSpinBox {
+                        id: globalPortSpin
                         Layout.fillWidth: true
-                        spacing: 4
-                        Text {
-                            text:           "Global Port"
-                            color:          Theme.textSecondary
-                            font.pixelSize: Theme.fontSizeSmall
-                            font.family:    Theme.fontFamily
-                        }
-                        StandardTextField {
-                            id:               globalPortField
-                            Layout.fillWidth: true
-                            placeholderText:  "e.g., 8080"
-                        }
+                        labelText: "Inside Global Port"
+                        from: 1
+                        to: 65535
+                        value: 8080
+                        stepSize: 1
                     }
                 }
 

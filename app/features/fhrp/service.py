@@ -67,6 +67,20 @@ class FhrpService:
             "message": f"Marked FHRP group for removal on {len(hosts)} devices.",
         }
 
+    def cancel_delete(self, fhrp_id: int) -> dict[str, Any]:
+        if fhrp_id <= 0:
+            return {"ok": False, "hosts": [], "message": "Invalid FHRP group ID."}
+        hosts = self.repository.cancel_group_delete(fhrp_id)
+        return {
+            "ok": bool(hosts),
+            "hosts": hosts,
+            "message": (
+                f"Cancelled FHRP group removal on {len(hosts)} devices."
+                if hosts
+                else "FHRP group is not waiting for removal."
+            ),
+        }
+
     def _normalize(self, payload: dict[str, Any]) -> dict[str, Any]:
         protocol = str(payload.get("protocol") or "").strip().lower()
         if protocol not in LIMITS:

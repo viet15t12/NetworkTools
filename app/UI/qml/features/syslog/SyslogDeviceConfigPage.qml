@@ -17,6 +17,7 @@ Item {
     property bool syncingPortEditor: false
     property var draftData: ({})
     property var allRows: []
+    property var sourceInterfaceOptions: []
     property string filterText: ""
     property string message: ""
     property bool messageError: false
@@ -24,6 +25,8 @@ Item {
     readonly property bool compactLayout: width < Theme.dataWorkspaceBreakpoint
     readonly property var backend: typeof syslogManager !== "undefined"
                                    && syslogManager !== null ? syslogManager : null
+    readonly property var databaseBackend: typeof dbManager !== "undefined"
+                                           && dbManager !== null ? dbManager : null
     readonly property var severityLabels: [
         "0 · Emergencies", "1 · Alerts", "2 · Critical", "3 · Errors",
         "4 · Warnings", "5 · Notifications", "6 · Informational", "7 · Debugging"
@@ -54,6 +57,65 @@ Item {
     ListModel { id: serverModel }
 
     function clone(value) { return JSON.parse(JSON.stringify(value || {})) }
+    function appendSourceInterface(options, seen, value) {
+        const name = String(value || "").trim()
+        const key = name.toLocaleLowerCase()
+        if (name === "" || seen[key]) return
+        seen[key] = true
+        options.push(name)
+    }
+    function sourceInterfaceIndex(value) {
+        const target = String(value || "").trim().toLocaleLowerCase()
+        for (let i = 0; i < root.sourceInterfaceOptions.length; ++i) {
+            if (String(root.sourceInterfaceOptions[i]).toLocaleLowerCase() === target)
+                return i
+        }
+        return -1
+    }
+    function loadSourceInterfaces() {
+        const options = []
+        const seen = ({})
+        const manager = root.databaseBackend
+
+        if (manager !== null) {
+            if (typeof manager.getRouterInterfaces === "function") {
+                const rows = manager.getRouterInterfaces(root.host) || []
+                for (let i = 0; i < rows.length; ++i)
+                    appendSourceInterface(options, seen, rows[i].interface_name)
+            }
+            if (typeof manager.getSwitchInterfaces === "function") {
+                const rows = manager.getSwitchInterfaces(root.host) || []
+                for (let i = 0; i < rows.length; ++i)
+                    appendSourceInterface(options, seen, rows[i].if_name)
+            }
+            if (typeof manager.getSwitchSvis === "function") {
+                const rows = manager.getSwitchSvis(root.host) || []
+                for (let i = 0; i < rows.length; ++i) {
+                    const vlanId = Number(rows[i].vlan_id || 0)
+                    if (vlanId > 0)
+                        appendSourceInterface(options, seen, "Vlan" + vlanId)
+                }
+            }
+            if (typeof manager.getSwitchEtherChannels === "function") {
+                const rows = manager.getSwitchEtherChannels(root.host) || []
+                for (let i = 0; i < rows.length; ++i) {
+                    const channel = Number(rows[i].po_number || 0)
+                    if (channel > 0)
+                        appendSourceInterface(options, seen, "Port-channel" + channel)
+                }
+            }
+        }
+
+        // Keep interfaces used by existing rows selectable even when the local
+        // interface inventory has not been synchronized yet.
+        for (let i = 0; i < root.allRows.length; ++i)
+            appendSourceInterface(options, seen, root.allRows[i].source_interface)
+
+        options.sort(function(left, right) {
+            return left.toLocaleLowerCase().localeCompare(right.toLocaleLowerCase())
+        })
+        root.sourceInterfaceOptions = options
+    }
     function normalizedRow(source) {
         const row = source || ({})
         return {
@@ -104,6 +166,7 @@ Item {
     }
     function load(reason) {
         allRows = backend !== null ? backend.getDeviceConfigurations(host) : []
+        loadSourceInterfaces()
         formMode = 0
         dirty = false
         rebuildVisibleRows()
@@ -393,13 +456,20 @@ Item {
                             }
                         }
                     }
-                    StandardTextField {
+                    StandardComboBox {
+                        id: sourceInterfaceCombo
+                        objectName: "syslogSourceInterfaceCombo"
                         Layout.fillWidth: true
                         visible: root.formMode !== 0
                         labelText: "Source interface"
-                        placeholderText: "Loopback0 or GigabitEthernet0/0"
-                        text: String(root.draftData.source_interface || "")
-                        onTextEdited: root.updateField("source_interface", text.trim())
+                        model: root.sourceInterfaceOptions
+                        emptyText: "No interfaces available"
+                        emptyWarningText: "No interface is available for this device. Synchronize Router Interfaces or Switching before configuring Syslog."
+                        currentIndex: root.sourceInterfaceIndex(
+                                          root.draftData.source_interface)
+                        onActivated: index => root.updateField(
+                                         "source_interface",
+                                         root.sourceInterfaceOptions[index])
                     }
                 }
 

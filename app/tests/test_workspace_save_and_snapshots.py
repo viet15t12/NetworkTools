@@ -366,6 +366,8 @@ class WorkspaceSaveControllerTests(unittest.TestCase):
         )
         try:
             self.assertEqual(default_controller._autosave_timer.interval(), 180_000)
+            self.assertEqual(default_controller._idle_autosave_timer.interval(), 5_000)
+            self.assertTrue(default_controller._idle_autosave_timer.isSingleShot())
             menu_source = (
                 Path(__file__).resolve().parents[1]
                 / "UI/qml/app/WorkspaceMenuBar.qml"
@@ -417,6 +419,23 @@ class WorkspaceSaveControllerTests(unittest.TestCase):
         self.assertGreaterEqual(len(self.controller.snapshots), 1)
         self.assertEqual(self.controller.snapshots[0]["reason"], "automatic")
 
+    def test_dirty_burst_is_debounced_into_one_idle_autosave(self) -> None:
+        self.controller._idle_autosave_timer.setInterval(40)
+        completed = QSignalSpy(self.controller.saveCompleted)
+        session = self.welcome.active_session()
+        self.assertIsNotNone(session)
+        with closing(sqlite3.connect(session.device_network_db)) as database:
+            database.execute("UPDATE state SET value = 'debounced change'")
+            database.commit()
+
+        self.controller.markDirty()
+        self.controller.markDirty()
+        self.controller.markDirty()
+
+        self.assertTrue(completed.wait(5_000))
+        self.assertEqual(self.service.save_calls, 1)
+        self.assertEqual(self.service.maximum_active_saves, 1)
+
     def test_closing_workspace_defers_temp_cleanup_until_worker_finishes(self) -> None:
         session = self.welcome.active_session()
         self.assertIsNotNone(session)
@@ -450,6 +469,64 @@ class WorkspaceSaveControllerTests(unittest.TestCase):
                 self.assertEqual(
                     database.execute("SELECT value FROM state").fetchone(),
                     ("saved on close",),
+                )
+
+    def test_close_releases_database_users_before_removing_temp_workspace(self) -> None:
+        session = self.welcome.active_session()
+        self.assertIsNotNone(session)
+        working_directory = session.working_directory
+        observed: list[tuple[bool, bool]] = []
+        self.welcome.activeWorkspaceChanged.connect(
+            lambda: observed.append(
+                (self.welcome.active_session() is None, working_directory.exists())
+            )
+        )
+
+        self.assertTrue(self.welcome.closeProject())
+
+        self.assertEqual(observed, [(True, True)])
+        self.assertFalse(working_directory.exists())
+
+    def test_close_retries_transient_temp_directory_sharing_failure(self) -> None:
+        session = self.welcome.active_session()
+        self.assertIsNotNone(session)
+        working_directory = session.working_directory
+        real_cleanup = session._temporary_directory.cleanup
+        attempts = 0
+
+        def flaky_cleanup():
+            nonlocal attempts
+            attempts += 1
+            if attempts == 1:
+                raise PermissionError("simulated sharing violation")
+            real_cleanup()
+
+        with patch.object(
+            session._temporary_directory, "cleanup", side_effect=flaky_cleanup
+        ):
+            self.assertTrue(self.welcome.closeProject())
+
+        self.assertEqual(attempts, 2)
+        self.assertFalse(working_directory.exists())
+
+    def test_shutdown_saves_then_removes_the_extracted_workspace(self) -> None:
+        session = self.welcome.active_session()
+        self.assertIsNotNone(session)
+        project = session.project_path
+        working_directory = session.working_directory
+        with closing(sqlite3.connect(session.device_network_db)) as database:
+            database.execute("UPDATE state SET value = 'saved at shutdown'")
+            database.commit()
+
+        self.controller.shutdown()
+
+        self.assertIsNone(self.welcome.active_session())
+        self.assertFalse(working_directory.exists())
+        with self.service.open_project(project) as reopened:
+            with closing(sqlite3.connect(reopened.device_network_db)) as database:
+                self.assertEqual(
+                    database.execute("SELECT value FROM state").fetchone(),
+                    ("saved at shutdown",),
                 )
 
     def test_close_disconnects_then_repacks_then_releases_workspace(self) -> None:

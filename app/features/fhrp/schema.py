@@ -18,6 +18,8 @@ CREATE TABLE t08_fhrp_members_new (
     shutdown        INTEGER NOT NULL DEFAULT 0 CHECK(shutdown IN (0,1)),
     sync_status     TEXT NOT NULL DEFAULT 'pending_apply'
                     CHECK(sync_status IN ('pending_apply','pending_delete','synchronized','skipped')),
+    delete_restore_status TEXT
+                    CHECK(delete_restore_status IS NULL OR delete_restore_status IN ('pending_apply','synchronized','skipped')),
     UNIQUE(fhrp_id, host),
     UNIQUE(fhrp_id, interface_kind, iface_id),
     FOREIGN KEY (fhrp_id) REFERENCES t08_fhrp_groups(fhrp_id)
@@ -182,10 +184,11 @@ def ensure_schema(connection: sqlite3.Connection) -> list[str]:
                 {_MEMBER_TABLE_SQL}
                 INSERT INTO t08_fhrp_members_new(
                     member_id, fhrp_id, host, iface_id, interface_kind,
-                    priority, preempt, shutdown, sync_status
+                    priority, preempt, shutdown, sync_status,
+                    delete_restore_status
                 )
                 SELECT member_id, fhrp_id, host, iface_id, 'router',
-                       priority, preempt, shutdown, sync_status
+                       priority, preempt, shutdown, sync_status, NULL
                 FROM t08_fhrp_members
                 ;
                 DROP TABLE t08_fhrp_members;
@@ -202,6 +205,40 @@ def ensure_schema(connection: sqlite3.Connection) -> list[str]:
             raise
         finally:
             connection.execute(f"PRAGMA foreign_keys = {foreign_keys}")
+
+    member_columns = {
+        str(row[1])
+        for row in connection.execute("PRAGMA table_info(t08_fhrp_members)")
+    }
+    if "delete_restore_status" not in member_columns:
+        connection.execute(
+            """
+            ALTER TABLE t08_fhrp_members
+            ADD COLUMN delete_restore_status TEXT
+                CHECK(delete_restore_status IS NULL OR delete_restore_status
+                      IN ('pending_apply','synchronized','skipped'));
+            """
+        )
+        changes.append("t08_fhrp_members.delete_restore_status")
+
+    tracks_table = connection.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 't08_fhrp_tracks'"
+    ).fetchone()
+    if tracks_table is not None:
+        track_columns = {
+            str(row[1])
+            for row in connection.execute("PRAGMA table_info(t08_fhrp_tracks)")
+        }
+        if "delete_restore_status" not in track_columns:
+            connection.execute(
+                """
+                ALTER TABLE t08_fhrp_tracks
+                ADD COLUMN delete_restore_status TEXT
+                    CHECK(delete_restore_status IS NULL OR delete_restore_status
+                          IN ('pending_apply','synchronized','skipped'));
+                """
+            )
+            changes.append("t08_fhrp_tracks.delete_restore_status")
 
     # Previous releases stored v3 while rendering classic v2 commands. Align the
     # desired state with what those releases actually configured on Cisco IOS.

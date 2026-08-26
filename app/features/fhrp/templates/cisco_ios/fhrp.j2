@@ -19,6 +19,7 @@ interface {{ config.interface_name }}
 {% if config.preempt %}
  no standby {{ config.group_number }} preempt
 {% endif %}
+ no standby {{ config.group_number }}
 {% elif config.protocol == 'vrrp' %}
  no vrrp {{ config.group_number }} ip {{ config.virtual_ip }}
 {% for track in config.tracks %}
@@ -37,6 +38,7 @@ interface {{ config.interface_name }}
 {% if config.preempt %}
  no vrrp {{ config.group_number }} preempt
 {% endif %}
+ no vrrp {{ config.group_number }}
 {% else %}
  no glbp {{ config.group_number }} ip {{ config.virtual_ip }}
 {% for track in config.tracks %}
@@ -56,6 +58,7 @@ interface {{ config.interface_name }}
 {% endif %}
  no glbp {{ config.group_number }} priority
  no glbp {{ config.group_number }} preempt
+ no glbp {{ config.group_number }}
 {% endif %}
 {% else %}
 {% set options = config.options %}

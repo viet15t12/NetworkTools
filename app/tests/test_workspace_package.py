@@ -343,6 +343,45 @@ class WorkspacePackageTests(unittest.TestCase):
         with self.assertRaises(InvalidWorkspacePackage):
             self.codec.open(package)
 
+    def test_file_directory_tree_conflict_is_rejected_before_extraction(self) -> None:
+        package = self.root / "TreeConflict.ntp"
+        with zipfile.ZipFile(package, "w") as archive:
+            archive.writestr("manifest.json", b"{}")
+            archive.writestr("backup/", b"")
+            archive.writestr("backup/router", b"not a directory")
+            archive.writestr("backup/router/running-config.txt", b"hostname R1\n")
+
+        with self.assertRaisesRegex(
+            InvalidWorkspacePackage, "nested below a file"
+        ):
+            self.codec.open(package)
+
+    def test_file_cannot_replace_an_existing_archive_directory_tree(self) -> None:
+        package = self.root / "ReverseTreeConflict.ntp"
+        with zipfile.ZipFile(package, "w") as archive:
+            archive.writestr("manifest.json", b"{}")
+            archive.writestr("backup/", b"")
+            archive.writestr("backup/router/running-config.txt", b"hostname R1\n")
+            archive.writestr("backup/router", b"not a directory")
+
+        with self.assertRaisesRegex(
+            InvalidWorkspacePackage, "conflicts with a directory tree"
+        ):
+            self.codec.open(package)
+
+    def test_case_colliding_implicit_directories_are_rejected(self) -> None:
+        package = self.root / "DirectoryCaseConflict.ntp"
+        with zipfile.ZipFile(package, "w") as archive:
+            archive.writestr("manifest.json", b"{}")
+            archive.writestr("backup/", b"")
+            archive.writestr("backup/Router/one.txt", b"one")
+            archive.writestr("backup/router/two.txt", b"two")
+
+        with self.assertRaisesRegex(
+            InvalidWorkspacePackage, "Case-colliding archive path component"
+        ):
+            self.codec.open(package)
+
     def test_symlink_member_is_rejected(self) -> None:
         package = self.root / "Symlink.ntp"
         link = zipfile.ZipInfo("backup/link")

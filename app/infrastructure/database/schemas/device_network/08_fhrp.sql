@@ -49,7 +49,10 @@ CREATE TABLE IF NOT EXISTS t08_fhrp_members (
     priority        INTEGER NOT NULL DEFAULT 100 CHECK(priority BETWEEN 1 AND 255),
     preempt         INTEGER NOT NULL DEFAULT 0   CHECK(preempt IN (0,1)),
     shutdown        INTEGER NOT NULL DEFAULT 0   CHECK(shutdown IN (0,1)),
-    sync_status         TEXT NOT NULL DEFAULT 'pending_apply'   CHECK(sync_status IN ('pending_apply','pending_delete','synchronized','skipped')),
+    sync_status         TEXT NOT NULL DEFAULT 'pending_apply'
+                        CHECK(sync_status IN ('pending_apply','pending_delete','synchronized','skipped')),
+    delete_restore_status TEXT
+                        CHECK(delete_restore_status IS NULL OR delete_restore_status IN ('pending_apply','synchronized','skipped')),
 
     -- Mot host/interface chi xuat hien mot lan trong cung nhom logic.
     UNIQUE(fhrp_id, host),
@@ -243,7 +246,10 @@ CREATE TABLE IF NOT EXISTS t08_fhrp_tracks (
     member_id       INTEGER NOT NULL,
     track_object    TEXT    NOT NULL,
     decrement_value INTEGER NOT NULL DEFAULT 10 CHECK(decrement_value BETWEEN 1 AND 254),
-    sync_status         TEXT NOT NULL DEFAULT 'pending_apply' CHECK(sync_status IN ('pending_apply','pending_delete','synchronized','skipped')),
+    sync_status         TEXT NOT NULL DEFAULT 'pending_apply'
+                        CHECK(sync_status IN ('pending_apply','pending_delete','synchronized','skipped')),
+    delete_restore_status TEXT
+                        CHECK(delete_restore_status IS NULL OR delete_restore_status IN ('pending_apply','synchronized','skipped')),
     UNIQUE(member_id, track_object),
     FOREIGN KEY (member_id) REFERENCES t08_fhrp_members(member_id)
         ON UPDATE CASCADE ON DELETE CASCADE

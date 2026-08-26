@@ -15,6 +15,7 @@ Rectangle {
     property int nextLocalId: -1
     property var pendingDeletes: []
     property var aclNames: []
+    property var routeMapNames: []
     property bool hasPendingLocalChanges: false
     signal dataChanged()
 
@@ -29,6 +30,7 @@ Rectangle {
     function clearForm() {
         editingEntryId = -1
         routeMapNameField.text = ""
+        routeMapNameCombo.currentIndex = 0
         descriptionField.text = ""
         routeMapAclCombo.currentIndex = 0
         sequenceSpin.value = 10
@@ -37,7 +39,9 @@ Rectangle {
 
     function editEntry(row) {
         editingEntryId = row.route_map_entry_id
-        routeMapNameField.text = row.route_map_name || ""
+        const routeMapIndex = indexOfValue(routeMapNames, row.route_map_name)
+        routeMapNameCombo.currentIndex = routeMapIndex >= 0 ? routeMapIndex + 1 : 0
+        routeMapNameField.text = routeMapIndex >= 0 ? "" : (row.route_map_name || "")
         descriptionField.text = row.description || ""
         const aclIndex = indexOfValue(aclNames, row.nat_acl_name)
         routeMapAclCombo.currentIndex = aclIndex >= 0 ? aclIndex + 1 : 0
@@ -48,6 +52,17 @@ Rectangle {
     function reloadAclNames() {
         aclNames = currentHostIp === "" ? [] : dbManager.getNatAclNames(currentHostIp)
         if (!isEditing()) routeMapAclCombo.currentIndex = 0
+    }
+
+    function reloadRouteMapNames() {
+        routeMapNames = currentHostIp === "" ? [] : dbManager.getNatRouteMapNames(currentHostIp)
+        if (!isEditing()) routeMapNameCombo.currentIndex = 0
+    }
+
+    function selectedRouteMapName() {
+        return routeMapNameCombo.currentIndex > 0
+                ? routeMapNameCombo.currentValue
+                : routeMapNameField.text.trim()
     }
 
     function refreshDirtyFlag() {
@@ -77,7 +92,7 @@ Rectangle {
     }
 
     function stageEntry() {
-        const values = { route_map_name: routeMapNameField.text.trim(), description: descriptionField.text.trim(),
+        const values = { route_map_name: selectedRouteMapName(), description: descriptionField.text.trim(),
             sequence: sequenceSpin.value, action: actionCombo.currentValue, nat_acl_name: routeMapAclCombo.currentValue }
         if (isEditing()) {
             for (let i = 0; i < routeMapModel.count; i++) {
@@ -86,10 +101,15 @@ Rectangle {
                 if (!routeMapModel.get(i)._isNew) routeMapModel.setProperty(i, "_isEdited", true)
                 break
             }
-        } else routeMapModel.append({ route_map_entry_id: nextLocalId--, route_map_name: values.route_map_name,
+        } else routeMapModel.append({ route_map_id: 0, route_map_entry_id: nextLocalId--,
+            route_map_name: values.route_map_name, host: currentHostIp,
             description: values.description, sequence: values.sequence, action: values.action,
-            nat_acl_name: values.nat_acl_name, _isNew: true, _isEdited: false })
+            nat_acl_id: 0, nat_acl_name: values.nat_acl_name,
+            sync_status: "pending_apply", _isNew: true, _isEdited: false })
+        if (indexOfValue(routeMapNames, values.route_map_name) < 0)
+            routeMapNames = routeMapNames.concat([values.route_map_name])
         clearForm()
+        routeMapNameCombo.currentIndex = indexOfValue(routeMapNames, values.route_map_name) + 1
         refreshDirtyFlag()
     }
 
@@ -110,6 +130,7 @@ Rectangle {
         }
         reloadEntries()
         reloadAclNames()
+        reloadRouteMapNames()
         if (ok) dataChanged()
         notify(ok ? "Saved NAT route-map changes." : "Save NAT route-map changes failed.", ok ? "success" : "error")
     }
@@ -117,9 +138,10 @@ Rectangle {
     onCurrentHostIpChanged: {
         clearForm()
         reloadAclNames()
+        reloadRouteMapNames()
         reloadEntries()
     }
-    Component.onCompleted: { reloadAclNames(); reloadEntries() }
+    Component.onCompleted: { reloadAclNames(); reloadRouteMapNames(); reloadEntries() }
 
     ListModel { id: routeMapModel }
 
@@ -164,12 +186,21 @@ Rectangle {
                 color: Theme.splitHandleColor
             }
 
+            StandardComboBox {
+                id: routeMapNameCombo
+                Layout.fillWidth: true
+                labelText: "Route Map Name"
+                model: ["Create new route map"].concat(routeMapForm.routeMapNames)
+                valueModel: [""].concat(routeMapForm.routeMapNames)
+            }
+
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 4
+                visible: routeMapNameCombo.currentIndex === 0
 
                 Text {
-                    text: "Route Map Name"
+                    text: "New Route Map Name"
                     color: Theme.textSecondary
                     font.pixelSize: Theme.fontSizeSmall
                     font.family: Theme.fontFamily
@@ -235,7 +266,7 @@ Rectangle {
                 StandardButton {
                     Layout.fillWidth: true; Layout.preferredHeight: 36; type: "Primary"
                     text: routeMapForm.isEditing() ? "Apply Edit" : "Add Locally"
-                    enabled: routeMapNameField.text.trim() !== "" && currentHostIp !== ""
+                    enabled: routeMapForm.selectedRouteMapName() !== "" && currentHostIp !== ""
                     onClicked: routeMapForm.stageEntry()
                 }
             }
@@ -388,7 +419,7 @@ Rectangle {
             text: "Cancel Changes"
             type: "Text"
             enabled: hasPendingLocalChanges
-            onClicked: { routeMapForm.clearForm(); routeMapForm.reloadEntries(); routeMapForm.notify("Discarded local route-map changes.", "info") }
+            onClicked: { routeMapForm.clearForm(); routeMapForm.reloadAclNames(); routeMapForm.reloadRouteMapNames(); routeMapForm.reloadEntries(); routeMapForm.notify("Discarded local route-map changes.", "info") }
         }
         StandardButton {
             text: "Reload UI"
@@ -397,7 +428,7 @@ Rectangle {
             autoCompact: false
             Layout.minimumWidth: expandedImplicitWidth
             enabled: currentHostIp !== ""
-            onClicked: { routeMapForm.clearForm(); routeMapForm.reloadAclNames(); routeMapForm.reloadEntries(); routeMapForm.notify("Reloaded NAT route-map entries from database.", "info") }
+            onClicked: { routeMapForm.clearForm(); routeMapForm.reloadAclNames(); routeMapForm.reloadRouteMapNames(); routeMapForm.reloadEntries(); routeMapForm.notify("Reloaded NAT route-map entries from database.", "info") }
         }
         StandardButton {
             text: "Save"

@@ -128,6 +128,7 @@ class WorkspaceSaveController(QObject):
         *,
         workspace_service: WorkspaceService | None = None,
         autosave_interval_ms: int = 3 * 60 * 1000,
+        autosave_idle_delay_ms: int = 5_000,
         workspace_close_preparer: Callable[[], None] | None = None,
     ) -> None:
         super().__init__(parent)
@@ -142,6 +143,10 @@ class WorkspaceSaveController(QObject):
         self._autosave_timer = QTimer(self)
         self._autosave_timer.setInterval(max(1, autosave_interval_ms))
         self._autosave_timer.timeout.connect(self.requestAutoSave)
+        self._idle_autosave_timer = QTimer(self)
+        self._idle_autosave_timer.setSingleShot(True)
+        self._idle_autosave_timer.setInterval(max(1, autosave_idle_delay_ms))
+        self._idle_autosave_timer.timeout.connect(self.requestAutoSave)
         self._busy = False
         self._state = "no_workspace"
         self._status_text = "No workspace"
@@ -192,6 +197,11 @@ class WorkspaceSaveController(QObject):
         if not self.hasWorkspace:
             return
         self._generation += 1
+        # Restarting a single-shot timer coalesces a burst of SQLite/QML file
+        # notifications into one background package write after activity has
+        # settled.  The periodic timer remains a safety net for changes below
+        # directories QFileSystemWatcher cannot observe recursively.
+        self._idle_autosave_timer.start()
         if not self._busy:
             self._set_state("unsaved", "Unsaved changes")
 
@@ -295,6 +305,7 @@ class WorkspaceSaveController(QObject):
         self._workers[operation_token] = worker
         self._active_request = request
         self._busy = True
+        self._idle_autosave_timer.stop()
         message = {
             "automatic": "Auto-saving workspace…",
             "manual": "Saving workspace…",
@@ -407,6 +418,7 @@ class WorkspaceSaveController(QObject):
         self._generation = 0
         self._saved_generation = 0
         self._pending_request = None
+        self._idle_autosave_timer.stop()
         if session is None:
             self._autosave_timer.stop()
             self._snapshots = []
@@ -467,6 +479,7 @@ class WorkspaceSaveController(QObject):
     def shutdown(self) -> None:
         self._shutting_down = True
         self._autosave_timer.stop()
+        self._idle_autosave_timer.stop()
         watched = self._watcher.files() + self._watcher.directories()
         if watched:
             self._watcher.removePaths(watched)
@@ -489,6 +502,11 @@ class WorkspaceSaveController(QObject):
                     f"Workspace shutdown save failed ({type(exc).__name__}): {exc}",
                     file=sys.stderr,
                 )
+            finally:
+                # The writer owns the application shutdown transaction: once
+                # its final save attempt is complete, retire the extracted
+                # session immediately instead of relying on a later caller.
+                self._welcome.closeProject()
 
 
 __all__ = ["WorkspaceSaveController"]

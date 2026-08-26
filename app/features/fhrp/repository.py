@@ -313,7 +313,12 @@ class FhrpRepository:
                     conn.execute(
                         f"""
                         UPDATE t08_fhrp_members
-                        SET sync_status = 'pending_delete'
+                        SET delete_restore_status = CASE
+                                WHEN sync_status = 'pending_delete'
+                                THEN delete_restore_status
+                                ELSE sync_status
+                            END,
+                            sync_status = 'pending_delete'
                         WHERE member_id IN ({placeholders});
                         """,
                         member_ids,
@@ -321,12 +326,60 @@ class FhrpRepository:
                     conn.execute(
                         f"""
                         UPDATE t08_fhrp_tracks
-                        SET sync_status = 'pending_delete'
+                        SET delete_restore_status = CASE
+                                WHEN sync_status = 'pending_delete'
+                                THEN delete_restore_status
+                                ELSE sync_status
+                            END,
+                            sync_status = 'pending_delete'
                         WHERE member_id IN ({placeholders});
                         """,
                         member_ids,
                     )
         return hosts
+
+    def cancel_group_delete(self, fhrp_id: int) -> list[str]:
+        """Restore the exact member/track states captured before deletion."""
+        with closing(self.db._connect()) as conn:
+            with conn:
+                members = conn.execute(
+                    """
+                    SELECT member_id, host
+                    FROM t08_fhrp_members
+                    WHERE fhrp_id = ? AND sync_status = 'pending_delete'
+                    ORDER BY member_id;
+                    """,
+                    (fhrp_id,),
+                ).fetchall()
+                if not members:
+                    return []
+                member_ids = [int(row["member_id"]) for row in members]
+                placeholders = ",".join("?" for _ in member_ids)
+                conn.execute(
+                    f"""
+                    UPDATE t08_fhrp_tracks
+                    SET sync_status = COALESCE(
+                            delete_restore_status, 'pending_apply'
+                        ),
+                        delete_restore_status = NULL
+                    WHERE member_id IN ({placeholders})
+                      AND sync_status = 'pending_delete';
+                    """,
+                    member_ids,
+                )
+                conn.execute(
+                    f"""
+                    UPDATE t08_fhrp_members
+                    SET sync_status = COALESCE(
+                            delete_restore_status, 'pending_apply'
+                        ),
+                        delete_restore_status = NULL
+                    WHERE member_id IN ({placeholders})
+                      AND sync_status = 'pending_delete';
+                    """,
+                    member_ids,
+                )
+        return [str(row["host"]) for row in members]
 
     @staticmethod
     def _insert_options(

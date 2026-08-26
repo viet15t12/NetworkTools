@@ -28,6 +28,10 @@ Luồng chuẩn:
 6. View & Push preview theo host, sau đó worker dùng session SSH/Telnet hiện có,
    kiểm tra output lỗi Cisco CLI, running-config và `show standby/vrrp/glbp
    brief`; chỉ cập nhật đúng member vượt qua verification.
+7. Delete lưu lại trạng thái member/track trước khi chuyển sang
+   `pending_delete`, nên `Cancel Delete` có thể khôi phục chính xác trước Push.
+   Khi Push xóa, template kết thúc bằng `no standby|vrrp|glbp <group>` để dọn
+   toàn bộ policy còn sót trên interface.
 
 Các file được tách theo trách nhiệm:
 

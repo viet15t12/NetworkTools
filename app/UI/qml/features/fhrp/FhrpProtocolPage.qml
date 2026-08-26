@@ -404,6 +404,13 @@ Rectangle {
             loadGroups()
     }
 
+    function cancelGroupDelete(fhrpId) {
+        const result = dbManager.cancelFhrpGroupDelete(Number(fhrpId))
+        notify(String(result.message || ""), result.ok ? "success" : "error")
+        if (result.ok)
+            loadGroups()
+    }
+
     onCurrentHostIpChanged: loadGroups()
     Component.onCompleted: {
         loadOptions()
@@ -887,6 +894,9 @@ Rectangle {
                 protocolLabel: root.protocol
                 onRemoveRequested: function(fhrpId) {
                     root.deleteGroup(fhrpId)
+                }
+                onCancelRemoveRequested: function(fhrpId) {
+                    root.cancelGroupDelete(fhrpId)
                 }
             }
         }

@@ -10,6 +10,7 @@ SavedListPanel {
     required property var groupModel
     required property string protocolLabel
     signal removeRequested(int fhrpId)
+    signal cancelRemoveRequested(int fhrpId)
 
     title: protocolLabel.toUpperCase() + " groups"
     count: groupModel.count
@@ -46,6 +47,15 @@ SavedListPanel {
         return count
     }
 
+    function pendingDelete(members) {
+        for (let i = 0; i < memberCount(members); i++) {
+            if (String(memberAt(members, i).sync_status || "")
+                    === "pending_delete")
+                return true
+        }
+        return false
+    }
+
     ListView {
         anchors.fill: parent
         spacing: Theme.spacing8
@@ -73,7 +83,7 @@ SavedListPanel {
 
             ColumnLayout {
                 anchors.left: parent.left
-                anchors.right: removeButton.left
+                anchors.right: actionLayout.left
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.leftMargin: Theme.spacing16
                 anchors.rightMargin: Theme.spacing8
@@ -119,18 +129,33 @@ SavedListPanel {
                 }
             }
 
-            IconButton {
-                id: removeButton
+            RowLayout {
+                id: actionLayout
                 anchors.right: parent.right
                 anchors.rightMargin: Theme.spacing12
                 anchors.verticalCenter: parent.verticalCenter
-                buttonSize: 30
-                iconSize: Theme.iconSizeNormal
-                iconSource: AppAssets.actionDelete
-                danger: true
-                tooltip: "Remove group"
-                onClicked: root.removeRequested(
-                               Number(groupRow.model.fhrp_id || 0))
+                spacing: Theme.spacing4
+
+                StandardButton {
+                    objectName: "fhrpCancelDeleteButton"
+                    text: "Cancel Delete"
+                    type: "Text"
+                    visible: root.pendingDelete(groupRow.model.members)
+                    onClicked: root.cancelRemoveRequested(
+                                   Number(groupRow.model.fhrp_id || 0))
+                }
+
+                IconButton {
+                    id: removeButton
+                    visible: !root.pendingDelete(groupRow.model.members)
+                    buttonSize: 30
+                    iconSize: Theme.iconSizeNormal
+                    iconSource: AppAssets.actionDelete
+                    danger: true
+                    tooltip: "Remove group"
+                    onClicked: root.removeRequested(
+                                   Number(groupRow.model.fhrp_id || 0))
+                }
             }
         }
     }

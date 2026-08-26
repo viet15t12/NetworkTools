@@ -14,16 +14,15 @@ Schema references (from main_numbered_tables.sql):
   t05_route_map_entries        — Route Map entries
 
 Design note:
-  The QML forms (NatStaticForm, NatDynamicForm, ...) use flat slot APIs
-  (addNatStaticEntry, addNatDynamicPool, ...) without a nat_id parent.
-  To keep the QML unchanged we transparently get-or-create a NAT_DB entry
-  using the host + nat_type as a single composite key, then attach child
-  rows to it. This is an implementation detail not visible to the UI.
+  The QML forms use flat slot APIs without exposing the numeric nat_id. The
+  repository still returns nat_name with child rows so the UI can distinguish
+  the NAT parent name from ACL and route-map names.
 """
 from __future__ import annotations
 
 import sqlite3
 from contextlib import closing
+from ipaddress import IPv4Address, IPv4Network
 from typing import Any
 
 from .common import (
@@ -39,18 +38,48 @@ from .common import (
 
 # ── Internal helper: get-or-create NAT_DB entry ───────────────────────────────
 
+def _is_ipv4(value: Any) -> bool:
+    try:
+        IPv4Address(str(value).strip())
+        return True
+    except ValueError:
+        return False
+
+
+def _is_netmask(value: Any) -> bool:
+    try:
+        IPv4Network(f"0.0.0.0/{str(value).strip()}")
+        return True
+    except ValueError:
+        return False
+
+
 def _get_or_create_nat_id(conn: sqlite3.Connection, host: str, nat_type: str, nat_name: str) -> int:
-    """Return an existing active nat_id or insert a new t05_NAT_DB row."""
+    """Return, reactivate, or create the named NAT parent."""
     row = conn.execute(
         """
-        SELECT nat_id FROM t05_NAT_DB
-        WHERE host = ? AND nat_name = ? AND nat_type = ? AND sync_status != 'pending_delete'
+        SELECT nat_id, nat_type, sync_status FROM t05_NAT_DB
+        WHERE host = ? AND nat_name = ?
         LIMIT 1;
         """,
-        (host, nat_name, nat_type),
+        (host, nat_name),
     ).fetchone()
     if row:
-        return int(row[0])
+        if str(row[1]) != nat_type:
+            raise sqlite3.IntegrityError(
+                f"NAT name {nat_name!r} already belongs to type {row[1]!r}"
+            )
+        nat_id = int(row[0])
+        if row[2] == "pending_delete":
+            conn.execute(
+                """
+                UPDATE t05_NAT_DB
+                SET sync_status = 'pending_apply', action_Cfg = 1
+                WHERE nat_id = ?;
+                """,
+                (nat_id,),
+            )
+        return nat_id
     cursor = conn.execute(
         """
         INSERT INTO t05_NAT_DB (nat_name, nat_type, host, sync_status, action_Cfg)
@@ -74,8 +103,11 @@ def get_nat_static_entries(db: Any, host: str) -> list[dict[str, Any]]:
                 SELECT m.id AS nat_static_id, m.nat_id,
                        m.inside_local_ip AS inside_local,
                        m.inside_global_ip AS inside_global,
-                       m.protocol, m.local_port, m.global_port,
-                       m.is_extendable, m.description, m.sync_status
+                       UPPER(COALESCE(m.protocol, '')) AS protocol,
+                       COALESCE(m.local_port, 0) AS local_port,
+                       COALESCE(m.global_port, 0) AS global_port,
+                       m.is_extendable, COALESCE(m.description, '') AS description,
+                       m.sync_status
                 FROM t05_nat_static_mappings m
                 JOIN t05_NAT_DB n ON n.nat_id = m.nat_id
                 WHERE n.host = ? AND n.nat_type = 'static'
@@ -102,12 +134,25 @@ def add_nat_static_entry(
     host = normalize_host(host)
     local_ip = text_or_default(local_ip, "")
     global_ip = text_or_default(global_ip, "")
-    if not host or not local_ip or not global_ip:
+    if not host or not _is_ipv4(local_ip) or not _is_ipv4(global_ip):
         return False
 
     protocol_val = text_or_none(protocol)
+    if protocol_val is not None:
+        protocol_val = protocol_val.lower()
+        if protocol_val not in ("tcp", "udp"):
+            return False
     local_port_val = int_or_none(local_port)
     global_port_val = int_or_none(global_port)
+    if protocol_val is None:
+        local_port_val = None
+        global_port_val = None
+    elif (
+        local_port_val is None or global_port_val is None
+        or not 1 <= local_port_val <= 65535
+        or not 1 <= global_port_val <= 65535
+    ):
+        return False
 
     try:
         with closing(db._connect()) as conn:
@@ -217,8 +262,9 @@ def get_nat_dynamic_pools(db: Any, host: str) -> list[dict[str, Any]]:
         with closing(db._connect()) as conn:
             rows = conn.execute(
                 """
-                SELECT p.pool_id AS nat_dynamic_id, p.nat_id, p.pool_name,
-                       p.start_ip, p.end_ip, p.netmask, p.prefix_length,
+                SELECT p.pool_id AS nat_dynamic_id, p.nat_id, n.nat_name, p.pool_name,
+                       p.start_ip, p.end_ip, COALESCE(p.netmask, '') AS netmask,
+                       COALESCE(p.prefix_length, 0) AS prefix_length,
                        COALESCE(a.acl_name, '') AS acl_name, p.sync_status
                 FROM t05_nat_pools p
                 JOIN t05_NAT_DB n ON n.nat_id = p.nat_id
@@ -251,7 +297,11 @@ def add_nat_dynamic_pool(
     pool_name = text_or_default(pool_name, "")
     start_ip = text_or_default(start_ip, "")
     end_ip = text_or_default(end_ip, "")
-    if not host or not pool_name or not start_ip or not end_ip:
+    if (
+        not host or not pool_name or not _is_ipv4(start_ip)
+        or not _is_ipv4(end_ip) or not _is_netmask(netmask)
+        or int(IPv4Address(start_ip)) > int(IPv4Address(end_ip))
+    ):
         return False
     try:
         with closing(db._connect()) as conn:
@@ -318,20 +368,20 @@ def get_nat_pat_rules(db: Any, host: str) -> list[dict[str, Any]]:
         with closing(db._connect()) as conn:
             rows = conn.execute(
                 """
-                SELECT r.id AS nat_pat_id, r.nat_id, r.nat_acl_id,
+                SELECT r.id AS nat_pat_id, r.nat_id, n.nat_name, r.nat_acl_id,
                        a.acl_name, 'Interface' AS source_type,
                        r.outside_interface AS source_value,
-                       r.overload, r.description, r.sync_status
+                       r.overload, COALESCE(r.description, '') AS description, r.sync_status
                 FROM t05_nat_overload_interface_rules r
                 JOIN t05_NAT_DB n ON n.nat_id = r.nat_id
                 JOIN t05_NAT_ACL_DB a ON a.nat_acl_id = r.nat_acl_id
                 WHERE n.host = ? AND n.nat_type = 'overload'
                   AND n.sync_status != 'pending_delete' AND a.sync_status != 'pending_delete' AND r.sync_status != 'pending_delete'
                 UNION ALL
-                SELECT -r.id AS nat_pat_id, r.nat_id, r.nat_acl_id,
+                SELECT -r.id AS nat_pat_id, r.nat_id, n.nat_name, r.nat_acl_id,
                        a.acl_name, 'Pool' AS source_type,
                        p.pool_name AS source_value,
-                       r.overload, r.description, r.sync_status
+                       r.overload, COALESCE(r.description, '') AS description, r.sync_status
                 FROM t05_nat_dynamic_rules r
                 JOIN t05_NAT_DB n ON n.nat_id = r.nat_id
                 JOIN t05_NAT_ACL_DB a ON a.nat_acl_id = r.nat_acl_id
@@ -492,9 +542,10 @@ def get_nat_acls(db: Any, host: str) -> list[dict[str, Any]]:
             rows = conn.execute(
                 """
                 SELECT a.nat_acl_id, a.acl_name, a.acl_type, a.host,
-                       a.description, r.action,
+                       COALESCE(a.description, '') AS description, r.action,
                        r.source AS source_network, COALESCE(r.wildcard, '') AS wildcard,
-                       r.id AS rule_id, r.sequence, r.sync_status
+                       r.id AS rule_id, COALESCE(r.sequence, r.id * 10) AS sequence,
+                       r.sync_status
                 FROM t05_NAT_ACL_DB a
                 JOIN t05_nat_standard_acl_rules r ON r.nat_acl_id = a.nat_acl_id
                 WHERE a.host = ? AND a.sync_status != 'pending_delete' AND r.sync_status != 'pending_delete'
@@ -518,20 +569,35 @@ def add_nat_acl(
 ) -> bool:
     host = normalize_host(host)
     acl_name = text_or_default(acl_name, "")
-    if not host or not acl_name:
+    source_network = text_or_default(source_network, "any")
+    wildcard = text_or_default(wildcard, "")
+    if (
+        not host or not acl_name
+        or (source_network.lower() != "any" and not _is_ipv4(source_network))
+        or (wildcard and not _is_ipv4(wildcard))
+    ):
         return False
     try:
         with closing(db._connect()) as conn:
             nat_acl_id = _get_or_create_nat_acl_id(conn, host, acl_name, create=True)
+            next_sequence = int(conn.execute(
+                """
+                SELECT COALESCE(MAX(COALESCE(sequence, id * 10)), 0) + 10
+                FROM t05_nat_standard_acl_rules
+                WHERE nat_acl_id = ?;
+                """,
+                (nat_acl_id,),
+            ).fetchone()[0])
 
             conn.execute(
                 """
                 INSERT INTO t05_nat_standard_acl_rules
-                    (nat_acl_id, action, source, wildcard, sync_status)
-                VALUES (?, ?, ?, ?, 'pending_apply');
+                    (nat_acl_id, sequence, action, source, wildcard, sync_status)
+                VALUES (?, ?, ?, ?, ?, 'pending_apply');
                 """,
-                (nat_acl_id, "permit" if str(action).strip().lower() == "permit" else "deny",
-                 text_or_default(source_network, "any"),
+                (nat_acl_id, next_sequence,
+                 "permit" if str(action).strip().lower() == "permit" else "deny",
+                 source_network,
                  text_or_none(wildcard)),
             )
             conn.commit()
@@ -556,6 +622,28 @@ def delete_nat_acl(db: Any, nat_acl_rule_id: int) -> bool:
 
 # ── Route Map ─────────────────────────────────────────────────────────────────
 
+def get_nat_route_map_names(db: Any, host: str) -> list[str]:
+    """Return active route-map names for the current device."""
+    host = normalize_host(host)
+    if not host:
+        return []
+    try:
+        with closing(db._connect()) as conn:
+            rows = conn.execute(
+                """
+                SELECT route_map_name
+                FROM t05_route_map_db
+                WHERE host = ? AND sync_status != 'pending_delete'
+                ORDER BY route_map_name COLLATE NOCASE;
+                """,
+                (host,),
+            ).fetchall()
+        return [str(row[0]) for row in rows]
+    except sqlite3.Error as exc:
+        log_db_error("getNatRouteMapNames", exc)
+        return []
+
+
 def get_nat_route_map_entries(db: Any, host: str) -> list[dict[str, Any]]:
     host = normalize_host(host)
     if not host:
@@ -565,9 +653,10 @@ def get_nat_route_map_entries(db: Any, host: str) -> list[dict[str, Any]]:
             rows = conn.execute(
                 """
                 SELECT rm.route_map_id, rm.route_map_name, rm.host,
-                       rm.description, rm.sync_status,
+                       COALESCE(rm.description, '') AS description, rm.sync_status,
                        e.id AS route_map_entry_id, e.sequence, e.action,
-                       e.nat_acl_id, COALESCE(a.acl_name, '') AS nat_acl_name
+                       COALESCE(e.nat_acl_id, 0) AS nat_acl_id,
+                       COALESCE(a.acl_name, '') AS nat_acl_name
                 FROM t05_route_map_db rm
                 JOIN t05_route_map_entries e ON e.route_map_id = rm.route_map_id
                 LEFT JOIN t05_NAT_ACL_DB a ON a.nat_acl_id = e.nat_acl_id

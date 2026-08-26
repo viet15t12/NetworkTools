@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 
-from PyQt6.QtCore import QMetaObject, QObject, QUrl, pyqtSlot
+from PyQt6.QtCore import QMetaObject, QObject, QUrl, pyqtSignal, pyqtSlot
 from PyQt6.QtQml import QQmlApplicationEngine, QQmlComponent
 from PyQt6.QtWidgets import QApplication
 
@@ -36,6 +36,33 @@ class _DeviceConfigBackend(QObject):
     def deleteDeviceConfiguration(self, host: str, payload):
         self.deleted_payload = _variant_dict(payload)
         return {"ok": True, "message": "staged"}
+
+
+class _InterfaceInventoryBackend(QObject):
+    runningConfigUpdated = pyqtSignal(str)
+
+    @pyqtSlot(str, result="QVariant")
+    def getRouterInterfaces(self, _host: str):
+        return [
+            {"interface_name": "Loopback0"},
+            {"interface_name": "GigabitEthernet0/0"},
+        ]
+
+    @pyqtSlot(str, result="QVariant")
+    def getSwitchInterfaces(self, _host: str):
+        return [{"if_name": "GigabitEthernet0/1"}]
+
+    @pyqtSlot(str, result="QVariant")
+    def getSwitchSvis(self, _host: str):
+        return [{"vlan_id": 10}]
+
+    @pyqtSlot(str, result="QVariant")
+    def getSwitchEtherChannels(self, _host: str):
+        return [{"po_number": 1}]
+
+    @pyqtSlot(str, str, str, result=bool)
+    def hasPendingViewPush(self, _controller: str, _host: str, _module: str):
+        return False
 
 
 class SyslogQmlTests(unittest.TestCase):
@@ -98,6 +125,26 @@ class SyslogQmlTests(unittest.TestCase):
             instance.deleteLater()
             engine.deleteLater()
 
+    def test_syslog_device_item_combines_name_and_host(self) -> None:
+        cases = (
+            ({"host": "192.168.122.10", "device_name": "Core-R1"},
+             "Core-R1(192.168.122.10)"),
+            ({"host": "192.168.122.11", "device_name": "   "},
+             "192.168.122.11"),
+        )
+        for device_data, expected in cases:
+            with self.subTest(device_data=device_data):
+                engine, instance, warnings = self._create(
+                    "UI/qml/sidebar/syslog/SyslogDeviceItem.qml",
+                    properties={"deviceData": device_data},
+                )
+                try:
+                    self.assertEqual(instance.property("displayLabel"), expected)
+                    self.assertEqual(warnings, [])
+                finally:
+                    instance.deleteLater()
+                    engine.deleteLater()
+
     def test_syslog_settings_spinboxes_do_not_create_binding_loops(self) -> None:
         settings = SyslogSettings()
         engine, instance, warnings = self._create(
@@ -128,6 +175,35 @@ class SyslogQmlTests(unittest.TestCase):
             self.assertEqual(backend.deleted_payload["server_ip"], "192.168.122.1")
             self.assertEqual(backend.deleted_payload["port"], 5514)
             self.assertFalse(any("Syslog data must" in item for item in warnings), warnings)
+        finally:
+            instance.deleteLater()
+            engine.deleteLater()
+
+    def test_device_config_source_interface_uses_inventory_combo_box(self) -> None:
+        backend = _DeviceConfigBackend()
+        inventory = _InterfaceInventoryBackend()
+        engine, instance, warnings = self._create(
+            "UI/qml/features/syslog/SyslogDeviceConfigPage.qml",
+            {"syslogManager": backend, "dbManager": inventory},
+            {"host": "192.168.122.102"},
+        )
+        try:
+            self.assertEqual(
+                instance.property("sourceInterfaceOptions").toVariant(),
+                [
+                    "GigabitEthernet0/0",
+                    "GigabitEthernet0/1",
+                    "Loopback0",
+                    "Port-channel1",
+                    "Vlan10",
+                ],
+            )
+            combo = instance.findChild(QObject, "syslogSourceInterfaceCombo")
+            self.assertIsNotNone(combo)
+            QMetaObject.invokeMethod(instance, "beginEdit")
+            self.app.processEvents()
+            self.assertEqual(combo.property("currentText"), "GigabitEthernet0/0")
+            self.assertEqual(warnings, [])
         finally:
             instance.deleteLater()
             engine.deleteLater()

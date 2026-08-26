@@ -30,11 +30,15 @@ class WelcomeControllerTests(unittest.TestCase):
         self.workspace_requests: list[tuple[str, str]] = []
         self.welcome_requests: list[str] = []
         self.password_requests: list[str] = []
+        self.operation_failures: list[tuple[str, str]] = []
         self.controller.workspaceRequested.connect(
             lambda name, path: self.workspace_requests.append((name, path))
         )
         self.controller.welcomeRequested.connect(self.welcome_requests.append)
         self.controller.passwordRequired.connect(self.password_requests.append)
+        self.controller.operationFailed.connect(
+            lambda title, message: self.operation_failures.append((title, message))
+        )
 
     def tearDown(self) -> None:
         self.controller.shutdown()
@@ -167,15 +171,30 @@ class WelcomeControllerTests(unittest.TestCase):
     def test_open_project_uses_selected_file_name(self) -> None:
         self.controller.createProject("Edge-Lab")
         project_path = self.workspace_requests[-1][1]
+        original_workspace = Path(self.controller.activeWorkspacePath)
         self.workspace_requests.clear()
         self.controller.openProject(QUrl.fromLocalFile(project_path))
 
         self.assertEqual(self.workspace_requests[0][0], "Edge-Lab")
         self.assertTrue(self.workspace_requests[0][1].endswith("Edge-Lab.ntp"))
+        self.assertEqual(Path(self.controller.activeWorkspacePath), original_workspace)
+        self.assertTrue(original_workspace.is_dir())
+
+    def test_active_workspace_cannot_be_silently_replaced(self) -> None:
+        self.controller.createProject("First Lab")
+        first_path = Path(self.workspace_requests[-1][1])
+
+        self.controller.createProject("Second Lab")
+
+        self.assertEqual(Path(self.controller.activeProjectPath), first_path)
+        self.assertFalse(Path(self.temporary.name, "Second-Lab.ntp").exists())
+        self.assertEqual(self.operation_failures[-1][0], "Create Project")
+        self.assertIn("Close the active workspace", self.operation_failures[-1][1])
 
     def test_encrypted_project_requests_password_then_unlocks(self) -> None:
         self.controller.createProject("Secret Lab", "correct password")
         project_path = self.workspace_requests[-1][1]
+        self.controller.closeProject()
         self.workspace_requests.clear()
 
         self.controller.openProject(QUrl.fromLocalFile(project_path))

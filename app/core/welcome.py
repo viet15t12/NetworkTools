@@ -1,5 +1,6 @@
 import json
 import re
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -93,6 +94,7 @@ class WelcomeController(QObject):
         self._default_project_directory = Path(str(configured_directory)).expanduser()
         self._active_session: WorkspaceSession | None = None
         self._pending_encrypted_path: Path | None = None
+        self._cleanup_pending: list[WorkspaceSession] = []
 
         self._migrate_legacy_recents()
         self._recent_projects: list[dict[str, Any]] = self._load_recents()
@@ -239,14 +241,17 @@ class WelcomeController(QObject):
         previous = self._active_session
         self._active_session = session
         self._pending_encrypted_path = None
-        if previous is not None and previous is not session:
-            previous.close()
         self._record_recent(
             session.manifest.name,
             session.project_path,
             is_encrypted=session.encrypted,
         )
         self.activeWorkspaceChanged.emit()
+        # Runtime services switch to the new databases synchronously through
+        # activeWorkspaceChanged. Only then is it safe to delete the previous
+        # extracted directory on platforms that lock open SQLite files.
+        if previous is not None and previous is not session:
+            self._cleanup_session(previous, "Switch Workspace")
         self.workspaceRequested.emit(session.manifest.name, str(session.project_path))
 
     @pyqtSlot(str)
@@ -333,6 +338,12 @@ class WelcomeController(QObject):
         self._create_at((project_name or "").strip(), Path(local_path), password)
 
     def _create_at(self, name: str, target: Path, password: str) -> bool:
+        if self._active_session is not None and not self._active_session.is_closed:
+            self.operationFailed.emit(
+                "Create Project",
+                "Close the active workspace before creating another project.",
+            )
+            return False
         if target.suffix.lower() != ".ntp":
             target = target.with_name(target.name + ".ntp")
         try:
@@ -392,6 +403,31 @@ class WelcomeController(QObject):
         self._open_path(path, password=password)
 
     def _open_path(self, path: Path, password: str | None) -> None:
+        active = self._active_session
+        if (
+            active is not None
+            and not active.is_closed
+            and self._same_project_path(active.project_path, path)
+        ):
+            # Re-opening the active package used to extract a second session,
+            # close the first one and make every cached QML list reload.  Apart
+            # from needless work, unsaved live changes could be discarded.
+            self._pending_encrypted_path = None
+            self._record_recent(
+                active.manifest.name,
+                active.project_path,
+                is_encrypted=active.encrypted,
+            )
+            self.workspaceRequested.emit(
+                active.manifest.name, str(active.project_path)
+            )
+            return
+        if active is not None and not active.is_closed:
+            self.operationFailed.emit(
+                "Open Project",
+                "Close the active workspace before opening another project.",
+            )
+            return
         try:
             session = self._workspace_service.open_project(path, password=password)
         except WorkspacePasswordRequired:
@@ -403,17 +439,65 @@ class WelcomeController(QObject):
             return
         self._activate(session)
 
-    @pyqtSlot()
-    def closeProject(self) -> None:
+    @staticmethod
+    def _same_project_path(first: Path, second: Path) -> bool:
+        """Compare existing project paths using filesystem identity when possible."""
+
+        try:
+            return first.samefile(second)
+        except OSError:
+            return first.expanduser().resolve() == second.expanduser().resolve()
+
+    @pyqtSlot(result=bool)
+    def closeProject(self) -> bool:
         session = self._active_session
         self._active_session = None
         self._pending_encrypted_path = None
-        if session is not None:
-            session.close()
-            self.activeWorkspaceChanged.emit()
+        if session is None:
+            return True
+
+        # Notify database managers/watchers first so they release handles into
+        # the disposable workspace. Deleting before this signal is unreliable
+        # on Windows and can leave networktools-workspace-* folders behind.
+        self.activeWorkspaceChanged.emit()
+        return self._cleanup_session(session, "Close Workspace")
+
+    def _cleanup_session(self, session: WorkspaceSession, title: str) -> bool:
+        last_error: OSError | None = None
+        for delay in (0.0, 0.025, 0.1):
+            if delay:
+                time.sleep(delay)
+            try:
+                session.close()
+            except OSError as exc:
+                last_error = exc
+                continue
+            if session.is_cleaned:
+                self._cleanup_pending = [
+                    item for item in self._cleanup_pending if item is not session
+                ]
+            elif all(item is not session for item in self._cleanup_pending):
+                # An active background operation still owns the directory; its
+                # lease will perform cleanup, with shutdown retaining a retry.
+                self._cleanup_pending.append(session)
+            return True
+
+        if all(item is not session for item in self._cleanup_pending):
+            self._cleanup_pending.append(session)
+        self.operationFailed.emit(
+            title,
+            "The project was saved, but its temporary workspace could not be "
+            f"removed yet: {last_error}",
+        )
+        return False
 
     def shutdown(self) -> None:
         self.closeProject()
+        # A transient sharing violation may outlive the first close attempt.
+        # Retry every retired session once all normal workspace users have
+        # received the activeWorkspaceChanged notification.
+        for session in tuple(self._cleanup_pending):
+            self._cleanup_session(session, "Application Shutdown")
 
     @pyqtSlot(str)
     def requestWelcome(self, mode: str = "") -> None:

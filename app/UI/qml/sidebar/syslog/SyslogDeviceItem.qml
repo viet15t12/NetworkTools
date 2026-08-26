@@ -11,7 +11,11 @@ Rectangle {
     required property var deviceData
     property bool selected: false
     readonly property string host: String(deviceData.host || "")
-    readonly property string deviceName: String(deviceData.device_name || host)
+    readonly property string deviceName: String(deviceData.device_name || "").trim()
+    readonly property string displayLabel: deviceName !== "" && host !== ""
+                                           && deviceName !== host
+                                           ? "%1(%2)".arg(deviceName).arg(host)
+                                           : (deviceName || host)
     readonly property string deviceType: String(deviceData.device_type || "").toLowerCase()
     readonly property url deviceIcon: deviceType === "router" ? AppAssets.deviceRouter
                                       : deviceType === "sw2" || deviceType === "sw3"
@@ -25,7 +29,7 @@ Rectangle {
                     : "transparent"
 
     ToolTip.visible: itemHover.hovered
-    ToolTip.text: "%1 · Connected log source".arg(host)
+    ToolTip.text: "%1 · Connected log source".arg(displayLabel)
     ToolTip.delay: 400
 
     Rectangle {
@@ -51,26 +55,13 @@ Rectangle {
             iconColor: Theme.statusConnected
         }
 
-        ColumnLayout {
+        Text {
             Layout.fillWidth: true
-            spacing: Theme.spacing2
-
-            Text {
-                Layout.fillWidth: true
-                text: root.deviceName
-                color: Theme.panelSideBarTextPrimary
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeNormal
-                elide: Text.ElideRight
-            }
-            Text {
-                Layout.fillWidth: true
-                text: root.host
-                color: Theme.panelSideBarTextSecondary
-                font.family: Theme.monoFontFamily
-                font.pixelSize: Theme.fontSizeSmall
-                elide: Text.ElideRight
-            }
+            text: root.displayLabel
+            color: Theme.panelSideBarTextPrimary
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSizeNormal
+            elide: Text.ElideRight
         }
 
         Text {

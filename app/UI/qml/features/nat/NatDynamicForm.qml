@@ -85,9 +85,11 @@ Rectangle {
                 if (!poolModel.get(i)._isNew) poolModel.setProperty(i, "_isEdited", true)
                 break
             }
-        } else poolModel.append({ nat_dynamic_id: nextLocalId--, pool_name: values.pool_name,
+        } else poolModel.append({ nat_dynamic_id: nextLocalId--, nat_id: 0,
+            nat_name: "dynamic_" + currentHostIp, pool_name: values.pool_name,
             start_ip: values.start_ip, end_ip: values.end_ip, netmask: values.netmask,
-            acl_name: values.acl_name, _isNew: true, _isEdited: false })
+            prefix_length: 0, acl_name: values.acl_name, sync_status: "pending_apply",
+            _isNew: true, _isEdited: false })
         clearForm()
         refreshDirtyFlag()
     }
@@ -238,7 +240,7 @@ Rectangle {
                 StandardComboBox {
                     id: dynamicAclCombo
                     Layout.fillWidth: true
-                    labelText: "ACL Name"
+                    labelText: "NAT ACL Name"
                     model: natDynamicForm.aclNames
                     valueModel: natDynamicForm.aclNames
                     emptyText: "No NAT ACL available"
@@ -281,6 +283,11 @@ Rectangle {
                         spacing: Theme.spacing8
 
                         DataTableCell {
+                            Layout.preferredWidth: 125
+                            header: true
+                            text: "NAT Name"
+                        }
+                        DataTableCell {
                             Layout.preferredWidth: 130
                             header: true
                             text: "Pool Name"
@@ -298,7 +305,7 @@ Rectangle {
                         DataTableCell {
                             Layout.fillWidth: true
                             header: true
-                            text: "ACL"
+                            text: "NAT ACL"
                         }
                         DataTableCell { Layout.preferredWidth: 64; header: true; text: "Actions" }
                     }
@@ -322,8 +329,12 @@ Rectangle {
                         spacing: Theme.spacing8
 
                         DataTableCell {
-                            Layout.preferredWidth: 130
+                            Layout.preferredWidth: 125
                             primary: true
+                            text: model.nat_name
+                        }
+                        DataTableCell {
+                            Layout.preferredWidth: 130
                             text: model.pool_name
                         }
                         DataTableCell {
