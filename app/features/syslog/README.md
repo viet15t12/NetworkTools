@@ -59,7 +59,13 @@ timestamp và sequence-number. Log nhận được được lưu riêng ở
 severity 5 (`notifications`) để nhận cả `%SYS-5-CONFIG_I`. Các row dùng
 `sync_status` và luồng View & Push chung; sửa endpoint đã áp dụng sẽ tạo đồng thời
 task gỡ endpoint cũ và task thêm endpoint mới. Activity bar chỉ sở hữu listener,
-bộ lọc và bảng log. Cancel chỉ xóa destination do NetworkTools quản lý.
+bộ lọc và bảng log. Bộ lọc hỗ trợ host, khoảng thời gian nhận, severity,
+protocol và N log mới nhất trên từng host. Ô Smart filter nhận cú pháp ngắn như
+`host:192.0.2.10 last:20`, `since:30m severity:error` hoặc
+`facility:LINK mnemonic:UPDOWN`; nút Help trong thanh lọc liệt kê đầy đủ cú pháp.
+**Export Excel** chỉ ghi các row đang hiển thị sau khi áp dụng mọi bộ lọc, đồng
+thời lưu tóm tắt bộ lọc trong workbook. Cancel chỉ xóa destination do
+NetworkTools quản lý.
 
 Chưa hỗ trợ RFC6587 octet-counting, TLS, nhiều bind endpoint/port hoặc alert engine.
 Chi tiết vận hành: [`../../docs/SYSTEM_LOGS.md`](../../docs/SYSTEM_LOGS.md).

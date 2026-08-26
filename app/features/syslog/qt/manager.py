@@ -12,7 +12,9 @@ from infrastructure.database.paths import DEVICE_NETWORK_DB, INFO_COLLECTED_DB
 
 from ..application.retention import run_retention
 from ..application.server_service import SyslogServerService
+from ..export import export_logs_xlsx, file_url_to_path
 from ..native import NativeSyslogCollector
+from ..smart_filter import SmartFilterError, build_log_filters
 from .settings import SyslogSettings
 
 
@@ -30,6 +32,19 @@ def _variant_dict(value: Any) -> dict[str, Any]:
         return dict(value)
     except (TypeError, ValueError) as exc:
         raise TypeError("Syslog data must be a QML object or mapping") from exc
+
+
+def _variant_list(value: Any) -> list[Any]:
+    if value is None:
+        return []
+    to_variant = getattr(value, "toVariant", None)
+    if callable(to_variant):
+        value = to_variant()
+    if value is None:
+        return []
+    if isinstance(value, (list, tuple)):
+        return list(value)
+    raise TypeError("Syslog rows must be a QML array or list")
 
 
 class SyslogManager(QObject):
@@ -269,6 +284,45 @@ class SyslogManager(QObject):
                 self.queryFinished.emit(request_id, [], False)
         self.executor.submit(task)
 
+    @pyqtSlot("QVariant", str, result="QVariant")
+    def buildLogFilters(self, filters: Any, expression: str) -> dict[str, Any]:
+        try:
+            return {
+                "ok": True,
+                "message": "",
+                "filters": build_log_filters(_variant_dict(filters), expression),
+            }
+        except (SmartFilterError, TypeError, ValueError) as exc:
+            return {"ok": False, "message": str(exc), "filters": {}}
+
+    @pyqtSlot(result="QVariant")
+    def getLogHosts(self) -> list[str]:
+        try:
+            return self.repository.distinct_hosts()
+        except Exception as exc:
+            self._error(str(exc))
+            return []
+
+    @pyqtSlot(str, "QVariant", "QVariant", result="QVariant")
+    def exportCurrentMessages(
+        self, file_url: str, rows: Any, filters: Any,
+    ) -> dict[str, Any]:
+        try:
+            values = [_variant_dict(row) for row in _variant_list(rows)]
+            if not values:
+                return {"ok": False, "message": "There are no displayed logs to export."}
+            target = export_logs_xlsx(
+                file_url_to_path(file_url), values, _variant_dict(filters)
+            )
+            return {
+                "ok": True,
+                "message": f"Exported {len(values)} displayed logs to {target}",
+                "path": str(target),
+                "count": len(values),
+            }
+        except Exception as exc:
+            return {"ok": False, "message": f"Could not export Syslog Excel file: {exc}"}
+
     @pyqtSlot()
     def shutdown(self) -> None:
         self._shutdown = True
@@ -277,4 +331,4 @@ class SyslogManager(QObject):
         self.executor.shutdown(wait=True, cancel_futures=True)
 
 
-__all__ = ["SyslogManager", "_variant_dict"]
+__all__ = ["SyslogManager", "_variant_dict", "_variant_list"]

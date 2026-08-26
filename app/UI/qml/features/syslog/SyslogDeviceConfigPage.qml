@@ -430,7 +430,9 @@ Item {
                         labelText: "Server IP"
                         placeholderText: "192.0.2.100"
                         text: String(root.draftData.server_ip || "")
-                        onTextEdited: root.updateField("server_ip", text.trim())
+                        onTextEdited: function(value) {
+                            root.updateField("server_ip", value.trim())
+                        }
                     }
                     RowLayout {
                         Layout.fillWidth: true

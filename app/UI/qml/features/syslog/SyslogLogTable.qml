@@ -14,8 +14,13 @@ DataTable {
     property bool limitReached: false
     property bool paused: false
     property int selectedIndex: -1
-    readonly property bool compactColumns: width < 760
-    readonly property bool narrowColumns: width < 520
+    readonly property bool compactColumns: width < 1120
+    readonly property bool narrowColumns: width < 720
+    readonly property int timeColumnWidth: compactColumns ? 184 : 210
+    readonly property int hostColumnWidth: compactColumns ? 112 : 126
+    readonly property int sourceColumnWidth: 130
+    readonly property int severityColumnWidth: compactColumns ? 148 : 164
+    readonly property int mnemonicColumnWidth: 112
     signal loadOlderRequested()
     signal messageActivated(var rowData)
 
@@ -34,33 +39,48 @@ DataTable {
 
                 DataTableCell {
                     visible: !root.narrowColumns
-                    Layout.preferredWidth: root.compactColumns ? 110 : 150
+                    Layout.minimumWidth: root.timeColumnWidth
+                    Layout.preferredWidth: root.timeColumnWidth
+                    Layout.maximumWidth: root.timeColumnWidth
                     header: true
                     text: "Time"
                 }
                 DataTableCell {
-                    Layout.preferredWidth: root.compactColumns ? 104 : 120
+                    Layout.minimumWidth: root.hostColumnWidth
+                    Layout.preferredWidth: root.hostColumnWidth
+                    Layout.maximumWidth: root.hostColumnWidth
                     header: true
                     text: "Host"
                 }
                 DataTableCell {
                     visible: !root.compactColumns
-                    Layout.preferredWidth: 120
+                    Layout.minimumWidth: root.sourceColumnWidth
+                    Layout.preferredWidth: root.sourceColumnWidth
+                    Layout.maximumWidth: root.sourceColumnWidth
                     header: true
                     text: "Source IP"
                 }
                 DataTableCell {
-                    Layout.preferredWidth: root.compactColumns ? 116 : 132
+                    Layout.minimumWidth: root.severityColumnWidth
+                    Layout.preferredWidth: root.severityColumnWidth
+                    Layout.maximumWidth: root.severityColumnWidth
                     header: true
                     text: "Facility / Severity"
                 }
                 DataTableCell {
                     visible: !root.compactColumns
-                    Layout.preferredWidth: 120
+                    Layout.minimumWidth: root.mnemonicColumnWidth
+                    Layout.preferredWidth: root.mnemonicColumnWidth
+                    Layout.maximumWidth: root.mnemonicColumnWidth
                     header: true
                     text: "Mnemonic"
                 }
-                DataTableCell { Layout.fillWidth: true; header: true; text: "Message" }
+                DataTableCell {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 120
+                    header: true
+                    text: "Message"
+                }
             }
         }
     }
@@ -84,6 +104,11 @@ DataTable {
             selected: root.selectedIndex === index
             compactColumns: root.compactColumns
             narrowColumns: root.narrowColumns
+            timeColumnWidth: root.timeColumnWidth
+            hostColumnWidth: root.hostColumnWidth
+            sourceColumnWidth: root.sourceColumnWidth
+            severityColumnWidth: root.severityColumnWidth
+            mnemonicColumnWidth: root.mnemonicColumnWidth
             onSelectedRequested: root.selectedIndex = index
             onActivated: function(data) {
                 root.selectedIndex = index

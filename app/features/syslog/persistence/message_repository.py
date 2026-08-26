@@ -54,6 +54,11 @@ class MessageRepository:
         params: list[Any] = []
         host = str(filters.get("host") or "").strip()
         search = str(filters.get("search") or "").strip()
+        from_time = str(filters.get("from_time") or "").strip()
+        to_time = str(filters.get("to_time") or "").strip()
+        facility = str(filters.get("facility") or "").strip()
+        mnemonic = str(filters.get("mnemonic") or "").strip()
+        per_host = max(0, min(int(filters.get("per_host") or 0), 500))
         severities = self._valid_severities(filters.get("severities", []))
         protocols = self._valid_protocols(filters.get("protocols", []))
         if host:
@@ -62,35 +67,82 @@ class MessageRepository:
         if search:
             clauses.append(
                 "(message LIKE ? ESCAPE '\\' OR mnemonic LIKE ? ESCAPE '\\' "
-                "OR cisco_facility LIKE ? ESCAPE '\\')"
+                "OR COALESCE(NULLIF(cisco_facility, ''), facility, '') "
+                "LIKE ? ESCAPE '\\')"
             )
             escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
             params.extend((f"%{escaped}%", f"%{escaped}%", f"%{escaped}%"))
+        if from_time:
+            clauses.append("julianday(received_at) >= julianday(?)")
+            params.append(from_time)
+        if to_time:
+            clauses.append("julianday(received_at) <= julianday(?)")
+            params.append(to_time)
+        if facility:
+            clauses.append(
+                "COALESCE(NULLIF(cisco_facility, ''), facility, '') LIKE ? ESCAPE '\\'"
+            )
+            params.append(f"%{self._escape_like(facility)}%")
+        if mnemonic:
+            clauses.append("COALESCE(mnemonic, '') LIKE ? ESCAPE '\\'")
+            params.append(f"%{self._escape_like(mnemonic)}%")
         if severities:
             clauses.append(f"severity IN ({','.join('?' for _ in severities)})")
             params.extend(severities)
         if protocols:
             clauses.append(f"protocol IN ({','.join('?' for _ in protocols)})")
             params.extend(protocols)
-        if before_id > 0:
+        if before_id > 0 and per_host <= 0:
             clauses.append("id < ?")
             params.append(before_id)
         where = " WHERE " + " AND ".join(clauses) if clauses else ""
-        params.append(max(1, min(int(limit), 500)))
+        row_limit = max(1, min(int(limit), 5_000))
+        with closing(info_connection(self.info_db)) as conn:
+            if per_host > 0:
+                outer_clauses = ["host_rank <= ?"]
+                outer_params: list[Any] = [*params, per_host]
+                if before_id > 0:
+                    outer_clauses.append("id < ?")
+                    outer_params.append(before_id)
+                outer_params.append(row_limit)
+                rows = conn.execute(
+                    "WITH ranked AS ("
+                    "SELECT *, ROW_NUMBER() OVER ("
+                    "PARTITION BY device_host ORDER BY id DESC"
+                    ") AS host_rank FROM t12_syslog_messages" + where + ") "
+                    "SELECT * FROM ranked WHERE " + " AND ".join(outer_clauses)
+                    + " ORDER BY id DESC LIMIT ?",
+                    outer_params,
+                ).fetchall()
+            else:
+                params.append(row_limit)
+                rows = conn.execute(
+                    "SELECT * FROM t12_syslog_messages" + where + " ORDER BY id DESC LIMIT ?",
+                    params,
+                ).fetchall()
+        return [self._public_row(dict(row)) for row in rows]
+
+    def distinct_hosts(self) -> list[str]:
         with closing(info_connection(self.info_db)) as conn:
             rows = conn.execute(
-                "SELECT * FROM t12_syslog_messages" + where + " ORDER BY id DESC LIMIT ?",
-                params,
+                "SELECT DISTINCT device_host FROM t12_syslog_messages "
+                "WHERE TRIM(COALESCE(device_host, '')) != '' "
+                "ORDER BY device_host COLLATE NOCASE"
             ).fetchall()
-        return [self._public_row(dict(row)) for row in rows]
+        return [str(row[0]) for row in rows]
 
     @staticmethod
     def _public_row(row: dict[str, Any]) -> dict[str, Any]:
+        row.pop("host_rank", None)
         row["clock_unsynchronized"] = bool(row.get("clock_unsynchronized"))
         row["facility"] = row.get("cisco_facility") or (
             str(row["syslog_facility"]) if row.get("syslog_facility") is not None else row.get("facility")
         )
         return row
+
+    @staticmethod
+    def _escape_like(value: str) -> str:
+        return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
     @staticmethod
     def _valid_severities(values: Any) -> list[int]:

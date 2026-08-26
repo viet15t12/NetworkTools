@@ -150,6 +150,7 @@ SyslogLogRow 1.0 qml/features/syslog/SyslogLogRow.qml
 SyslogMessageDetails 1.0 qml/features/syslog/SyslogMessageDetails.qml
 SyslogServerSettings 1.0 qml/features/syslog/SyslogServerSettings.qml
 SyslogDeviceConfigPage 1.0 qml/features/syslog/SyslogDeviceConfigPage.qml
+SyslogSmartFilterHelp 1.0 qml/features/syslog/SyslogSmartFilterHelp.qml
 
 SwitchWorkspace 1.0 qml/features/switching/SwitchWorkspace.qml
 CrudFormActions 1.0 qml/features/switching/components/CrudFormActions.qml

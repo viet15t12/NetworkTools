@@ -65,7 +65,10 @@ row `pending_apply`/`pending_delete`. Cấu hình mới mặc định dùng UDP/
 `logging trap notifications` (severity 5), vì `warnings` (severity 4) không gửi
 message `%SYS-5-CONFIG_I`. Màn System Logs ở activity bar không cấu hình thiết
 bị: màn này bật/tắt một listener logic nhận đồng thời UDP+TCP, chọn host và lọc
-theo nội dung, severity hoặc transport trước khi xem log. Listener/writer dùng
+theo nội dung, khoảng thời gian, severity hoặc transport trước khi xem log. Có
+thể giới hạn N log gần nhất cho từng host, dùng Smart filter với cú pháp
+`key:value`, xem hướng dẫn ngay trên thanh lọc và xuất chính xác tập row đang
+hiển thị sang Excel. Listener/writer dùng
 tiến trình C++ riêng và `info_collected.db`, không giữ session CLI của View & Push.
 
 ## Build và cấu hình native

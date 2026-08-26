@@ -10,6 +10,11 @@ DataTableRow {
     property var rowData: ({})
     property bool compactColumns: false
     property bool narrowColumns: false
+    property int timeColumnWidth: 210
+    property int hostColumnWidth: 126
+    property int sourceColumnWidth: 130
+    property int severityColumnWidth: 164
+    property int mnemonicColumnWidth: 112
     signal selectedRequested()
     signal activated(var rowData)
 
@@ -39,25 +44,33 @@ DataTableRow {
 
         DataTableCell {
             visible: !root.narrowColumns
-            Layout.preferredWidth: root.compactColumns ? 110 : 150
+            Layout.minimumWidth: root.timeColumnWidth
+            Layout.preferredWidth: root.timeColumnWidth
+            Layout.maximumWidth: root.timeColumnWidth
             monospaced: true
             text: String(root.rowValue("device_time", "")
                          || root.rowValue("received_at", "") || "—")
         }
         DataTableCell {
-            Layout.preferredWidth: root.compactColumns ? 104 : 120
+            Layout.minimumWidth: root.hostColumnWidth
+            Layout.preferredWidth: root.hostColumnWidth
+            Layout.maximumWidth: root.hostColumnWidth
             primary: true
             text: String(root.rowValue("device_host", "")
                          || root.rowValue("source_ip", "") || "—")
         }
         DataTableCell {
             visible: !root.compactColumns
-            Layout.preferredWidth: 120
+            Layout.minimumWidth: root.sourceColumnWidth
+            Layout.preferredWidth: root.sourceColumnWidth
+            Layout.maximumWidth: root.sourceColumnWidth
             monospaced: true
             text: String(root.rowValue("source_ip", "") || "—")
         }
         DataTableCell {
-            Layout.preferredWidth: root.compactColumns ? 116 : 132
+            Layout.minimumWidth: root.severityColumnWidth
+            Layout.preferredWidth: root.severityColumnWidth
+            Layout.maximumWidth: root.severityColumnWidth
             color: root.severityColor
             text: "%1 / %2 %3".arg(root.rowValue("cisco_facility", "")
                                       || root.rowValue("facility", "") || "—")
@@ -66,12 +79,15 @@ DataTableRow {
         }
         DataTableCell {
             visible: !root.compactColumns
-            Layout.preferredWidth: 120
+            Layout.minimumWidth: root.mnemonicColumnWidth
+            Layout.preferredWidth: root.mnemonicColumnWidth
+            Layout.maximumWidth: root.mnemonicColumnWidth
             monospaced: true
             text: String(root.rowValue("mnemonic", "") || "—")
         }
         DataTableCell {
             Layout.fillWidth: true
+            Layout.minimumWidth: 120
             primary: true
             text: String(root.rowValue("message", "") || "—")
         }

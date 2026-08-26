@@ -49,6 +49,43 @@ class MessageRepositoryV2Tests(unittest.TestCase):
             self.assertEqual(len(tcp_rows), 1)
             self.assertEqual(tcp_rows[0]["protocol"], "tcp")
 
+    def test_filters_time_facility_mnemonic_and_latest_rows_per_host(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            database = Path(temp_dir) / "info.db"
+            database.touch()
+            repository = MessageRepository(database)
+            rows = []
+            for host_index, host in enumerate(("r1", "r2")):
+                for minute in range(3):
+                    rows.append(SyslogMessage(
+                        source_ip=f"192.0.2.{host_index + 1}",
+                        device_host=host,
+                        protocol="udp",
+                        severity=3 if minute == 2 else 5,
+                        message=f"event {host} {minute}",
+                        raw_message="raw",
+                        received_at=f"2026-08-26T18:0{minute + host_index}:00+00:00",
+                        cisco_facility="LINK" if minute == 2 else "SYS",
+                        mnemonic="UPDOWN" if minute == 2 else "CONFIG_I",
+                    ))
+            repository.insert_messages(rows)
+
+            latest = repository.query_messages({"per_host": 2}, limit=20)
+            self.assertEqual(len(latest), 4)
+            self.assertEqual(
+                {host: sum(row["device_host"] == host for row in latest) for host in ("r1", "r2")},
+                {"r1": 2, "r2": 2},
+            )
+
+            filtered = repository.query_messages({
+                "from_time": "2026-08-26T18:02:00+00:00",
+                "to_time": "2026-08-26T18:03:00+00:00",
+                "facility": "link",
+                "mnemonic": "up",
+            }, limit=20)
+            self.assertEqual({row["device_host"] for row in filtered}, {"r1", "r2"})
+            self.assertEqual(repository.distinct_hosts(), ["r1", "r2"])
+
 
 if __name__ == "__main__":
     unittest.main()
