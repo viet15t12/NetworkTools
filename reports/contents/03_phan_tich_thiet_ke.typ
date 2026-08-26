@@ -6,57 +6,50 @@
 
 == Tác nhân và ca sử dụng
 
-Hệ thống được thiết kế tối ưu cho môi trường phòng thực hành (lab) và quản trị mạng vừa/nhỏ. Tác nhân chính (Primary Actor) tham gia tương tác trực tiếp với phần mềm là *Người quản trị mạng* (bao gồm giảng viên phụ trách lab, kỹ sư quản trị hoặc sinh viên thực hành). 
+Hệ thống được thiết kế tối ưu cho môi trường phòng thực hành (lab) và quản trị mạng vừa/nhỏ. Tác nhân chính (Primary Actor) tham gia tương tác trực tiếp với phần mềm là *Người quản trị mạng* (bao gồm giảng viên phụ trách lab, kỹ sư quản trị hoặc sinh viên thực hành).
 
-Các ca sử dụng cốt lõi (Use Cases) được mô hình hóa bao quát toàn bộ vòng đời quản trị và tự động hóa cấu hình:
+Các ca sử dụng cốt lõi được mô hình hóa bao quát toàn bộ vòng đời quản trị và tự động hóa cấu hình:
 
-/ UC-01 Quản lý danh mục thiết bị (Device Inventory): Khai báo, chỉnh sửa, xóa thông tin định danh, địa chỉ IP và tham số xác thực của Router/Switch; nhập hàng loạt danh sách thiết bị từ tệp JSON/Excel.
-/ UC-02 Kiểm tra kết nối và Đồng bộ cơ sở (Ping & Baseline Sync): Kiểm tra khả năng kết nối mạng (Ping ICMP), mở phiên SSH/Telnet, thu thập cấu hình đang chạy (`running-config`) và phân tích (parse) lưu vào cơ sở dữ liệu SQLite làm trạng thái cơ sở.
-/ UC-03 Định nghĩa cấu hình mong muốn (Define Desired State): Sử dụng các biểu mẫu đồ họa (Form GUI) để thiết lập thông số mạng cho từng phân hệ (Interface, DHCP, Routing, ACL, NAT, Switching); dữ liệu được kiểm tra tính hợp lệ và ghi vào cơ sở dữ liệu với trạng thái chờ xử lý (`Pending`).
-/ UC-04 Xem trước cấu hình (Preview Configuration): Kích hoạt bộ tạo mẫu Jinja2 để kết xuất các bản ghi đang chờ thành tập lệnh CLI Cisco IOS hoàn chỉnh để người quản trị kiểm duyệt trực quan.
-/ UC-05 Thực thi cấu hình (Push Configuration): Đẩy tập lệnh đã phê duyệt xuống thiết bị qua phiên kết nối hiện hành, thu thập phản hồi và cập nhật trạng thái đồng bộ thành công vào cơ sở dữ liệu.
-/ UC-06 Quản lý lịch sử và phiên bản (Version Control & Backup): Tự động lưu vết các bản cấu hình `running-config` thành các commit Git thông qua Dulwich, hỗ trợ xem lại lịch sử và so sánh sai khác cấu hình (Unified Diff).
-/ UC-07 Thao tác dòng lệnh tương tác (Terminal Companion): Mở phiên dòng lệnh nhúng Alacritty để can thiệp cấu hình thủ công khi cần thiết, tự động kích hoạt đồng bộ khi đóng phiên.
-/ UC-08 Giám sát nhật ký và truyền tệp (Syslog & SFTP): Khởi chạy máy chủ Syslog lắng nghe bản tin sự kiện thời gian thực và sử dụng máy khách SFTP hai khung nhìn để truyền tệp an toàn tới thiết bị.
+- *Quản lý danh mục thiết bị (Device Inventory):* Khai báo, chỉnh sửa, xóa thông tin định danh, địa chỉ IP và tham số xác thực của Router/Switch; nhập hàng loạt danh sách thiết bị từ tệp JSON/Excel.
+- *Kiểm tra kết nối và Đồng bộ cơ sở (Ping & Baseline Sync):* Kiểm tra khả năng kết nối mạng (Ping ICMP), mở phiên SSH/Telnet, thu thập cấu hình đang chạy (`running-config`) và phân tích (parse) lưu vào cơ sở dữ liệu SQLite làm trạng thái cơ sở.
+- *Định nghĩa cấu hình mong muốn (Define Desired State):* Sử dụng các biểu mẫu đồ họa (Form GUI) để thiết lập thông số mạng cho từng phân hệ (Interface, DHCP, Routing, ACL, NAT, Switching); dữ liệu được kiểm tra tính hợp lệ và ghi vào cơ sở dữ liệu với trạng thái chờ xử lý (`Pending`).
+- *Xem trước cấu hình (Preview Configuration):* Kích hoạt bộ tạo mẫu Jinja2 để kết xuất các bản ghi đang chờ thành tập lệnh CLI Cisco IOS hoàn chỉnh để người quản trị kiểm duyệt trực quan.
+- *Thực thi cấu hình (Push Configuration):* Đẩy tập lệnh đã phê duyệt xuống thiết bị qua phiên kết nối hiện hành, thu thập phản hồi và cập nhật trạng thái đồng bộ thành công vào cơ sở dữ liệu.
+- *Quản lý lịch sử và phiên bản (Version Control & Backup):* Tự động lưu vết các bản cấu hình `running-config` thành các commit Git thông qua Dulwich, hỗ trợ xem lại lịch sử và so sánh sai khác cấu hình (Unified Diff).
+- *Thao tác dòng lệnh tương tác (Terminal Companion):* Mở phiên dòng lệnh nhúng Alacritty để can thiệp cấu hình thủ công khi cần thiết, tự động kích hoạt đồng bộ khi đóng phiên.
+- *Giám sát nhật ký và truyền tệp (Syslog & SFTP):* Khởi chạy máy chủ Syslog lắng nghe bản tin sự kiện thời gian thực và sử dụng máy khách SFTP hai khung nhìn để truyền tệp an toàn tới thiết bị.
 
 == Yêu cầu chức năng
 
-Dựa trên các ca sử dụng, các yêu cầu chức năng (Functional Requirements - FR) được phân định rõ ràng thành nhóm tính năng cốt lõi và nhóm tiện ích mở rộng:
+Dựa trên các ca sử dụng, các yêu cầu chức năng được phân định rõ ràng thành nhóm tính năng cốt lõi và nhóm tiện ích mở rộng:
 
 === Nhóm tính năng cốt lõi
 
-#report-table(
-  columns: (15%, 35%, 50%),
-  header: ([Mã YC], [Tên yêu cầu chức năng], [Mô tả chi tiết và tiêu chí nghiệm thu]),
-  rows: (
-    ([FR-01], [Quản lý danh mục thiết bị], [Thêm, sửa, xóa thiết bị; gán vai trò (`rou`, `sw2`, `sw3`); hỗ trợ nhập hàng loạt từ JSON/Excel; lưu trữ thông tin IP, port, credential.]),
-    ([FR-02], [Kết nối và Thu thập trạng thái], [Ping kiểm tra kết nối; khởi tạo phiên SSH/Telnet; bóc tách `running-config` và lưu trữ trạng thái Baseline vào SQLite.]),
-    ([FR-03], [Cấu hình Giao diện Router], [Quản lý thông số IPv4 cho cổng vật lý L3/WAN; tạo/xóa cổng ảo Loopback, Tunnel GRE và Subinterface 802.1Q (Router-on-a-Stick).]),
-    ([FR-04], [Cấu hình Cấp phát IP (DHCP)], [Quản lý DHCP Pool (Network, Gateway, DNS, Lease), dải địa chỉ loại trừ (Excluded IP) và cấu hình Relay Helper Address trên từng interface.]),
-    ([FR-05], [Cấu hình Định tuyến mạng], [Quản lý Static & Default Route; cấu hình định tuyến động OSPFv2 (Process, Area, Network, Interface tuning); cấu hình EIGRP (AS, Network, Key Chain).]),
-    ([FR-06], [Chính sách kiểm soát truy cập (ACL)], [Quản lý Standard, Extended, Dynamic, Reflexive và MAC ACL; đảm bảo thứ tự ưu tiên (Sequence); gán chính sách vào giao diện theo chiều in/out.]),
-    ([FR-07], [Biên dịch địa chỉ mạng (NAT/PAT)], [Quản lý Static NAT (1-1), Dynamic NAT (Pool), PAT (Overload cổng WAN); phân định vai trò `ip nat inside/outside`; kết hợp NAT ACL và Route-map.]),
-    ([FR-08], [Chuyển mạch & Bảo mật Lớp 2], [Quản lý VLAN, Switchport Access/Trunk 802.1Q, EtherChannel LACP; cấu hình STP, VTP; kích hoạt Port Security, DHCP Snooping và DAI.]),
-  ),
-  caption: [Danh mục các yêu cầu chức năng cốt lõi của hệ thống],
-) <tab-functional-requirements>
+- *Quản lý danh mục thiết bị:* Thêm, sửa, xóa thiết bị; gán vai trò (`rou`, `sw2`, `sw3`); hỗ trợ nhập hàng loạt từ JSON/Excel; lưu trữ thông tin IP, port, credential.
+- *Kết nối và Thu thập trạng thái:* Ping kiểm tra kết nối; khởi tạo phiên SSH/Telnet; bóc tách `running-config` và lưu trữ trạng thái Baseline vào SQLite.
+- *Cấu hình Giao diện Router:* Quản lý thông số IPv4 cho cổng vật lý L3/WAN; tạo/xóa cổng ảo Loopback, Tunnel GRE và Subinterface 802.1Q (Router-on-a-Stick).
+- *Cấu hình Cấp phát IP (DHCP):* Quản lý DHCP Pool (Network, Gateway, DNS, Lease), dải địa chỉ loại trừ (Excluded IP) và cấu hình Relay Helper Address trên từng interface.
+- *Cấu hình Định tuyến mạng:* Quản lý Static & Default Route; cấu hình định tuyến động OSPFv2 (Process, Area, Network, Interface tuning); cấu hình EIGRP (AS, Network, Key Chain).
+- *Chính sách kiểm soát truy cập (ACL):* Quản lý Standard, Extended, Dynamic, Reflexive và MAC ACL; đảm bảo thứ tự ưu tiên (Sequence); gán chính sách vào giao diện theo chiều in/out.
+- *Biên dịch địa chỉ mạng (NAT/PAT):* Quản lý Static NAT (1-1), Dynamic NAT (Pool), PAT (Overload cổng WAN); phân định vai trò `ip nat inside/outside`; kết hợp NAT ACL và Route-map.
+- *Chuyển mạch & Bảo mật Lớp 2:* Quản lý VLAN, Switchport Access/Trunk 802.1Q, EtherChannel LACP; cấu hình STP, VTP; kích hoạt Port Security, DHCP Snooping và DAI.
 
 === Nhóm tính năng mở rộng
 
-- *FR-09 (Máy chủ Syslog):* Tiếp nhận bản tin nhật ký qua UDP/TCP (cổng 514), ghi theo lô vào SQLite, hỗ trợ lọc theo Severity (0–7) và dọn dẹp theo thời gian.
-- *FR-10 (Truyền tệp SFTP):* Giao diện hai khung nhìn, xác thực vân tay máy chủ SHA-256, hàng đợi tải tệp nền có thanh tiến trình.
-- *FR-11 (Terminal Alacritty nhúng):* Khởi chạy cửa sổ CLI độc lập giao tiếp qua socket IPC nội bộ (NTTP/1), tách biệt khỏi phiên automation.
-- *FR-12 (Quản lý Gói dự án .ntp):* Đóng gói toàn bộ cơ sở dữ liệu và cấu hình thành tệp `.ntp` chuẩn Zip, hỗ trợ mã hóa Argon2id + AES-256-GCM và snapshot khôi phục an toàn.
+- *Máy chủ Syslog:* Tiếp nhận bản tin nhật ký qua UDP/TCP (cổng 514), ghi theo lô vào SQLite, hỗ trợ lọc theo Severity (0–7) và dọn dẹp theo thời gian.
+- *Truyền tệp SFTP:* Giao diện hai khung nhìn, xác thực vân tay máy chủ SHA-256, hàng đợi tải tệp nền có thanh tiến trình.
+- *Terminal Alacritty nhúng:* Khởi chạy cửa sổ CLI độc lập giao tiếp qua socket IPC nội bộ (NTTP/1), tách biệt khỏi phiên automation.
+- *Quản lý Gói dự án .ntp:* Đóng gói toàn bộ cơ sở dữ liệu và cấu hình thành tệp `.ntp` chuẩn Zip, hỗ trợ mã hóa Argon2id + AES-256-GCM và snapshot khôi phục an toàn.
 
 == Yêu cầu phi chức năng
 
-Hệ thống phải đáp ứng các tiêu chuẩn kỹ thuật nghiêm ngặt về hiệu năng, tính ổn định và an toàn (Non-Functional Requirements - NFR):
+Hệ thống phải đáp ứng các tiêu chuẩn kỹ thuật nghiêm ngặt về hiệu năng, tính ổn định và an toàn:
 
-- *NFR-01 (Hiệu năng giao diện không chặn - Non-blocking UI):* Luồng giao diện chính (UI Thread) phải hoàn toàn độc lập với các tác vụ mạng. Mọi hoạt động kết nối SSH, thu thập cấu hình hoặc đẩy lệnh kéo dài đều phải thực thi trên các luồng nền (Worker Threads / Background Tasks) để giao diện luôn phản hồi mượt mà.
-- *NFR-02 (An toàn thực thi Dev-mode - Fail-closed):* Hệ thống cung cấp Chế độ phát triển (Dev-mode). Khi được kích hoạt, hệ thống khóa chặn tuyệt đối việc mở socket kết nối thật xuống thiết bị vật lý, chỉ sinh phản hồi mô phỏng phục vụ kiểm thử logic và giao diện.
-- *NFR-03 (Toàn vẹn dữ liệu quan hệ):* Cơ sở dữ liệu SQLite kích hoạt kiểm tra ràng buộc khóa ngoại (`PRAGMA foreign_keys = ON`) và các bộ xác thực nghiệp vụ (Validation) ở backend nhằm ngăn chặn dữ liệu sai lệch (nhập sai IP, Subnet không hợp lệ, hoặc tham chiếu tới đối tượng không tồn tại).
-- *NFR-04 (Khóa đồng bộ theo thiết bị - Host Lock):* Áp dụng cơ chế khóa tuần tự hóa (`operation_lock`) trên từng thiết bị. Không cho phép hai tiến trình cùng ghi lệnh vào một kênh CLI tại cùng một thời điểm nhằm loại trừ triệt để hiện tượng xung đột dữ liệu (Race Condition).
-- *NFR-05 (Bảo mật thông tin xác thực):* Mật khẩu thiết bị và khóa bí mật không được ghi lại dưới dạng bản rõ (plain-text) trong các tệp nhật ký hệ thống. Mật khẩu kết nối SFTP được bảo vệ qua kho bảo mật Windows DPAPI.
+- *Hiệu năng giao diện không chặn (Non-blocking UI):* Luồng giao diện chính (UI Thread) phải hoàn toàn độc lập với các tác vụ mạng. Mọi hoạt động kết nối SSH, thu thập cấu hình hoặc đẩy lệnh kéo dài đều phải thực thi trên các luồng nền (Worker Threads / Background Tasks) để giao diện luôn phản hồi mượt mà.
+- *An toàn thực thi Dev-mode (Fail-closed):* Hệ thống cung cấp Chế độ phát triển (Dev-mode). Khi được kích hoạt, hệ thống khóa chặn tuyệt đối việc mở socket kết nối thật xuống thiết bị vật lý, chỉ sinh phản hồi mô phỏng phục vụ kiểm thử logic và giao diện.
+- *Toàn vẹn dữ liệu quan hệ:* Cơ sở dữ liệu SQLite kích hoạt kiểm tra ràng buộc khóa ngoại (`PRAGMA foreign_keys = ON`) và các bộ xác thực nghiệp vụ (Validation) ở backend nhằm ngăn chặn dữ liệu sai lệch (nhập sai IP, Subnet không hợp lệ, hoặc tham chiếu tới đối tượng không tồn tại).
+- *Khóa đồng bộ theo thiết bị (Host Lock):* Áp dụng cơ chế khóa tuần tự hóa (`operation_lock`) trên từng thiết bị. Không cho phép hai tiến trình cùng ghi lệnh vào một kênh CLI tại cùng một thời điểm nhằm loại trừ triệt để hiện tượng xung đột dữ liệu (Race Condition).
+- *Bảo mật thông tin xác thực:* Mật khẩu thiết bị và khóa bí mật không được ghi lại dưới dạng bản rõ (plain-text) trong các tệp nhật ký hệ thống. Mật khẩu kết nối SFTP được bảo vệ qua kho bảo mật Windows DPAPI.
 
 == Kiến trúc phân lớp hệ thống
 
