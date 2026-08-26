@@ -113,6 +113,7 @@ DhcpSubBar 1.0 qml/features/dhcp/DhcpSubBar.qml
 DhcpView 1.0 qml/features/dhcp/DhcpView.qml
 
 FhrpMemberEditor 1.0 qml/features/fhrp/FhrpMemberEditor.qml
+FhrpProtocolOptionsEditor 1.0 qml/features/fhrp/FhrpProtocolOptionsEditor.qml
 FhrpProtocolPage 1.0 qml/features/fhrp/FhrpProtocolPage.qml
 FhrpSavedGroupsPanel 1.0 qml/features/fhrp/FhrpSavedGroupsPanel.qml
 FhrpSubBar 1.0 qml/features/fhrp/FhrpSubBar.qml

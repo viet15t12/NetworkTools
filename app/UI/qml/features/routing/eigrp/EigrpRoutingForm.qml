@@ -554,9 +554,11 @@ FormLayout {
             onClicked: eigrpRoutingForm.cancelAllChanges()
         },
         StandardButton {
-            text: "Reload"
+            text: "Reload UI"
             icon.source: AppAssets.actionDatabaseReload
             type: "Secondary"
+            autoCompact: false
+            Layout.minimumWidth: expandedImplicitWidth
             onClicked: {
                 eigrpRoutingForm.loadFromDatabase()
                 eigrpRoutingForm.notify("Reloaded EIGRP routing from database.", "info")

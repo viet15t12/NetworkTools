@@ -32,7 +32,7 @@ Button {
         + (text !== "" ? buttonTextMetrics.advanceWidth : 0)
     readonly property real expandedImplicitWidth: type === "Icon"
         ? implicitHeight
-        : Math.max(80, expandedContentWidth + leftPadding + rightPadding)
+        : Math.ceil(Math.max(80, expandedContentWidth + leftPadding + rightPadding))
     readonly property bool compactContent: autoCompact
         && type !== "Icon" && hasIcon && text !== ""
         && width > 0 && width + 0.5 < expandedImplicitWidth

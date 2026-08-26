@@ -240,7 +240,7 @@ class NatQmlBridgeContractTests(unittest.TestCase):
             with self.subTest(form=form_name):
                 self.assertIn('text: "Save"', source)
                 self.assertIn('text: "Cancel Changes"', source)
-                self.assertIn('text: "Reload"', source)
+                self.assertIn('text: "Reload UI"', source)
                 self.assertIn("property bool hasPendingLocalChanges", source)
                 self.assertIn("function saveChanges()", source)
 
@@ -320,7 +320,9 @@ class ButtonIconContractTests(unittest.TestCase):
 
     def test_reload_and_save_buttons_have_semantic_icons(self) -> None:
         reload_blocks = [
-            block for _, block in self.button_blocks if re.search(r'text:\s*"Reload"', block)
+            block
+            for _, block in self.button_blocks
+            if re.search(r'text:\s*"Reload UI"', block)
         ]
         save_blocks = [
             block
@@ -335,6 +337,11 @@ class ButtonIconContractTests(unittest.TestCase):
                 or "AppAssets.actionBackup" in block
                 for block in reload_blocks
             )
+        )
+        self.assertTrue(all("autoCompact: false" in block for block in reload_blocks))
+        self.assertTrue(
+            all("Layout.minimumWidth: expandedImplicitWidth" in block
+                for block in reload_blocks)
         )
         self.assertGreaterEqual(len(save_blocks), 17)
         self.assertTrue(all("AppAssets.actionSave" in block for block in save_blocks))
@@ -447,6 +454,9 @@ class ButtonIconContractTests(unittest.TestCase):
         subbar = (fhrp_root / "FhrpSubBar.qml").read_text(encoding="utf-8")
         page = (fhrp_root / "FhrpProtocolPage.qml").read_text(encoding="utf-8")
         member = (fhrp_root / "FhrpMemberEditor.qml").read_text(encoding="utf-8")
+        options = (fhrp_root / "FhrpProtocolOptionsEditor.qml").read_text(
+            encoding="utf-8"
+        )
 
         self.assertIn('tabs: ["HSRP", "VRRP", "GLBP"]', subbar)
         self.assertEqual(view.count("FhrpProtocolPage {"), 3)
@@ -461,6 +471,27 @@ class ButtonIconContractTests(unittest.TestCase):
         self.assertIn("groupAuthType", page)
         self.assertNotIn('labelText: "Authentication"', member)
         self.assertIn('text: "Reset"', page)
+        self.assertNotIn("ViewPushButton {", page)
+        self.assertNotIn('text: "Save & Push"', page)
+        self.assertEqual(page.count('text: "View & Push"'), 1)
+        self.assertIn('objectName: "fhrpViewPushButton"', page)
+        self.assertIn("batchDialog.openPreview(pendingPushHosts, protocol)", page)
+        self.assertIn('objectName: "fhrpReloadButton"', page)
+        self.assertIn('text: "Reload UI"', page)
+        self.assertIn("autoCompact: false", page)
+        self.assertIn("width: Math.ceil(expandedImplicitWidth)", page)
+        self.assertIn("FhrpProtocolOptionsEditor {", page)
+        self.assertIn("advertisement_ms: root.advertisementMs", page)
+        self.assertIn("load_balancing: root.loadBalancing", page)
+        self.assertIn("preempt_delay_min_sec:", page)
+        self.assertIn("weighting_max:", page)
+        self.assertIn("tracks: parseTracks(row.tracksJson)", page)
+        self.assertIn('labelText: "HSRP version"', options)
+        self.assertIn('labelText: "Advertisement interval (ms)"', options)
+        self.assertIn('labelText: "Load balancing"', options)
+        self.assertIn('labelText: "Preempt minimum delay (sec)"', member)
+        self.assertIn('labelText: "Maximum weighting"', member)
+        self.assertIn('text: "Add tracking object"', member)
 
     def test_sftp_assets_are_deduplicated_and_use_semantic_bindings(self) -> None:
         resources = self.ui_root / "resources"
@@ -846,7 +877,7 @@ class ButtonIconContractTests(unittest.TestCase):
                 elif path.name != "AclBindingsTab.qml":
                     self.assertLess(
                         source.index('text: "Cancel Changes"'),
-                        source.index('text: "Reload"'),
+                        source.index('text: "Reload UI"'),
                     )
 
     def test_every_cancel_action_uses_text_style(self) -> None:
@@ -2221,7 +2252,7 @@ class DataTableUiContractTests(unittest.TestCase):
         self.assertIn("filteredHostOptions", vtp)
         self.assertIn("function loadGroup(index)", vtp)
         self.assertIn('text: "Add Group"', vtp)
-        self.assertIn('text: "Reload"', vtp)
+        self.assertIn('text: "Reload UI"', vtp)
         self.assertNotIn('text: "Refresh"', vtp)
         self.assertNotIn("FormSection {", inspector)
 
@@ -2232,7 +2263,7 @@ class DataTableUiContractTests(unittest.TestCase):
         for object_name, label in (
             ("crudAddButton", "Add"),
             ("crudEditButton", "Edit"),
-            ("crudReloadButton", "Reload"),
+            ("crudReloadButton", "Reload UI"),
             ("crudCancelButton", "Cancel"),
         ):
             self.assertIn(f'objectName: "{object_name}"', crud_actions)

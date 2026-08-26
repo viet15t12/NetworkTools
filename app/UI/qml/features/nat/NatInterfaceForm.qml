@@ -306,9 +306,11 @@ Rectangle {
             onClicked: { natInterfaceForm.clearForm(); natInterfaceForm.reloadInterfaces(); natInterfaceForm.notify("Discarded local NAT interface changes.", "info") }
         }
         StandardButton {
-            text: "Reload"
+            text: "Reload UI"
             icon.source: AppAssets.actionDatabaseReload
             type: "Secondary"
+            autoCompact: false
+            Layout.minimumWidth: expandedImplicitWidth
             enabled: currentHostIp !== ""
             onClicked: { natInterfaceForm.clearForm(); natInterfaceForm.reloadInterfaces(); natInterfaceForm.notify("Reloaded NAT interfaces from database.", "info") }
         }

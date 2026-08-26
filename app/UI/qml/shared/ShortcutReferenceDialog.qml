@@ -27,7 +27,7 @@ StandardDialog {
         ListElement { sectionName: "Application"; shortcutText: "Ctrl+K Ctrl+S"; description: "Open this keyboard shortcuts reference" }
         ListElement { sectionName: "Application"; shortcutText: "Alt+F / Alt+V / Alt+H"; description: "Open the File, View, or Help menu" }
         ListElement { sectionName: "General"; shortcutText: "Ctrl+B"; description: "Toggle the PanelSideBar" }
-        ListElement { sectionName: "General"; shortcutText: "Ctrl+R"; description: "Reload the active view" }
+        ListElement { sectionName: "General"; shortcutText: "Ctrl+R"; description: "Reload the active UI" }
         ListElement { sectionName: "Activity Bar"; shortcutText: "Ctrl+Alt+D"; description: "Open Dashboard" }
         ListElement { sectionName: "Activity Bar"; shortcutText: "Ctrl+Alt+F"; description: "Open SFTP" }
         ListElement { sectionName: "Activity Bar"; shortcutText: "Ctrl+Alt+L"; description: "Open System Logs" }

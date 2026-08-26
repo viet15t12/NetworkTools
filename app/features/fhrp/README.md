@@ -17,8 +17,11 @@ Luồng chuẩn:
    switch SVI từ `t06_svi_interface`. Chỉ endpoint đã synchronized, không
    shutdown và cùng subnet mask mới được chọn; gateway không được trùng IP
    interface, network address hoặc broadcast.
-4. Nhập priority và preempt riêng cho từng host. Version, timer,
-   authentication/key và policy cấp group phải giống nhau trên mọi member.
+4. Nhập option theo giao thức: HSRP version/timer/preempt delay, VRRPv2
+   advertisement timer, hoặc GLBP timer/load-balancing/weighting/forwarder
+   preempt. Priority, preempt và tracking được cấu hình riêng cho từng host;
+   version, timer, authentication/key và policy cấp group phải giống nhau trên
+   mọi member.
 5. Repository lưu group/member/options trong transaction; member là đơn vị
    `sync_status`. Retry được phép thay thế đúng local draft `pending_apply`,
    nhưng không ghi đè group đã đồng bộ với thiết bị.

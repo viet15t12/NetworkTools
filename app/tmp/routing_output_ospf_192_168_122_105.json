@@ -1,7 +1,0 @@
-[
-    {
-        "target": "192.168.122.105",
-        "status": "success",
-        "message": "^@\nISP2#^@\nISP2#^@\nISP2#^@\nISP2#^@\nISP2#^@\nISP2#^@\nISP2#\nISP2#\nISP2#\nISP2#\nISP2#configure terminal\nEnter configuration commands, one per line.  End with CNTL/Z.\nISP2(config)#no logging console\nISP2(config)#no logging monitor\nISP2(config)#router ospf 1\nISP2(config-router)#router-id 5.5.5.5\nISP2(config-router)#network 10.0.2.0 0.0.0.255 area 0\nISP2(config-router)#network 10.0.3.0 0.0.0.255 area 0\nISP2(config-router)#network 5.5.5.0 0.0.0.255 area 0\nISP2(config-router)#no area 0 stub\nISP2(config-router)#no area 0 nssa\nISP2(config-router)#no default-information originate\nISP2(config-router)#no passive-interface default\nISP2(config-router)#exit\nISP2(config)#logging console\nISP2(config)#logging monitor\nISP2(config)#end\nISP2#"
-    }
-]

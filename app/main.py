@@ -161,6 +161,7 @@ from features.sftp import SftpController
 from features.syslog import SyslogManager
 from infrastructure.network.session_registry import DeviceSessionRegistry
 from infrastructure.database.paths import DEVICE_NETWORK_DB, INFO_COLLECTED_DB
+from infrastructure.system.runtime_tmp import cleanup_runtime_tmp
 
 
 def _runtime_arguments(argv: list[str]) -> tuple[list[str], str]:
@@ -295,20 +296,27 @@ def main() -> int:
         if shutdown_complete:
             return
         shutdown_complete = True
-        # Stop new callbacks/tasks first, then abort network I/O before releasing sessions.
-        network_monitor.shutdown()
-        db_manager.shutdown()
-        cli.shutdown()
         try:
-            repository_path = Path(device_repository.db_path)
-            if repository_path.is_file():
-                device_repository.reset_connected_to_waiting()
-        except Exception as exc:
-            print(f"Failed to reset connected devices during shutdown: {exc}", file=sys.stderr)
-        syslog_manager.shutdown()
-        sftp_controller.shutdown()
-        workspace_save_controller.shutdown()
-        welcome_controller.shutdown()
+            # Stop new callbacks/tasks first, then abort network I/O before releasing sessions.
+            network_monitor.shutdown()
+            db_manager.shutdown()
+            cli.shutdown()
+            try:
+                repository_path = Path(device_repository.db_path)
+                if repository_path.is_file():
+                    device_repository.reset_connected_to_waiting()
+            except Exception as exc:
+                print(f"Failed to reset connected devices during shutdown: {exc}", file=sys.stderr)
+            syslog_manager.shutdown()
+            sftp_controller.shutdown()
+            workspace_save_controller.shutdown()
+            welcome_controller.shutdown()
+        finally:
+            for cleanup_error in cleanup_runtime_tmp():
+                print(
+                    f"Failed to remove temporary runtime artifact: {cleanup_error}",
+                    file=sys.stderr,
+                )
 
     app.aboutToQuit.connect(shutdown)
 

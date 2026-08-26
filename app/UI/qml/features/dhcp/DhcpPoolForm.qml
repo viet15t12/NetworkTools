@@ -302,9 +302,11 @@ Rectangle {
             }
 
             StandardButton {
-                text: "Reload"
+                text: "Reload UI"
                 icon.source: AppAssets.actionDatabaseReload
                 type: "Secondary"
+                autoCompact: false
+                Layout.minimumWidth: expandedImplicitWidth
                 enabled: currentHostIp !== ""
                 onClicked: {
                     dhcpPoolForm.clearForm()

@@ -263,9 +263,11 @@ Rectangle {
 
             StandardButton {
                 objectName: "informationReloadButton"
-                text: "Reload"
+                text: "Reload UI"
                 icon.source: AppAssets.actionBackup
                 type: "Secondary"
+                autoCompact: false
+                Layout.minimumWidth: expandedImplicitWidth
                 tooltip: "Reload running-config history"
                 enabled: String(root.currentHostIp || "").trim() !== ""
                          && !root.isLoadingHistory

@@ -208,9 +208,11 @@ FormLayout {
             elide: Text.ElideRight
         },
         StandardButton {
-            text: "Reload"
+            text: "Reload UI"
             type: "Secondary"
             icon.source: AppAssets.actionDatabaseReload
+            autoCompact: false
+            Layout.minimumWidth: expandedImplicitWidth
             onClicked: form.loadFromDatabase()
         },
         ViewPushButton {

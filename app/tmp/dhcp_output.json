@@ -1,7 +1,0 @@
-[
-    {
-        "target": "192.168.122.101",
-        "status": "success",
-        "message": "^@\nvIOS1#\nvIOS1#\nvIOS1#configure terminal\nEnter configuration commands, one per line.  End with CNTL/Z.\nvIOS1(config)#ip dhcp excluded-address 192.168.10.1 192.168.10.20\nvIOS1(config)#ip dhcp excluded-address 192.168.20.1 192.168.20.20\nvIOS1(config)#ip dhcp excluded-address 192.168.30.1 192.168.30.20\nvIOS1(config)#ip dhcp excluded-address 192.168.40.1 192.168.40.20\nvIOS1(config)#ip dhcp pool POOL_IT_VLAN\nvIOS1(dhcp-config)#network 192.168.10.0 255.255.255.0\nvIOS1(dhcp-config)#default-router 192.168.10.1\nvIOS1(dhcp-config)#dns-server 8.8.8.8\nvIOS1(dhcp-config)#lease 1\nvIOS1(dhcp-config)#exit\nvIOS1(config)#ip dhcp pool POOL_HR_VLAN\nvIOS1(dhcp-config)#network 192.168.20.0 255.255.255.0\nvIOS1(dhcp-config)#default-router 192.168.20.1\nvIOS1(dhcp-config)#dns-server 8.8.8.8\nvIOS1(dhcp-config)#lease 1\nvIOS1(dhcp-config)#exit\nvIOS1(config)#ip dhcp pool POOL_MRKT_VLAN\nvIOS1(dhcp-config)#network 192.168.30.0 255.255.255.0\nvIOS1(dhcp-config)#default-router 192.168.30.1\nvIOS1(dhcp-config)#dns-server 8.8.8.8\nvIOS1(dhcp-config)#lease 1\nvIOS1(dhcp-config)#exit\nvIOS1(config)#ip dhcp pool POOL_KE_TOAN_VLAN\nvIOS1(dhcp-config)#network 192.168.40.0 255.255.255.0\nvIOS1(dhcp-config)#default-router 192.168.40.1\nvIOS1(dhcp-config)#dns-server 8.8.8.8\nvIOS1(dhcp-config)#lease 1\nvIOS1(dhcp-config)#exit\nvIOS1(config)#end\nvIOS1#"
-    }
-]

@@ -455,9 +455,11 @@ FormLayout {
             elide: Text.ElideRight
         },
         StandardButton {
-            text: "Reload"
+            text: "Reload UI"
             icon.source: AppAssets.actionDatabaseReload
             type: "Secondary"
+            autoCompact: false
+            Layout.minimumWidth: expandedImplicitWidth
             onClicked: {
                 staticRoutingForm.loadFromDatabase()
                 notify("Static routes reloaded for host " + staticRoutingForm.currentHostIp, "info")

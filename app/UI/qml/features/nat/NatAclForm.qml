@@ -359,9 +359,11 @@ Rectangle {
             onClicked: { natAclForm.clearForm(); natAclForm.reloadAcls(); natAclForm.notify("Discarded local NAT ACL changes.", "info") }
         }
         StandardButton {
-            text: "Reload"
+            text: "Reload UI"
             icon.source: AppAssets.actionDatabaseReload
             type: "Secondary"
+            autoCompact: false
+            Layout.minimumWidth: expandedImplicitWidth
             enabled: currentHostIp !== ""
             onClicked: { natAclForm.clearForm(); natAclForm.reloadAcls(); natAclForm.notify("Reloaded NAT ACL entries from database.", "info") }
         }

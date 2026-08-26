@@ -391,9 +391,11 @@ Rectangle {
             onClicked: { routeMapForm.clearForm(); routeMapForm.reloadEntries(); routeMapForm.notify("Discarded local route-map changes.", "info") }
         }
         StandardButton {
-            text: "Reload"
+            text: "Reload UI"
             icon.source: AppAssets.actionDatabaseReload
             type: "Secondary"
+            autoCompact: false
+            Layout.minimumWidth: expandedImplicitWidth
             enabled: currentHostIp !== ""
             onClicked: { routeMapForm.clearForm(); routeMapForm.reloadAclNames(); routeMapForm.reloadEntries(); routeMapForm.notify("Reloaded NAT route-map entries from database.", "info") }
         }

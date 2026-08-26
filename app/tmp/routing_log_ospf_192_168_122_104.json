@@ -1,8 +1,0 @@
-[
-    {
-        "ip": "192.168.122.104",
-        "status": "SUCCESS",
-        "log": "\nISP1#\nISP1#configure terminal\nEnter configuration commands, one per line.  End with CNTL/Z.\nISP1(config)#no logging console\nISP1(config)#no logging monitor\nISP1(config)#router ospf 1\nISP1(config-router)#router-id 4.4.4.4\nISP1(config-router)#network 10.0.0.2 0.0.0.255 area 0\nISP1(config-router)#network 10.0.2.0 0.0.0.255 area 0\nISP1(config-router)#network 4.4.4.0 0.0.0.255 area 0\nISP1(config-router)#no default-information originate\nISP1(config-router)#no passive-interface default\nISP1(config-router)#exit\nISP1(config)#logging console\nISP1(config)#logging monitor\nISP1(config)#end\nISP1#",
-        "db_updated": true
-    }
-]

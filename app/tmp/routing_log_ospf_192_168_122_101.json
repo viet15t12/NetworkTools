@@ -1,8 +1,0 @@
-[
-    {
-        "ip": "192.168.122.101",
-        "status": "SUCCESS",
-        "log": "\nR1#configure terminal\nEnter configuration commands, one per line.  End with CNTL/Z.\nR1(config)#no logging console\nR1(config)#no logging monitor\nR1(config)#router ospf 1\nR1(config-router)#router-id 1.1.1.1\nR1(config-router)#network 1.1.1.0 0.0.0.255 area 0\nR1(config-router)#network 10.0.0.0 0.0.0.255 area 0\nR1(config-router)#network 10.1.12.0 0.0.0.255 area 1\nR1(config-router)#network 10.1.13.0 0.0.0.255 area 1\nR1(config-router)#no area 0 stub\nR1(config-router)#no area 0 nssa\nR1(config-router)#no area 1 stub\nR1(config-router)#no area 1 nssa\nR1(config-router)#no default-information originate\nR1(config-router)#no passive-interface default\nR1(config-router)#exit\nR1(config)#logging console\nR1(config)#logging monitor\nR1(config)#end\nR1#",
-        "db_updated": true
-    }
-]

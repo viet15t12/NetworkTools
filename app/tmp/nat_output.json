@@ -1,7 +1,0 @@
-[
-    {
-        "target": "192.168.122.101",
-        "status": "success",
-        "message": "\nR1#configure terminal\nEnter configuration commands, one per line.  End with CNTL/Z.\nR1(config)#no logging console\nR1(config)#no logging monitor\nR1(config)#ip nat inside source static 192.168.3.1 192.168.122.101\nR1(config)#logging console\nR1(config)#logging monitor\nR1(config)#end\nR1#"
-    }
-]

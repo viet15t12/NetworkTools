@@ -711,9 +711,11 @@ FormLayout {
             onClicked: ospfRoutingForm.cancelAllChanges()
         },
         StandardButton {
-            text: "Reload"
+            text: "Reload UI"
             icon.source: AppAssets.actionDatabaseReload
             type: "Secondary"
+            autoCompact: false
+            Layout.minimumWidth: expandedImplicitWidth
             onClicked: {
                 ospfRoutingForm.loadFromDatabase()
                 ospfRoutingForm.notify("Reloaded OSPF routing from database.", "info")

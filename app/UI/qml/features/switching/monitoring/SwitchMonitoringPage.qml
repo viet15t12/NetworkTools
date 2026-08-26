@@ -170,8 +170,10 @@ Item {
             subtitle: root.pageSubtitle
 
             StandardButton {
-                text: "Reload"
+                text: "Reload UI"
                 icon.source: AppAssets.actionDatabaseReload
+                autoCompact: false
+                Layout.minimumWidth: expandedImplicitWidth
                 onClicked: root.load("manual")
             }
         }

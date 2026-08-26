@@ -62,7 +62,7 @@ RowLayout {
     }
     StandardButton {
         objectName: "crudReloadButton"
-        text: "Reload"
+        text: "Reload UI"
         icon.source: AppAssets.actionDatabaseReload
         autoCompact: false
         Layout.minimumWidth: expandedImplicitWidth

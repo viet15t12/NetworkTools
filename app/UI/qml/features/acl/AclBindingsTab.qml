@@ -112,9 +112,11 @@ Rectangle {
                 font.bold: true
             }
             StandardButton {
-                text: "Reload"
+                text: "Reload UI"
                 icon.source: AppAssets.actionDatabaseReload
                 type: "Secondary"
+                autoCompact: false
+                Layout.minimumWidth: expandedImplicitWidth
                 enabled: root.currentHostIp !== ""
                 onClicked: root.reloadAll()
             }

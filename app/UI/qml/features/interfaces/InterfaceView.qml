@@ -248,9 +248,11 @@ Rectangle {
 
                 StandardButton {
                     objectName: "interfaceReloadButton"
-                    text: "Reload"
+                    text: "Reload UI"
                     icon.source: AppAssets.actionDatabaseReload
                     type: "Secondary"
+                    autoCompact: false
+                    Layout.minimumWidth: expandedImplicitWidth
                     enabled: interfaceView.currentHostIp !== ""
                     onClicked: {
                         interfaceView.reloadInterfaces()

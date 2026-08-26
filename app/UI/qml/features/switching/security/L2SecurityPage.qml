@@ -362,8 +362,10 @@ Item {
                 }
             }
             StandardButton {
-                text: "Reload"
+                text: "Reload UI"
                 icon.source: AppAssets.actionDatabaseReload
+                autoCompact: false
+                Layout.minimumWidth: expandedImplicitWidth
                 onClicked: root.load("manual")
             }
         }
@@ -626,7 +628,7 @@ Item {
                         emptyText: root.refreshingReferences
                                    ? "Refreshing interfaces..."
                                    : "No Layer 2 interfaces available"
-                        emptyWarningText: "No usable Layer 2 interface is available. Complete or synchronize the Interfaces tab, then return here or select Reload."
+                        emptyWarningText: "No usable Layer 2 interface is available. Complete or synchronize the Interfaces tab, then return here or select Reload UI."
                     }
                     StandardButton {
                         Layout.alignment: Qt.AlignRight

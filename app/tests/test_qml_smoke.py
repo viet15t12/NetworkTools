@@ -638,6 +638,17 @@ class QmlSmokeTests(unittest.TestCase):
                 ip_address: "192.168.4.2",
                 network: "192.168.4.0/24"
             }];
+            groupAuthType = "md5-key";
+            groupAuthSecret = "secret";
+            updateProtocolOption("version", 1);
+            updateProtocolOption("hello_ms", 2000);
+            updateProtocolOption("hold_ms", 7000);
+            updateMember(0, "preemptDelayMinSec", 15);
+            updateMember(0, "preemptDelayReloadSec", 30);
+            updateMember(0, "tracks", [{
+                track_object: "GigabitEthernet0/2",
+                decrement_value: 25
+            }]);
             savedGroupModel.append({
                 fhrp_id: 1,
                 protocol: "hsrp",
@@ -649,7 +660,10 @@ class QmlSmokeTests(unittest.TestCase):
                 members: [{host: "192.0.2.1", sync_status: "pending_apply"},
                           {host: "192.0.2.2", sync_status: "synchronized"}]
             });
-            ({matched: matchedHostCount(), payload: memberPayload()})
+            refreshPendingPushHosts();
+            ({matched: matchedHostCount(), payload: memberPayload(),
+              pendingHosts: pendingPushHosts, groupRange: groupRange,
+              authType: groupAuthType})
             """,
         ).evaluate()
         self.app.processEvents()
@@ -672,30 +686,107 @@ class QmlSmokeTests(unittest.TestCase):
         self.assertIsNotNone(page.findChild(QObject, "fhrpSummaryGrid"))
         self.assertIsNotNone(page.findChild(QObject, "fhrpHostPicker"))
         self.assertIsNotNone(page.findChild(QObject, "fhrpSavedGroupsPanel"))
+        self.assertIsNotNone(page.findChild(QObject, "fhrpProtocolOptionsEditor"))
+        reload_button = page.findChild(QObject, "fhrpReloadButton")
+        self.assertIsNotNone(reload_button)
+        self.assertEqual(reload_button.property("text"), "Reload UI")
+        self.assertFalse(reload_button.property("autoCompact"))
+        self.assertGreaterEqual(
+            float(reload_button.property("width")) + 0.5,
+            float(reload_button.property("expandedImplicitWidth")),
+        )
         save_button = page.findChild(QObject, "fhrpSaveButton")
-        save_push_button = page.findChild(QObject, "fhrpSavePushButton")
+        view_push_button = page.findChild(QObject, "fhrpViewPushButton")
         self.assertIsNotNone(save_button)
-        self.assertIsNotNone(save_push_button)
+        self.assertIsNotNone(view_push_button)
+        self.assertIsNone(page.findChild(QObject, "fhrpSavePushButton"))
         self.assertTrue(save_button.property("enabled"))
-        self.assertTrue(save_push_button.property("enabled"))
+        self.assertTrue(view_push_button.property("enabled"))
         page.setProperty("operationBusy", True)
         self.app.processEvents()
         self.assertFalse(save_button.property("enabled"))
-        self.assertFalse(save_push_button.property("enabled"))
+        self.assertFalse(view_push_button.property("enabled"))
         page.setProperty("operationBusy", False)
         self.app.processEvents()
         self.assertTrue(save_button.property("enabled"))
-        self.assertTrue(save_push_button.property("enabled"))
+        self.assertTrue(view_push_button.property("enabled"))
         self.assertFalse(is_undefined)
         result_map = result.toVariant()
         self.assertEqual(result_map["matched"], 2)
         self.assertEqual(len(result_map["payload"]), 2)
+        self.assertEqual(result_map["pendingHosts"], ["192.0.2.1"])
+        self.assertEqual(result_map["groupRange"], "0–255")
+        self.assertEqual(result_map["authType"], "none")
+        first_member = result_map["payload"][0]
+        self.assertEqual(first_member["version"], 1)
+        self.assertEqual(first_member["hello_ms"], 2000)
+        self.assertEqual(first_member["hold_ms"], 7000)
+        self.assertEqual(first_member["preempt_delay_min_sec"], 15)
+        self.assertEqual(first_member["preempt_delay_reload_sec"], 30)
+        self.assertEqual(
+            first_member["tracks"],
+            [{"track_object": "GigabitEthernet0/2", "decrement_value": 25}],
+        )
 
         page.setProperty("width", 600)
         self.app.processEvents()
         self.assertTrue(page.property("compactLayout"))
         self.assertGreater(float(form_pane.property("width")), 0)
         self.assertGreater(float(form_pane.property("height")), 0)
+        self.assertEqual(self.warnings, [])
+
+    def test_fhrp_vrrp_and_glbp_specific_options_reach_member_payload(self) -> None:
+        cases = (
+            (
+                "vrrp",
+                """
+                updateProtocolOption("advertisement_ms", 750);
+                toggleHost("192.0.2.1", true);
+                memberPayload()[0]
+                """,
+                {"version": 2, "advertisement_ms": 750},
+            ),
+            (
+                "glbp",
+                """
+                updateProtocolOption("hello_ms", 1500);
+                updateProtocolOption("hold_ms", 6000);
+                updateProtocolOption("load_balancing", "weighted");
+                toggleHost("192.0.2.1", true);
+                updateMember(0, "weightingMax", 120);
+                updateMember(0, "weightingLower", 80);
+                updateMember(0, "weightingUpper", 110);
+                updateMember(0, "forwarderPreempt", false);
+                updateMember(0, "forwarderPreemptDelaySec", 10);
+                memberPayload()[0]
+                """,
+                {
+                    "hello_ms": 1500,
+                    "hold_ms": 6000,
+                    "load_balancing": "weighted",
+                    "weighting_max": 120,
+                    "weighting_lower": 80,
+                    "weighting_upper": 110,
+                    "forwarder_preempt": False,
+                    "forwarder_preempt_delay_sec": 10,
+                },
+            ),
+        )
+
+        for protocol, expression, expected in cases:
+            with self.subTest(protocol=protocol):
+                page = self._create_with_properties(
+                    "UI/qml/features/fhrp/FhrpProtocolPage.qml",
+                    {"protocol": protocol, "width": 1100, "height": 760},
+                )
+                result, is_undefined = QQmlExpression(
+                    QQmlEngine.contextForObject(page), page, expression
+                ).evaluate()
+                self.assertFalse(is_undefined)
+                payload = result.toVariant()
+                for field, value in expected.items():
+                    self.assertEqual(payload[field], value)
+
         self.assertEqual(self.warnings, [])
 
     def test_nqv_easter_egg_switches_brand_logo_to_hidden_asset(self) -> None:

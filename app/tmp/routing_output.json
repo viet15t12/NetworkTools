@@ -1,7 +1,0 @@
-[
-    {
-        "target": "192.168.122.101",
-        "status": "success",
-        "message": "\nvIOS1#configure terminal\nEnter configuration commands, one per line.  End with CNTL/Z.\nvIOS1(config)#no logging console\nvIOS1(config)#no logging monitor\nvIOS1(config)#router ospf 1\nvIOS1(config-router)#no network 10.1.12.0 0.0.0.255 area 0\nvIOS1(config-router)#exit\nvIOS1(config)#logging console\nvIOS1(config)#logging monitor\nvIOS1(config)#logging console\nvIOS1(config)#logging monitor\nvIOS1(config)#end\nvIOS1#"
-    }
-]

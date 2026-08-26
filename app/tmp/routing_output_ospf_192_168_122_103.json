@@ -1,7 +1,0 @@
-[
-    {
-        "target": "192.168.122.103",
-        "status": "success",
-        "message": "^@\nR3#\nR3#\nR3#\nR3#\nR3#configure terminal\nEnter configuration commands, one per line.  End with CNTL/Z.\nR3(config)#no logging console\nR3(config)#no logging monitor\nR3(config)#router ospf 1\nR3(config-router)#router-id 3.3.3.3\nR3(config-router)#network 10.1.13.0 0.0.0.255 area 1\nR3(config-router)#network 10.1.23.0 0.0.0.255 area 1\nR3(config-router)#network 3.3.3.0 0.0.0.255 area 1\nR3(config-router)#redistribute connected subnets\nR3(config-router)#no default-information originate\nR3(config-router)#no passive-interface default\nR3(config-router)#exit\nR3(config)#logging console\nR3(config)#logging monitor\nR3(config)#end\nR3#"
-    }
-]

@@ -56,11 +56,16 @@ Rectangle {
     property string currentHostIp: ""
     property var hostOptions: []
     property var matchingInterfaces: []
+    property var pendingPushHosts: []
     property string errorText: ""
-    property int viewPushRevision: 0
     property bool operationBusy: false
     property string groupAuthType: "none"
     property string groupAuthSecret: ""
+    property int protocolVersion: 2
+    property int helloMs: 3000
+    property int holdMs: 10000
+    property int advertisementMs: 1000
+    property string loadBalancing: "round-robin"
     property alias savedGroupModel: groupModel
     readonly property int maxHosts: 5
     readonly property bool isViewLoading: false
@@ -74,7 +79,8 @@ Rectangle {
                                              ? "Share gateway traffic while preserving failover."
                                              : "Build a resilient virtual gateway across multiple routers."
     readonly property string groupRange: protocol === "vrrp" ? "1–255"
-                                         : protocol === "glbp" ? "0–1023" : "0–4095"
+                                         : protocol === "glbp" ? "0–1023"
+                                         : protocolVersion === 1 ? "0–255" : "0–4095"
     readonly property bool readyToSave: memberModel.count >= 2
                                         && matchedHostCount() === memberModel.count
                                         && groupField.text.trim() !== ""
@@ -122,7 +128,47 @@ Rectangle {
                 })
             }
         }
-        viewPushRevision++
+        refreshPendingPushHosts()
+    }
+
+    function collectionCount(collection) {
+        if (!collection)
+            return 0
+        if (typeof collection.count === "number")
+            return collection.count
+        return collection.length || 0
+    }
+
+    function collectionItem(collection, index) {
+        return collection && typeof collection.get === "function"
+                ? collection.get(index) : collection[index]
+    }
+
+    function refreshPendingPushHosts() {
+        const hosts = []
+        const seen = ({})
+        for (let groupIndex = 0; groupIndex < groupModel.count; groupIndex++) {
+            const members = groupModel.get(groupIndex).members
+            for (let memberIndex = 0;
+                    memberIndex < collectionCount(members); memberIndex++) {
+                const member = collectionItem(members, memberIndex)
+                const status = String(member.sync_status || "")
+                const host = String(member.host || "").trim()
+                if ((status === "pending_apply" || status === "pending_delete")
+                        && host !== "" && !seen[host]) {
+                    seen[host] = true
+                    hosts.push(host)
+                }
+            }
+        }
+        pendingPushHosts = hosts
+    }
+
+    function openViewPush() {
+        if (pendingPushHosts.length === 0 || operationBusy)
+            return
+        operationBusy = true
+        batchDialog.openPreview(pendingPushHosts, protocol)
     }
 
     function findMemberIndex(host) {
@@ -145,7 +191,15 @@ Rectangle {
                 ifaceId: 0,
                 interfaceKind: "router",
                 priority: "100",
-                preempt: true
+                preempt: true,
+                preemptDelayMinSec: 0,
+                preemptDelayReloadSec: 0,
+                weightingMax: 100,
+                weightingLower: 0,
+                weightingUpper: 0,
+                forwarderPreempt: true,
+                forwarderPreemptDelaySec: 30,
+                tracksJson: "[]"
             })
         } else if (!selected && index >= 0) {
             memberModel.remove(index)
@@ -190,7 +244,30 @@ Rectangle {
         descriptionField.clear()
         groupAuthType = "none"
         groupAuthSecret = ""
+        protocolVersion = 2
+        helloMs = 3000
+        holdMs = 10000
+        advertisementMs = 1000
+        loadBalancing = "round-robin"
         errorText = ""
+    }
+
+    function updateProtocolOption(field, value) {
+        if (field === "version") {
+            protocolVersion = Number(value)
+            if (protocol === "hsrp" && protocolVersion === 1
+                    && groupAuthType.indexOf("md5-") === 0) {
+                groupAuthType = "none"
+                groupAuthSecret = ""
+            }
+        } else if (field === "hello_ms")
+            helloMs = Number(value)
+        else if (field === "hold_ms")
+            holdMs = Number(value)
+        else if (field === "advertisement_ms")
+            advertisementMs = Number(value)
+        else if (field === "load_balancing")
+            loadBalancing = String(value)
     }
 
     function refreshMatchingInterfaces() {
@@ -233,7 +310,20 @@ Rectangle {
             memberModel.setProperty(index, "ifaceId", Number(parts[1] || 0))
             return
         }
+        if (field === "tracks") {
+            memberModel.setProperty(index, "tracksJson", JSON.stringify(value || []))
+            return
+        }
         memberModel.setProperty(index, field, value)
+    }
+
+    function parseTracks(value) {
+        try {
+            const parsed = JSON.parse(String(value || "[]"))
+            return Array.isArray(parsed) ? parsed : []
+        } catch (error) {
+            return []
+        }
     }
 
     function memberPayload() {
@@ -249,13 +339,28 @@ Rectangle {
                 shutdown: false,
                 auth_type: root.groupAuthType,
                 auth_secret: root.groupAuthSecret,
-                version: 2
+                version: root.protocolVersion,
+                hello_ms: root.helloMs,
+                hold_ms: root.holdMs,
+                advertisement_ms: root.advertisementMs,
+                load_balancing: root.loadBalancing,
+                preempt_delay_min_sec: Number(row.preemptDelayMinSec || 0),
+                preempt_delay_reload_sec: Number(row.preemptDelayReloadSec || 0),
+                weighting_max: Number(row.weightingMax || 100),
+                weighting_lower: Number(row.weightingLower || 0) > 0
+                                 ? Number(row.weightingLower) : null,
+                weighting_upper: Number(row.weightingUpper || 0) > 0
+                                 ? Number(row.weightingUpper) : null,
+                forwarder_preempt: Boolean(row.forwarderPreempt),
+                forwarder_preempt_delay_sec:
+                    Number(row.forwarderPreemptDelaySec || 0),
+                tracks: parseTracks(row.tracksJson)
             })
         }
         return members
     }
 
-    function saveGroup(pushAfterSave) {
+    function saveGroup() {
         errorText = ""
         if (groupField.text.trim() === "") {
             errorText = root.protocol === "vrrp"
@@ -290,20 +395,13 @@ Rectangle {
         }
         notify(String(result.message || ""), "success")
         loadGroups()
-        if (pushAfterSave) {
-            operationBusy = true
-            batchDialog.openPreview(result.hosts || [], root.protocol)
-        }
     }
 
     function deleteGroup(fhrpId) {
         const result = dbManager.deleteFhrpGroup(Number(fhrpId))
         notify(String(result.message || ""), result.ok ? "success" : "error")
-        if (result.ok) {
+        if (result.ok)
             loadGroups()
-            operationBusy = true
-            batchDialog.openPreview(result.hosts || [], root.protocol)
-        }
     }
 
     onCurrentHostIpChanged: loadGroups()
@@ -347,22 +445,29 @@ Rectangle {
                 subtitle: root.protocol.toUpperCase() + " · " + root.protocolSummary
 
                 StandardButton {
-                    text: "Reload"
+                    objectName: "fhrpReloadButton"
+                    text: "Reload UI"
                     icon.source: AppAssets.actionDatabaseReload
                     type: "Secondary"
+                    autoCompact: false
+                    width: Math.ceil(expandedImplicitWidth)
+                    Layout.minimumWidth: expandedImplicitWidth
                     onClicked: {
                         root.reloadData("manual")
                         root.notify("Reloaded FHRP options and saved groups.", "info")
                     }
                 }
 
-                ViewPushButton {
+                StandardButton {
+                    objectName: "fhrpViewPushButton"
+                    text: "View & Push"
+                    icon.source: AppAssets.actionPush
                     type: "Primary"
-                    controllerName: "fhrp"
-                    moduleName: root.protocol
-                    hostIp: root.currentHostIp
-                    ownerForm: root
-                    refreshKey: root.viewPushRevision
+                    enabled: root.pendingPushHosts.length > 0
+                             && !root.operationBusy
+                    tooltip: enabled ? ""
+                                     : "No FHRP configuration is waiting for Push."
+                    onClicked: root.openViewPush()
                 }
             }
         }
@@ -620,9 +725,13 @@ Rectangle {
                             Layout.fillWidth: true
                             labelText: "Authentication"
                             model: root.protocol === "vrrp"
+                                   || (root.protocol === "hsrp"
+                                       && root.protocolVersion === 1)
                                    ? ["None", "Plain"]
                                    : ["None", "Plain", "MD5 key", "MD5 key-chain"]
                             valueModel: root.protocol === "vrrp"
+                                        || (root.protocol === "hsrp"
+                                            && root.protocolVersion === 1)
                                         ? ["none", "plain"]
                                         : ["none", "plain", "md5-key", "md5-keychain"]
                             currentIndex: Math.max(
@@ -653,6 +762,20 @@ Rectangle {
                     }
                 }
 
+                FhrpProtocolOptionsEditor {
+                    objectName: "fhrpProtocolOptionsEditor"
+                    Layout.fillWidth: true
+                    protocol: root.protocol
+                    protocolVersion: root.protocolVersion
+                    helloMs: root.helloMs
+                    holdMs: root.holdMs
+                    advertisementMs: root.advertisementMs
+                    loadBalancing: root.loadBalancing
+                    onOptionChanged: function(field, value) {
+                        root.updateProtocolOption(field, value)
+                    }
+                }
+
                 FormSection {
                     Layout.fillWidth: true
                     title: "Member policy"
@@ -673,6 +796,7 @@ Rectangle {
                             required property var model
 
                             memberIndex: memberEditor.index
+                            protocol: root.protocol
                             host: memberEditor.model.host
                             interfaceOptions: root.interfaceOptionsForHost(
                                                   memberEditor.model.host)
@@ -680,6 +804,18 @@ Rectangle {
                             interfaceKind: memberEditor.model.interfaceKind
                             priority: memberEditor.model.priority
                             preempt: memberEditor.model.preempt
+                            preemptDelayMinSec:
+                                Number(memberEditor.model.preemptDelayMinSec || 0)
+                            preemptDelayReloadSec:
+                                Number(memberEditor.model.preemptDelayReloadSec || 0)
+                            weightingMax: Number(memberEditor.model.weightingMax || 100)
+                            weightingLower: Number(memberEditor.model.weightingLower || 0)
+                            weightingUpper: Number(memberEditor.model.weightingUpper || 0)
+                            forwarderPreempt:
+                                Boolean(memberEditor.model.forwarderPreempt)
+                            forwarderPreemptDelaySec:
+                                Number(memberEditor.model.forwarderPreemptDelaySec || 0)
+                            tracks: root.parseTracks(memberEditor.model.tracksJson)
                             onFieldChanged: function(memberIndex, field, value) {
                                 root.updateMember(memberIndex, field, value)
                             }
@@ -718,15 +854,7 @@ Rectangle {
                         icon.source: AppAssets.actionSave
                         type: "Secondary"
                         enabled: !root.operationBusy
-                        onClicked: root.saveGroup(false)
-                    }
-                    StandardButton {
-                        objectName: "fhrpSavePushButton"
-                        text: "Save & Push"
-                        icon.source: AppAssets.actionSave
-                        type: "Primary"
-                        enabled: !root.operationBusy
-                        onClicked: root.saveGroup(true)
+                        onClicked: root.saveGroup()
                     }
                 }
             }

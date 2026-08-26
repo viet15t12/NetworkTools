@@ -53,7 +53,7 @@ Item {
     property var shortcutGuideHandler: null
     property var aboutHandler: null
 
-    readonly property string reloadLabel: qsTr("Reload")
+    readonly property string reloadLabel: qsTr("Reload UI")
     readonly property string reloadShortcut: "Ctrl+R"
     readonly property string dashboardLabel: qsTr("Dashboard")
     readonly property string dashboardShortcut: "Ctrl+Alt+D"
