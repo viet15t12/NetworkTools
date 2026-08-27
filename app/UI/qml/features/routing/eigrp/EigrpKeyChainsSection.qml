@@ -26,7 +26,13 @@ Rectangle {
         anchors.margins: Theme.spacing16
         spacing: Theme.spacing12
 
-        SectionTitle { text: "EIGRP KEY CHAINS" }
+        SectionTitle {
+            text: "EIGRP KEY CHAINS"
+            helpText: "Chain Name: IOS key-chain referenced by EIGRP interface authentication.\n\n" +
+                      "Key ID: positive numeric identifier within the chain.\n\n" +
+                      "Key String: shared secret; peer routers must use the same active secret.\n\n" +
+                      "Accept Lifetime / Send Lifetime: optional IOS lifetime expressions controlling when a key can verify or sign packets."
+        }
 
         GridLayout {
             Layout.fillWidth: true

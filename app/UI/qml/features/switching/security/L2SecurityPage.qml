@@ -470,6 +470,7 @@ Item {
                     SwitchInspectorSection {
                         Layout.fillWidth: true
                         title: "DHCP Snooping"
+                        helpText: "DHCP Snooping validates DHCP messages for this VLAN and learns IP-MAC-port bindings. Enable it only after identifying trusted uplinks; client-facing access ports should remain untrusted."
                         description: "Inspect DHCP exchanges and build the trusted binding database for this VLAN."
                         SwitchPropertyRow { label: "Push status"; value: String(root.policyDraft.success || "skipped").replace(/_/g, " ") }
                         StandardToggleButton {
@@ -491,6 +492,7 @@ Item {
                     SwitchInspectorSection {
                         Layout.fillWidth: true
                         title: "Dynamic ARP Inspection"
+                        helpText: "DAI validates ARP packets against DHCP Snooping or static bindings to prevent spoofing. DHCP Snooping must be enabled for dynamically learned clients, and uplinks toward legitimate infrastructure must be trusted."
                         description: "Validate ARP packets against trusted bindings on untrusted access ports."
                         showDivider: false
                         StandardToggleButton {
@@ -602,6 +604,7 @@ Item {
                     SplitView.minimumWidth: root.compactLayout ? 0 : 340
                     SplitView.minimumHeight: root.compactLayout ? 260 : 0
                     title: "Add trusted uplink"
+                    helpText: "Layer 2 interface identifies the port toward a legitimate DHCP server or trusted upstream switch. Trust bypasses DHCP Snooping and DAI checks, so never trust ordinary client-facing access ports."
 
                     Text {
                         Layout.fillWidth: true
@@ -725,6 +728,7 @@ Item {
                     SwitchInspectorSection {
                         Layout.fillWidth: true
                         title: "Forwarding binding"
+                        helpText: "MAC address identifies the client and is normalized to Cisco xxxx.xxxx.xxxx format. VLAN and Layer-2 interface define where the address is valid. Use static bindings for fixed hosts not learned through DHCP Snooping."
                         description: "The MAC address is normalized to Cisco xxxx.xxxx.xxxx notation."
                         showDivider: false
                         SwitchPropertyRow { visible: root.staticFormMode === 0; label: "MAC"; value: root.staticDraft.mac_addr || "—"; monospaced: true }

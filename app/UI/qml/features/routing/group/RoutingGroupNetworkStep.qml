@@ -12,6 +12,9 @@ FormSection {
     title: protocol === "ospf"
            ? "Connected networks and OSPF area"
            : "Connected networks"
+    helpText: protocol === "ospf"
+              ? "Select each connected subnet that should run OSPF. The interface list shows where that subnet was discovered. Area assigns the selected subnet to an OSPF area; use 0 for the backbone."
+              : "Select each connected subnet that should participate in EIGRP. The generated network statement enables EIGRP on matching interfaces and advertises the connected subnet."
 
     function interfaceNames(interfaces) {
         if (!interfaces)

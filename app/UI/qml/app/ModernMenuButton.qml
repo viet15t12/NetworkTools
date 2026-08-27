@@ -52,9 +52,9 @@ FocusScope {
 
     Rectangle {
         anchors.fill: parent
-        color: menuHover.hovered && !root.popupVisible
-               ? Theme.sideBarItemHover
-               : "transparent"
+        color: root.popupVisible
+               ? Theme.activityBarItemActive
+               : (menuHover.hovered ? Theme.activityBarItemHover : "transparent")
     }
 
     Text {

@@ -62,7 +62,7 @@ FocusScope {
         anchors.rightMargin: Theme.spacing4
         radius: Theme.radiusSmall
         color: root.highlighted && root.enabled
-               ? Theme.sideBarItemHover
+               ? Theme.panelSideBarItemHover
                : "transparent"
     }
 
@@ -82,7 +82,7 @@ FocusScope {
                          && root.command.checked
                 anchors.centerIn: parent
                 text: "✓"
-                color: Theme.accentColor
+                color: Theme.panelSideBarAccentColor
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeNormal
                 font.weight: Font.DemiBold
@@ -95,7 +95,9 @@ FocusScope {
                 anchors.centerIn: parent
                 iconSource: root.hasCommand ? root.command.iconSource : ""
                 iconSize: Theme.iconSizeNormal
-                iconColor: root.enabled ? Theme.textSecondary : Theme.textDisabled
+                iconColor: root.enabled
+                           ? Theme.panelSideBarTextSecondary
+                           : Theme.panelSideBarTextDisabled
             }
         }
 
@@ -104,7 +106,9 @@ FocusScope {
                             - parent.spacing * 2)
             height: parent.height
             text: root.hasCommand ? root.command.text : ""
-            color: root.enabled ? Theme.textPrimary : Theme.textDisabled
+            color: root.enabled
+                   ? Theme.panelSideBarTextPrimary
+                   : Theme.panelSideBarTextDisabled
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeNormal
             font.weight: Font.Normal
@@ -117,7 +121,9 @@ FocusScope {
             width: 82
             height: parent.height
             text: root.shortcutText
-            color: root.enabled ? Theme.textSecondary : Theme.textDisabled
+            color: root.enabled
+                   ? Theme.panelSideBarTextSecondary
+                   : Theme.panelSideBarTextDisabled
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeSmall
             verticalAlignment: Text.AlignVCenter

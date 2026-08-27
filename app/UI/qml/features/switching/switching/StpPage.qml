@@ -322,6 +322,7 @@ Item {
                 SwitchInspectorSection {
                     Layout.fillWidth: true
                     title: "Global protocol"
+                    helpText: "PVST runs a spanning-tree instance per VLAN. Rapid-PVST uses rapid convergence and is generally preferred when all participating switches support it. The mode is global and must be compatible across the Layer-2 domain."
                     description: "Cisco IOS uses one global STP mode; changing it updates every saved VLAN policy."
                     SwitchPropertyRow { visible: root.formMode === 0; label: "STP mode"; value: root.activeData().stp_mode || "—"; emphasize: true }
                     StandardComboBox {
@@ -337,6 +338,7 @@ Item {
                 SwitchInspectorSection {
                     Layout.fillWidth: true
                     title: "Root election"
+                    helpText: "VLAN selects the STP instance. Root role Primary/Secondary lets IOS choose an appropriate priority. Explicit Priority uses values in increments of 4096; lower values win the root election. Avoid conflicting root policies on multiple switches."
                     description: "Use a root role for automatic priority selection, or choose an explicit priority."
                     showDivider: false
 

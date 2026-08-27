@@ -34,6 +34,10 @@ Item {
 
                 SectionTitle {
                     text: "OSPF NETWORKS"
+                    helpText: "Process: OSPF process that receives this network statement.\n\n" +
+                              "Network: IPv4 network or interface address to match.\n\n" +
+                              "Wildcard: inverse subnet mask, for example 0.0.0.255; CIDR shorthand such as -/24 is also accepted.\n\n" +
+                              "Area: OSPF area ID, either decimal (0) or dotted format (0.0.0.0). Interfaces matching the statement join this area."
                 }
 
                 GridLayout {

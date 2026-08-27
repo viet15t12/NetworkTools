@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+import json
 import re
 import tempfile
 import unittest
@@ -163,7 +164,8 @@ class NatQmlBridgeContractTests(unittest.TestCase):
         self.assertIn("id: intfNameCombo", interface_source)
         self.assertIn("dbManager.getRouterInterfaces(currentHostIp)", interface_source)
         self.assertNotIn("id:               intfNameField", interface_source)
-        self.assertIn('tabs: ["Interfaces", "ACL", "Static", "Dynamic", "PAT", "Route Map", "Info"]', subbar_source)
+        self.assertIn('tabs: ["Interfaces", "ACL", "Static", "Dynamic", "PAT", "Route Map"]', subbar_source)
+        self.assertNotIn('"Info"', subbar_source)
         self.assertIn('activeTab: "Interfaces"', subbar_source)
         self.assertIn("id: sourceKindCombo", acl_source)
         self.assertIn('valueModel: ["network", "host", "any"]', acl_source)
@@ -442,10 +444,15 @@ class ButtonIconContractTests(unittest.TestCase):
         # Welcome flow adds Create/Cancel, a reusable theme choice, and Done.
         # Router Interface replaces its former hard-coded port-family action
         # with one text-only virtual-interface create action.
-        # The per-device Syslog page adds nine icon-bearing CRUD/push actions.
-        self.assertEqual(len(self.button_blocks), 237)
-        self.assertEqual(len(buttons_with_icons), 95)
-        self.assertEqual(len(self.button_blocks) - len(buttons_with_icons), 142)
+        # The per-device Syslog page, Syslog Group, and visual Smart Filter
+        # builder add their icon-bearing CRUD/save/push/filter actions.
+        # ParameterHelpButton uses a literal circled "i" so the affordance
+        # remains visible even when an SVG theme asset is unavailable.
+        # The System Logs Settings restart action adds one semantic icon
+        # button after ParameterHelpButton moved to a literal circled "i".
+        self.assertEqual(len(self.button_blocks), 256)
+        self.assertEqual(len(buttons_with_icons), 102)
+        self.assertEqual(len(self.button_blocks) - len(buttons_with_icons), 154)
 
     def test_routing_group_replaces_clone_workflow(self) -> None:
         routing_root = self.ui_root / "qml" / "features" / "routing"
@@ -836,6 +843,16 @@ class ButtonIconContractTests(unittest.TestCase):
         config_page = (
             self.ui_root / "qml" / "features" / "syslog" / "SyslogDeviceConfigPage.qml"
         ).read_text(encoding="utf-8")
+        filter_bar = (
+            self.ui_root / "qml" / "features" / "syslog" / "SyslogFilterBar.qml"
+        ).read_text(encoding="utf-8")
+        filter_builder = (
+            self.ui_root / "qml" / "features" / "syslog"
+            / "SyslogSmartFilterBuilder.qml"
+        ).read_text(encoding="utf-8")
+        group_dialog = (
+            self.ui_root / "qml" / "features" / "syslog" / "SyslogGroupDialog.qml"
+        ).read_text(encoding="utf-8")
         context_menu = (
             self.ui_root / "qml" / "sidebar" / "syslog" / "SyslogDeviceContextMenu.qml"
         ).read_text(encoding="utf-8")
@@ -848,6 +865,18 @@ class ButtonIconContractTests(unittest.TestCase):
         main = (self.ui_root / "qml" / "app" / "Main.qml").read_text(encoding="utf-8")
 
         self.assertIn("WorkspaceHeader {", workspace)
+        self.assertIn('objectName: "syslogGroupButton"', config_page)
+        self.assertIn('title: "Syslog Group"', group_dialog)
+        self.assertIn('text: "Save & Push"', group_dialog)
+        self.assertIn('controllerName: "syslog"', group_dialog)
+        self.assertIn("function openFor(form, preselectedHosts)", group_dialog)
+        self.assertIn('const ownerHost = String(ownerForm.host || "")', group_dialog)
+        self.assertGreaterEqual(filter_bar.count("SyslogMultiSelectFilter {"), 2)
+        self.assertIn("smartFilterBuilder.openFor(smartSearch.text)", filter_bar)
+        self.assertIn('title: "Build Smart Filter"', filter_builder)
+        self.assertIn('objectName: "syslogSmartFilterApplyButton"', filter_builder)
+        self.assertGreaterEqual(filter_builder.count("helpText:"), 3)
+        self.assertGreaterEqual(config_page.count("helpText:"), 2)
         self.assertIn("maximumEntries: 2000", workspace)
         self.assertIn("function matchesFilters(row)", workspace)
         self.assertIn("DataTable {", table)
@@ -855,7 +884,18 @@ class ButtonIconContractTests(unittest.TestCase):
         self.assertIn("DataTableRow {", row)
         self.assertGreaterEqual(row.count("DataTableCell {"), 6)
         self.assertGreaterEqual(settings.count("FormSection {"), 3)
+        self.assertIn('title: "Capacity and safety"', settings)
+        self.assertIn('text: "Restart Listener"', settings)
+        self.assertIn("maxMessageBytes", settings)
+        self.assertIn("maxTcpClients", settings)
         self.assertIn('title: "Syslog Servers"', config_page)
+        self.assertIn("DeviceBatchActionBar {", devices_panel)
+        self.assertIn("SyslogDeviceContextMenu {", devices_panel)
+        self.assertIn("function selectRangeTo(host)", devices_panel)
+        self.assertIn("groupDialog.openFor(root, hosts)", devices_panel)
+        self.assertIn('sequence: "Escape"', devices_panel)
+        self.assertIn('text: "Configure as Syslog Group ("', context_menu)
+        self.assertIn("root.batchHosts.length <= 5", context_menu)
         self.assertIn('controllerName: "syslog"', config_page)
         self.assertIn("CrudFormActions {", config_page)
         self.assertIn("getDeviceConfigurations(host)", config_page)
@@ -872,8 +912,8 @@ class ButtonIconContractTests(unittest.TestCase):
         self.assertIn('objectName: "syslogPanelReloadButton"', devices_panel)
         self.assertIn('tooltip: root.busy ? "Refreshing Connected Hosts..."', devices_panel)
         self.assertNotIn("StandardButton {", devices_panel)
-        self.assertNotIn("configureDevice(", devices_panel)
-        self.assertNotIn("cancelDevice(", devices_panel)
+        self.assertIn("root.backend.configureDevice(host)", devices_panel)
+        self.assertIn("root.backend.cancelDevice(host)", devices_panel)
 
     def test_add_and_new_buttons_do_not_use_add_icons(self) -> None:
         for path, block in self.button_blocks:
@@ -974,6 +1014,70 @@ class ButtonIconContractTests(unittest.TestCase):
 
 
 class QmlModuleContractTests(unittest.TestCase):
+    def test_configuration_tabs_expose_parameter_help(self) -> None:
+        feature_root = Path(__file__).resolve().parents[1] / "UI" / "qml" / "features"
+
+        direct_help_files = [
+            "acl/AclEditorPane.qml",
+            "acl/AclBindingsEditor.qml",
+            "dhcp/DhcpPoolForm.qml",
+            "dhcp/DhcpExcludedForm.qml",
+            "dhcp/DhcpHelperForm.qml",
+            "nat/NatAclForm.qml",
+            "nat/NatDynamicForm.qml",
+            "nat/NatInterfaceForm.qml",
+            "nat/NatPatForm.qml",
+            "nat/NatRouteMapForm.qml",
+            "nat/NatStaticForm.qml",
+            "routing/static/DefaultRoutingForm.qml",
+            "routing/static/StaticRoutingDefaultCard.qml",
+            "routing/static/StaticRoutingRoutesCard.qml",
+        ]
+        for relative_path in direct_help_files:
+            source = (feature_root / relative_path).read_text(encoding="utf-8")
+            with self.subTest(qml=relative_path):
+                self.assertIn("ParameterHelpButton {", source)
+                self.assertIn("helpText:", source)
+
+        section_help_files = [
+            "interfaces/InterfaceEditorPane.qml",
+            "fhrp/FhrpProtocolOptionsEditor.qml",
+            "fhrp/FhrpProtocolPage.qml",
+            "routing/ospf/OspfProcessCard.qml",
+            "routing/eigrp/EigrpProcessCard.qml",
+            "routing/group/RoutingGroupHostStep.qml",
+            "routing/group/RoutingGroupIdentityStep.qml",
+            "routing/group/RoutingGroupNetworkStep.qml",
+            "routing/group/RoutingGroupCommonStep.qml",
+            "switching/interfaces/InterfaceInspector.qml",
+            "switching/interfaces/SviPage.qml",
+            "switching/security/L2SecurityPage.qml",
+            "switching/switching/EtherChannelPage.qml",
+            "switching/switching/StpPage.qml",
+            "switching/switching/VlanPage.qml",
+            "switching/switching/VtpPage.qml",
+        ]
+        section_help_files += [
+            path.relative_to(feature_root).as_posix()
+            for protocol in ("ospf", "eigrp")
+            for path in sorted((feature_root / "routing" / protocol).glob("*Section.qml"))
+        ]
+        for relative_path in section_help_files:
+            source = (feature_root / relative_path).read_text(encoding="utf-8")
+            with self.subTest(qml=relative_path):
+                self.assertIn("helpText:", source)
+
+        visible_subbars = {
+            "routing/RoutingSubBar.qml": ["Static", "Default", "OSPF", "EIGRP", "BGP"],
+            "dhcp/DhcpSubBar.qml": ["Pool", "Excluded", "Helper"],
+            "nat/NatSubBar.qml": ["Interfaces", "ACL", "Static", "Dynamic", "PAT", "Route Map"],
+        }
+        for relative_path, expected_tabs in visible_subbars.items():
+            source = (feature_root / relative_path).read_text(encoding="utf-8")
+            with self.subTest(qml=relative_path):
+                self.assertIn("tabs: " + json.dumps(expected_tabs), source)
+                self.assertNotIn('"Info"', source)
+
     def test_welcome_preserves_brand_colors_and_uses_contrast_safe_icons(self) -> None:
         ui_root = Path(__file__).resolve().parents[1] / "UI"
         welcome = (ui_root / "qml/app/Welcome.qml").read_text(encoding="utf-8")
@@ -1454,7 +1558,8 @@ class QmlModuleContractTests(unittest.TestCase):
         self.assertIn("MenuDefinition.menus", menu_bar)
         self.assertIn("registry: commandRegistry", main)
         self.assertIn("active: root.useModernCustomMenu", main)
-        self.assertIn("Theme.contentSurface", popup)
+        self.assertIn("Theme.panelSideBarSurface", popup)
+        self.assertIn("Theme.panelSideBarBorderColor", popup)
         self.assertIn("MultiEffect", popup)
         self.assertIn("shadowColor: Theme.shadowColor", popup)
         self.assertIn("radius: Theme.radiusMedium", popup)
@@ -1463,9 +1568,11 @@ class QmlModuleContractTests(unittest.TestCase):
         self.assertIn("command.iconSource", item)
         self.assertIn("command.shortcut", item)
         self.assertIn("command.enabled", item)
-        self.assertIn(
-            "color: menuHover.hovered && !root.popupVisible", button
-        )
+        self.assertIn("Theme.panelSideBarItemHover", item)
+        self.assertIn("Theme.panelSideBarTextPrimary", item)
+        self.assertIn("color: root.popupVisible", button)
+        self.assertIn("Theme.activityBarItemActive", button)
+        self.assertIn("Theme.activityBarItemHover", button)
         self.assertIn(
             "visible: root.popupVisible || root.activeFocus", button
         )

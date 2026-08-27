@@ -158,9 +158,11 @@ Popup {
     }
 
     background: Rectangle {
-        color: Theme.contentSurface
+        // The title/menu bar may intentionally use the dark-sidebar palette
+        // while the workspace remains light. Keep its popup in that palette.
+        color: Theme.panelSideBarSurface
         border.width: Theme.borderWidth
-        border.color: Theme.isHighContrast ? Theme.textPrimary : Theme.borderColor
+        border.color: Theme.panelSideBarBorderColor
         radius: Theme.radiusMedium
 
         layer.enabled: true

@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 
 from PyQt6.QtCore import QMetaObject, QObject, QUrl, pyqtSignal, pyqtSlot
-from PyQt6.QtQml import QQmlApplicationEngine, QQmlComponent
+from PyQt6.QtQml import QQmlApplicationEngine, QQmlComponent, QQmlEngine, QQmlExpression
 from PyQt6.QtWidgets import QApplication
 
 from features.syslog.qt.manager import _variant_dict
@@ -104,6 +104,27 @@ class SyslogQmlTests(unittest.TestCase):
             instance.deleteLater()
             engine.deleteLater()
 
+    def test_parameter_help_button_opens_explanation_dialog(self) -> None:
+        engine, instance, warnings = self._create(
+            "tests/qml/ParameterHelpHarness.qml"
+        )
+        try:
+            button = instance.findChild(QObject, "parameterHelpIconButton")
+            dialog = instance.findChild(QObject, "parameterHelpDialog")
+            self.assertIsNotNone(button)
+            self.assertIsNotNone(dialog)
+
+            QMetaObject.invokeMethod(button, "click")
+            self.app.processEvents()
+
+            self.assertTrue(dialog.property("opened"))
+            self.assertEqual(dialog.property("title"), "Destination parameters")
+            self.assertEqual(warnings, [])
+        finally:
+            instance.close()
+            instance.deleteLater()
+            engine.deleteLater()
+
     def test_syslog_table_recycles_rows_without_null_model_warnings(self) -> None:
         engine, instance, warnings = self._create(
             "tests/qml/SyslogTableHarness.qml"
@@ -152,6 +173,9 @@ class SyslogQmlTests(unittest.TestCase):
             {"syslogSettings": settings, "syslogManager": None},
         )
         try:
+            self.assertEqual(
+                len(instance.findChildren(QObject, "parameterHelpIconButton")), 4
+            )
             self.assertFalse(
                 any("Binding loop" in warning for warning in warnings),
                 warnings,
@@ -169,6 +193,10 @@ class SyslogQmlTests(unittest.TestCase):
         )
         try:
             self.assertEqual(instance.property("selectedIndex"), 0)
+            self.assertIsNotNone(instance.findChild(QObject, "syslogGroupButton"))
+            self.assertGreaterEqual(
+                len(instance.findChildren(QObject, "parameterHelpIconButton")), 2
+            )
             QMetaObject.invokeMethod(instance, "deleteSelected")
             self.app.processEvents()
             self.assertIsInstance(backend.deleted_payload, dict)
@@ -203,6 +231,121 @@ class SyslogQmlTests(unittest.TestCase):
             QMetaObject.invokeMethod(instance, "beginEdit")
             self.app.processEvents()
             self.assertEqual(combo.property("currentText"), "GigabitEthernet0/0")
+            self.assertEqual(warnings, [])
+        finally:
+            instance.deleteLater()
+            engine.deleteLater()
+
+    def test_syslog_group_builds_per_host_targets_with_shared_policy(self) -> None:
+        engine, instance, warnings = self._create(
+            "UI/qml/features/syslog/SyslogGroupDialog.qml",
+            {"dbManager": None},
+        )
+        try:
+            self.assertEqual(
+                len(instance.findChildren(QObject, "parameterHelpIconButton")), 3
+            )
+            result, is_undefined = QQmlExpression(
+                QQmlEngine.contextForObject(instance),
+                instance,
+                """
+                populateOptions({
+                    defaults: {
+                        server_ip: "198.51.100.10", protocol: "udp", port: 5514,
+                        trap_severity: 5, timestamps: true, sequence_numbers: true
+                    },
+                    hosts: [{
+                        host: "192.0.2.1", device_name: "R1", role: "rou",
+                        interfaces: [{name: "Loopback0", kind: "router"}],
+                        recommended_interface: "Loopback0"
+                    }, {
+                        host: "192.0.2.2", device_name: "R2", role: "rou",
+                        interfaces: [{name: "GigabitEthernet0/0", kind: "router"}],
+                        recommended_interface: "GigabitEthernet0/0"
+                    }]
+                });
+                updateSelected(0, true);
+                updateSelected(1, true);
+                stepIndex = 1;
+                ({valid: stepValid(), targets: selectedTargets(), policy: commonPolicy()})
+                """,
+            ).evaluate()
+
+            self.assertFalse(is_undefined)
+            value = result.toVariant()
+            self.assertTrue(value["valid"], value)
+            self.assertEqual(
+                value["targets"],
+                [
+                    {"host": "192.0.2.1", "source_interface": "Loopback0"},
+                    {"host": "192.0.2.2", "source_interface": "GigabitEthernet0/0"},
+                ],
+            )
+            self.assertEqual(value["policy"]["server_ip"], "198.51.100.10")
+            self.assertEqual(warnings, [])
+        finally:
+            instance.deleteLater()
+            engine.deleteLater()
+
+    def test_syslog_filter_supports_multiple_hosts_and_severities(self) -> None:
+        engine, instance, warnings = self._create(
+            "UI/qml/features/syslog/SyslogFilterBar.qml",
+            {"syslogManager": None},
+            {"hostOptions": ["r1", "r2", "r3"]},
+        )
+        try:
+            self.assertEqual(
+                len(instance.findChildren(QObject, "parameterHelpIconButton")), 3
+            )
+            result, is_undefined = QQmlExpression(
+                QQmlEngine.contextForObject(instance),
+                instance,
+                """
+                selectedHosts = ["r1", "r3"];
+                selectedSeverities = [2, 3, 4];
+                currentFilters()
+                """,
+            ).evaluate()
+
+            self.assertFalse(is_undefined)
+            filters = result.toVariant()
+            self.assertEqual(filters["hosts"], ["r1", "r3"])
+            self.assertEqual(filters["host"], "")
+            self.assertEqual(filters["severities"], [2, 3, 4])
+            host_filter = instance.findChild(QObject, "syslogHostFilterChip")
+            severity_filter = instance.findChild(QObject, "syslogSeverityFilter")
+            self.assertEqual(host_filter.property("summaryText"), "2 hosts selected")
+            self.assertEqual(
+                severity_filter.property("summaryText"), "3 severities selected"
+            )
+            self.assertEqual(warnings, [])
+        finally:
+            instance.deleteLater()
+            engine.deleteLater()
+
+    def test_smart_filter_builder_round_trips_structured_expression(self) -> None:
+        engine, instance, warnings = self._create(
+            "UI/qml/features/syslog/SyslogSmartFilterBuilder.qml"
+        )
+        try:
+            result, is_undefined = QQmlExpression(
+                QQmlEngine.contextForObject(instance),
+                instance,
+                """
+                loadExpression('host:r1,r2 severity:error,warning protocol:udp '
+                               + 'since:30m last:20 facility:LINK '
+                               + 'mnemonic:UPDOWN text:"changed state"');
+                buildExpression()
+                """,
+            ).evaluate()
+
+            self.assertFalse(is_undefined)
+            expression = str(result)
+            self.assertIn("host:r1,r2", expression)
+            self.assertIn("severity:error,warning", expression)
+            self.assertIn("protocol:udp", expression)
+            self.assertIn("since:30m", expression)
+            self.assertIn('text:"changed state"', expression)
             self.assertEqual(warnings, [])
         finally:
             instance.deleteLater()

@@ -384,6 +384,7 @@ Item {
                 SwitchInspectorSection {
                     Layout.fillWidth: true
                     title: "Identity"
+                    helpText: "VLAN ID is the unique numeric VLAN identifier, normally 1-4094. Name is an optional human-readable label such as Users, Voice, or Management."
                     description: "VLAN identifiers must be unique on the selected switch."
 
                     SwitchPropertyRow { visible: root.formMode === 0; label: "VLAN ID"; value: String(root.activeData().vlan_id || "—"); emphasize: true }
@@ -410,6 +411,7 @@ Item {
                 SwitchInspectorSection {
                     Layout.fillWidth: true
                     title: "Lifecycle"
+                    helpText: "Active permits the VLAN to forward when ports are available. Suspend retains the VLAN definition but marks it inactive. Push status reports whether the local change still needs deployment."
                     description: "Suspending a VLAN preserves its definition while marking it inactive."
                     showDivider: false
 

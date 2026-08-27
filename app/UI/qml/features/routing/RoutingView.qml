@@ -12,10 +12,11 @@ Rectangle {
     color: Theme.contentBackground
     property string currentHostIp: ""
 
-    // Tab đang active, mặc định là "Info"
-    property string currentTab: "Info"
-    property bool infoLoaded: true
-    property bool staticLoaded: false
+    // Info remains available internally for compatibility, but is no longer
+    // exposed as a configuration tab.
+    property string currentTab: "Static"
+    property bool infoLoaded: false
+    property bool staticLoaded: true
     property bool defaultLoaded: false
     property bool ospfLoaded: false
     property bool eigrpLoaded: false

@@ -1,30 +1,30 @@
-#!/usr/bin/env python3
 """
-Demo SSH song song 4 thiết bị Cisco và tạo sự kiện Syslog.
+Demo SSH song song 4 thiết bị Cisco và tạo NHIỀU Syslog để demo collector/app.
 
-Thiết bị:
-- R1  : 192.168.122.101
-- R2  : 192.168.122.102
-- R4  : 192.168.122.103
-- SW1 : 192.168.122.104
+Mặc định:
+- SSH đồng thời R1 / R2 / R4 / SW1.
+- Gửi custom Syslog đủ severity 0..7 trên mỗi thiết bị.
+- Router: flap Loopback99 nhiều vòng để sinh LINK/LINEPROTO log thật.
+- Switch: flap Gi1/3 nhiều vòng để sinh LINK/LINEPROTO log thật.
 
-Yêu cầu:
+Cài:
     uv add netmiko
-hoặc:
-    pip install netmiko
 
-Chạy:
-    uv run python demo_syslog.py
-hoặc:
-    python3 demo_syslog.py
+Chạy mặc định:
+    uv run python demo_syslog_multi.py
+
+Ví dụ tạo nhiều log hơn:
+    uv run python demo_syslog_multi.py --cycles 10 --bursts 3 --delay 0.5
 """
 
+from __future__ import annotations
+
+import argparse
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
-import time
 
 from netmiko import ConnectHandler
-
 
 USERNAME = "admin"
 PASSWORD = "Cisco@123"
@@ -64,121 +64,185 @@ DEVICES = [
     },
 ]
 
+# Syslog severity chuẩn: 0 nghiêm trọng nhất -> 7 debug.
+SEVERITIES = {
+    0: "EMERGENCY",
+    1: "ALERT",
+    2: "CRITICAL",
+    3: "ERROR",
+    4: "WARNING",
+    5: "NOTICE",
+    6: "INFORMATIONAL",
+    7: "DEBUG",
+}
+
 
 def log_local(device_name: str, message: str) -> None:
     now = datetime.now().strftime("%H:%M:%S.%f")[:-3]
     print(f"[{now}] [{device_name:<3}] {message}", flush=True)
 
 
-def send_custom_syslog(conn, device_name: str, message: str) -> None:
-    """
-    Cisco IOS thường hỗ trợ lệnh EXEC:
-        send log <severity> <message>
+def send_custom_syslog(
+    conn,
+    device_name: str,
+    severity: int,
+    message: str,
+) -> bool:
+    """Gửi một custom Syslog bằng lệnh EXEC `send log`."""
+    command = f"send log {severity} {message}"
+    output = conn.send_command_timing(command, strip_prompt=False, strip_command=False)
 
-    Severity 6 = informational.
-    Nếu image IOS không hỗ trợ lệnh này, script vẫn tiếp tục
-    tạo log bằng thay đổi trạng thái interface.
-    """
-    command = f"send log 6 {message}"
-    output = conn.send_command_timing(command)
-
-    if "Invalid input" in output or "Incomplete command" in output:
-        log_local(device_name, "IOS không hỗ trợ 'send log', bỏ qua custom message.")
-    else:
-        log_local(device_name, f"Đã gửi custom Syslog: {message}")
-
-
-def router_demo(conn, name: str) -> None:
-    """
-    Dùng Loopback99 để tạo log UP/DOWN.
-    Không đụng Gi0/0 nên không làm rớt SSH.
-    """
-    log_local(name, "Tạo Loopback99...")
-    conn.send_config_set([
-        "interface Loopback99",
-        "description SYSLOG-DEMO",
-        "ip address 10.255.99.1 255.255.255.255",
-        "no shutdown",
-    ])
-
-    time.sleep(2)
-
-    send_custom_syslog(
-        conn,
-        name,
-        f"DEMO-{name}: Loopback99 da duoc tao va bat len"
+    bad_markers = (
+        "Invalid input",
+        "Incomplete command",
+        "Ambiguous command",
+        "% Invalid",
     )
 
-    log_local(name, "Shutdown Loopback99 -> tạo log DOWN...")
-    conn.send_config_set([
-        "interface Loopback99",
-        "shutdown",
-    ])
+    if any(marker in output for marker in bad_markers):
+        log_local(
+            device_name,
+            f"IOS không hỗ trợ '{command}'. Sẽ tiếp tục bằng log interface.",
+        )
+        return False
 
-    time.sleep(3)
-
-    log_local(name, "No shutdown Loopback99 -> tạo log UP...")
-    conn.send_config_set([
-        "interface Loopback99",
-        "no shutdown",
-    ])
-
-    time.sleep(3)
-
-    send_custom_syslog(
-        conn,
-        name,
-        f"DEMO-{name}: Hoan tat chu ky DOWN-UP"
+    log_local(
+        device_name, f"SYSLOG severity={severity} {SEVERITIES[severity]}: {message}"
     )
-
-    time.sleep(2)
-
-    log_local(name, "Xóa Loopback99...")
-    conn.send_config_set([
-        "no interface Loopback99",
-    ])
+    return True
 
 
-def switch_demo(conn, name: str) -> None:
-    """
-    Với switch, dùng một cổng demo không phải đường quản trị.
+def send_severity_burst(conn, name: str, burst_no: int, pause: float) -> int:
+    """Gửi 8 message, mỗi message một severity từ 0 đến 7."""
+    sent = 0
 
-    Theo mô hình 8 cổng trước đó, Gi1/3 được chọn làm DEMO_PORT.
-    Hãy bảo đảm Gi1/3 không phải cổng đang nối thiết bị quan trọng.
-    """
+    for severity, label in SEVERITIES.items():
+        message = (
+            f"DEMO-{name} BURST={burst_no} "
+            f"SEVERITY={severity}-{label} "
+            f"TIME={datetime.now().strftime('%H:%M:%S')}"
+        )
+        if send_custom_syslog(conn, name, severity, message):
+            sent += 1
+        time.sleep(pause)
+
+    return sent
+
+
+def router_demo(conn, name: str, cycles: int, delay: float) -> int:
+    """Flap Loopback99 nhiều vòng, không đụng interface SSH."""
+    interface = "Loopback99"
+    events = 0
+
+    log_local(name, f"Tạo {interface}...")
+    conn.send_config_set(
+        [
+            f"interface {interface}",
+            "description SYSLOG-DEMO",
+            "ip address 10.255.99.1 255.255.255.255",
+            "no shutdown",
+        ]
+    )
+    time.sleep(delay)
+
+    for cycle in range(1, cycles + 1):
+        log_local(name, f"[{cycle}/{cycles}] shutdown {interface} -> DOWN")
+        conn.send_config_set(
+            [
+                f"interface {interface}",
+                "shutdown",
+            ]
+        )
+        events += 1
+        time.sleep(delay)
+
+        # Marker custom giúp app dễ nhìn giữa các log thật của IOS.
+        send_custom_syslog(
+            conn,
+            name,
+            4,
+            f"DEMO-{name} CYCLE={cycle}/{cycles} {interface}=DOWN",
+        )
+        time.sleep(delay)
+
+        log_local(name, f"[{cycle}/{cycles}] no shutdown {interface} -> UP")
+        conn.send_config_set(
+            [
+                f"interface {interface}",
+                "no shutdown",
+            ]
+        )
+        events += 1
+        time.sleep(delay)
+
+        send_custom_syslog(
+            conn,
+            name,
+            5,
+            f"DEMO-{name} CYCLE={cycle}/{cycles} {interface}=UP",
+        )
+        time.sleep(delay)
+
+    log_local(name, f"Xóa {interface}...")
+    conn.send_config_set([f"no interface {interface}"])
+    events += 1
+    return events
+
+
+def switch_demo(conn, name: str, cycles: int, delay: float) -> int:
+    """Flap cổng demo Gi1/3 nhiều vòng."""
     demo_port = "GigabitEthernet1/3"
+    events = 0
 
-    send_custom_syslog(
-        conn,
-        name,
-        f"DEMO-{name}: Bat dau demo Syslog tren {demo_port}"
+    log_local(name, f"Dùng {demo_port} làm cổng demo.")
+    conn.send_config_set(
+        [
+            f"interface {demo_port}",
+            "description SYSLOG-DEMO-PORT",
+        ]
     )
 
-    log_local(name, f"Shutdown {demo_port}...")
-    conn.send_config_set([
-        f"interface {demo_port}",
-        "description SYSLOG-DEMO-PORT",
-        "shutdown",
-    ])
+    for cycle in range(1, cycles + 1):
+        log_local(name, f"[{cycle}/{cycles}] shutdown {demo_port} -> DOWN")
+        conn.send_config_set(
+            [
+                f"interface {demo_port}",
+                "shutdown",
+            ]
+        )
+        events += 1
+        time.sleep(delay)
 
-    time.sleep(3)
+        send_custom_syslog(
+            conn,
+            name,
+            4,
+            f"DEMO-{name} CYCLE={cycle}/{cycles} {demo_port}=DOWN",
+        )
+        time.sleep(delay)
 
-    log_local(name, f"No shutdown {demo_port}...")
-    conn.send_config_set([
-        f"interface {demo_port}",
-        "no shutdown",
-    ])
+        log_local(name, f"[{cycle}/{cycles}] no shutdown {demo_port} -> UP")
+        conn.send_config_set(
+            [
+                f"interface {demo_port}",
+                "no shutdown",
+            ]
+        )
+        events += 1
+        time.sleep(delay)
 
-    time.sleep(3)
+        send_custom_syslog(
+            conn,
+            name,
+            5,
+            f"DEMO-{name} CYCLE={cycle}/{cycles} {demo_port}=UP",
+        )
+        time.sleep(delay)
 
-    send_custom_syslog(
-        conn,
-        name,
-        f"DEMO-{name}: Hoan tat chu ky shutdown-no_shutdown"
-    )
+    return events
 
 
-def run_device(device: dict) -> str:
+def run_device(device: dict, cycles: int, bursts: int, delay: float) -> str:
     name = device["name"]
 
     params = {
@@ -193,28 +257,50 @@ def run_device(device: dict) -> str:
     }
 
     log_local(name, f"Đang SSH tới {device['host']}...")
-
     conn = None
+    custom_sent = 0
+    physical_events = 0
+
     try:
         conn = ConnectHandler(**params)
-
         prompt = conn.find_prompt()
         log_local(name, f"SSH thành công: {prompt}")
 
-        # Tạo một Syslog đánh dấu bắt đầu phiên demo.
         send_custom_syslog(
             conn,
             name,
-            f"DEMO-{name}: SSH session da ket noi thanh cong"
+            5,
+            f"DEMO-{name} START SSH_SESSION_OK",
         )
 
-        if device["kind"] == "router":
-            router_demo(conn, name)
-        else:
-            switch_demo(conn, name)
+        # Mỗi burst = 8 log custom (severity 0..7).
+        for burst_no in range(1, bursts + 1):
+            log_local(name, f"Gửi severity burst {burst_no}/{bursts}...")
+            custom_sent += send_severity_burst(conn, name, burst_no, delay)
 
-        log_local(name, "Demo hoàn tất.")
-        return f"{name}: OK"
+        # Sau đó sinh log thật bằng interface state changes.
+        if device["kind"] == "router":
+            physical_events += router_demo(conn, name, cycles, delay)
+        else:
+            physical_events += switch_demo(conn, name, cycles, delay)
+
+        send_custom_syslog(
+            conn,
+            name,
+            6,
+            (
+                f"DEMO-{name} FINISH CUSTOM_SENT={custom_sent} "
+                f"INTERFACE_EVENTS={physical_events}"
+            ),
+        )
+
+        log_local(
+            name,
+            f"Hoàn tất: {custom_sent} custom log + {physical_events} interface actions.",
+        )
+        return (
+            f"{name}: OK | custom={custom_sent} | interface_actions={physical_events}"
+        )
 
     except Exception as exc:
         log_local(name, f"LỖI: {exc}")
@@ -229,22 +315,66 @@ def run_device(device: dict) -> str:
                 pass
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Tạo nhiều Syslog trên R1/R2/R4/SW1 để demo collector/app."
+    )
+    parser.add_argument(
+        "--cycles",
+        type=int,
+        default=5,
+        help="Số vòng shutdown/no shutdown trên mỗi thiết bị (mặc định: 5).",
+    )
+    parser.add_argument(
+        "--bursts",
+        type=int,
+        default=2,
+        help="Số burst severity 0..7; mỗi burst có 8 custom log (mặc định: 2).",
+    )
+    parser.add_argument(
+        "--delay",
+        type=float,
+        default=0.8,
+        help="Khoảng nghỉ giữa các hành động, đơn vị giây (mặc định: 0.8).",
+    )
+    args = parser.parse_args()
+
+    if args.cycles < 1:
+        parser.error("--cycles phải >= 1")
+    if args.bursts < 1:
+        parser.error("--bursts phải >= 1")
+    if args.delay < 0:
+        parser.error("--delay phải >= 0")
+
+    return args
+
+
 def main() -> None:
-    print("=" * 72)
-    print("      DEMO SSH SONG SONG + SYSLOG - R1 / R2 / R4 / SW1")
-    print("=" * 72)
+    args = parse_args()
+
+    print("=" * 78)
+    print("   DEMO SSH SONG SONG + MULTI SYSLOG - R1 / R2 / R4 / SW1")
+    print("=" * 78)
+    print(f"cycles : {args.cycles}")
+    print(f"bursts : {args.bursts}  ({args.bursts * 8} custom severity logs/device)")
+    print(f"delay  : {args.delay}s")
     print()
-    print("Script sẽ SSH đồng thời vào 4 thiết bị.")
-    print("Router: tạo Loopback99 -> shutdown -> no shutdown -> xóa.")
-    print("Switch: shutdown/no shutdown Gi1/3.")
+    print("Router : Loopback99 shutdown/no shutdown nhiều vòng.")
+    print("Switch : Gi1/3 shutdown/no shutdown nhiều vòng.")
+    print("Custom : severity 0,1,2,3,4,5,6,7.")
     print()
 
-    # 4 worker => 4 thiết bị chạy gần như đồng thời.
     results = []
 
-    with ThreadPoolExecutor(max_workers=4) as executor:
+    with ThreadPoolExecutor(max_workers=len(DEVICES)) as executor:
         futures = {
-            executor.submit(run_device, device): device["name"]
+            executor.submit(
+                run_device,
+                device,
+                args.cycles,
+                args.bursts,
+                args.delay,
+            ): device["name"]
             for device in DEVICES
         }
 
@@ -252,10 +382,9 @@ def main() -> None:
             results.append(future.result())
 
     print()
-    print("=" * 72)
+    print("=" * 78)
     print("KẾT QUẢ")
-    print("=" * 72)
-
+    print("=" * 78)
     for result in sorted(results):
         print(result)
 

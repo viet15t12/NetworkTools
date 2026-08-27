@@ -271,6 +271,7 @@ Rectangle {
                     FormSection {
                         Layout.fillWidth: true
                         title: "Domain settings"
+                        helpText: "Domain name groups switches that exchange VTP advertisements and is case-sensitive on some platforms. Version selects VTP 1, 2, or 3; all participating switches must be compatible. Review production domains carefully because VTP can modify VLAN databases."
 
                         Text {
                             Layout.fillWidth: true
@@ -314,6 +315,7 @@ Rectangle {
                     FormSection {
                         Layout.fillWidth: true
                         title: "Participating switches"
+                        helpText: "Select 2-5 connected switches that should share the VTP domain configuration. Verify connectivity and current VLAN state before applying a common VTP policy."
 
                         RowLayout {
                             Layout.fillWidth: true
@@ -417,6 +419,7 @@ Rectangle {
                     FormSection {
                         Layout.fillWidth: true
                         title: "Member policy"
+                        helpText: "VTP mode controls each switch's role: server can update the VLAN database, client learns it, transparent forwards advertisements while maintaining local VLANs, and off disables participation where supported. Pruning reduces unnecessary flooded traffic on trunks."
 
                         EmptyState {
                             visible: memberModel.count === 0

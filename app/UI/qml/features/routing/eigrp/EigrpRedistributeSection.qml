@@ -26,7 +26,12 @@ Rectangle {
         anchors.margins: Theme.spacing16
         spacing: Theme.spacing12
 
-        SectionTitle { text: "EIGRP REDISTRIBUTE" }
+        SectionTitle {
+            text: "EIGRP REDISTRIBUTE"
+            helpText: "Protocol: source routing protocol imported into EIGRP.\n\n" +
+                      "Route Map: optional import policy.\n\n" +
+                      "Metric BW, Delay, Reliability, Load, and MTU form the EIGRP seed metric. For protocols without a native compatible metric, provide all required values. Reliability and Load are 1-255; MTU is bytes."
+        }
 
         GridLayout {
             Layout.fillWidth: true

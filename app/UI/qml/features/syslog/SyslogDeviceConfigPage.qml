@@ -261,6 +261,14 @@ Item {
             title: "Syslog Servers"
             subtitle: "Manage multiple Cisco Syslog destinations for " + root.host + "."
 
+            StandardButton {
+                objectName: "syslogGroupButton"
+                text: "Syslog Group"
+                icon.source: AppAssets.actionPush
+                type: "Primary"
+                onClicked: syslogGroupDialog.openFor(root)
+            }
+
             ViewPushButton {
                 objectName: "syslogViewPushButton"
                 controllerName: "syslog"
@@ -420,6 +428,7 @@ Item {
                 SwitchInspectorSection {
                     Layout.fillWidth: true
                     title: "Destination"
+                    helpText: "Server IP: Reachable IPv4 or IPv6 address of the collector.\n\nProtocol: UDP or TCP transport used by this destination.\n\nPort: Destination port from 1 to 65535; normally the NetworkTools listener port.\n\nSource interface: Cisco interface used as the source address of outgoing Syslog traffic. Prefer a reachable Loopback, management interface, or SVI."
                     SwitchPropertyRow { visible: root.formMode === 0; label: "Server"; value: root.endpoint(root.activeData()); emphasize: true }
                     SwitchPropertyRow { visible: root.formMode === 0; label: "Protocol"; value: String(root.activeData().protocol || "—").toUpperCase() }
                     SwitchPropertyRow { visible: root.formMode === 0; label: "Source interface"; value: root.activeData().source_interface || "—" }
@@ -478,6 +487,7 @@ Item {
                 SwitchInspectorSection {
                     Layout.fillWidth: true
                     title: "Message policy"
+                    helpText: "Trap severity: Controls which message levels Cisco sends. Lower numbers are more severe; 7 Debug is the most verbose.\n\nTimestamps: Adds millisecond timestamps to generated log messages.\n\nSequence numbers: Adds device-side ordering numbers.\n\nPush status: pending_apply waits to be pushed, pending_delete waits for removal, synchronized matches verified device state, and skipped is intentionally not applied."
                     showDivider: false
                     SwitchPropertyRow { visible: root.formMode === 0; label: "Trap severity"; value: root.severityLabels[Number(root.activeData().trap_severity || 0)] || "—" }
                     SwitchPropertyRow { visible: root.formMode === 0; label: "Timestamps"; value: root.activeData().timestamps ? "Enabled" : "Disabled" }
@@ -525,5 +535,10 @@ Item {
                 }
             }
         }
+    }
+
+    SyslogGroupDialog {
+        id: syslogGroupDialog
+        parent: Overlay.overlay
     }
 }

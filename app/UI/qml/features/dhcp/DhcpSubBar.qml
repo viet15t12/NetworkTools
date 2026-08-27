@@ -10,6 +10,5 @@ import UI
 SubBar {
     id: root
     activeTab: "Pool"
-    tabs: ["Info", "Pool", "Excluded", "Helper"]
-    disabledTabs: ["Info"]
+    tabs: ["Pool", "Excluded", "Helper"]
 }

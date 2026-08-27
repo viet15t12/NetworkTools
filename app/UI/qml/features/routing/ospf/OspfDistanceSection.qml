@@ -50,7 +50,13 @@ Rectangle {
         anchors.margins: Theme.spacing16
         spacing: Theme.spacing12
 
-        SectionTitle { text: "OSPF DISTANCE" }
+        SectionTitle {
+            text: "OSPF DISTANCE"
+            helpText: "External: administrative distance for external OSPF routes.\n\n" +
+                      "Intra-area: distance for routes learned within the local area.\n\n" +
+                      "Inter-area: distance for routes learned from another OSPF area.\n\n" +
+                      "Values are integers from 1 to 255; Cisco's normal OSPF default is 110. Lower values are preferred over routes from other protocols."
+        }
 
         GridLayout {
             Layout.fillWidth: true

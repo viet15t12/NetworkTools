@@ -12,6 +12,16 @@ ProcessCard {
     showArea: false
     processIdLabel: "AS Number"
     processIdPlaceholder: "e.g., 100"
+    helpTitle: "EIGRP process parameters"
+    helpText: "AS Number: EIGRP autonomous-system number; neighbors must use the same value.\n\n" +
+              "Router ID: unique identifier in IPv4 notation. Leave empty to let IOS select it.\n\n" +
+              "Auto Summary: summarizes routes at classful boundaries; normally keep disabled in modern networks.\n\n" +
+              "Passive Default: prevents neighbor formation on all interfaces unless overridden.\n\n" +
+              "BFD All Interfaces: enables fast failure detection where supported.\n\n" +
+              "Stub / Stub Options / Leak Map: limits queries and controls which routes a stub router advertises.\n\n" +
+              "Metric Weights: K1-K5 values, entered as six integers such as 0 1 0 1 0 0.\n\n" +
+              "Active Timer: seconds before an active route is declared stuck-in-active.\n\n" +
+              "Distance Internal/External: administrative distance. Variance enables unequal-cost load balancing; Maximum Paths limits installed paths."
 
     property int processUid: 0
     property var payload: ({})

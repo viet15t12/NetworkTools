@@ -144,6 +144,7 @@ StandardDialog {
 
     Connections {
         target: typeof dbManager !== "undefined" ? dbManager : null
+        ignoreUnknownSignals: true
         function onViewPushPreviewFinished(controller, host, module, ok, message, commands) {
             if (String(controller) === dialog.controllerName
                     && String(module) === dialog.moduleName)

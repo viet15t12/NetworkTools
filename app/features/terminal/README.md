@@ -64,7 +64,7 @@ Managed windows force Alacritty's hold behavior. If the SSH child exits during
 verification, negotiation, or authentication, the window remains visible so
 the user can read the error and close it explicitly.
 
-`Up (Dev)` devices, unknown inventory rows, Telnet, unsafe host/user/port values,
+devices in development mode, unknown inventory rows, Telnet, unsafe host/user/port values,
 a missing companion binary, and an unavailable safe runtime directory all fail
 closed before a process starts. Automated tests never start SSH or contact a
 device.

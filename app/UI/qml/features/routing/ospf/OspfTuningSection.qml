@@ -58,7 +58,13 @@ Rectangle {
         anchors.margins: Theme.spacing16
         spacing: Theme.spacing12
 
-        SectionTitle { text: "OSPF TUNING" }
+        SectionTitle {
+            text: "OSPF TUNING"
+            helpText: "Max paths: maximum equal-cost OSPF paths installed in the routing table.\n\n" +
+                      "Max LSA: safety limit for received LSAs.\n\n" +
+                      "SPF delay/min/max: initial, minimum hold, and maximum hold timers for SPF calculations, in milliseconds.\n\n" +
+                      "LSA delay/min/max: initial, minimum hold, and maximum hold timers for LSA generation, in milliseconds. Leave optional fields empty to keep the device default."
+        }
 
         GridLayout {
             Layout.fillWidth: true

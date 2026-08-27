@@ -115,12 +115,26 @@ Rectangle {
             SplitView.minimumHeight: dhcpExcludedForm.compactLayout ? excludedSplit.height * 0.4 : 0
             SplitView.maximumHeight: dhcpExcludedForm.compactLayout ? excludedSplit.height * 0.4 : Number.POSITIVE_INFINITY
 
-                Text {
-                    text:           "Add Excluded Address"
-                    color:          Theme.textPrimary
-                    font.pixelSize: Theme.fontSizeLarge
-                    font.family:    Theme.fontFamily
-                    font.bold:      true
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Theme.spacing8
+
+                    Text {
+                        Layout.fillWidth: true
+                        text:           "Add Excluded Address"
+                        color:          Theme.textPrimary
+                        font.pixelSize: Theme.fontSizeLarge
+                        font.family:    Theme.fontFamily
+                        font.bold:      true
+                    }
+
+                    ParameterHelpButton {
+                        Layout.preferredWidth: 22
+                        Layout.preferredHeight: 22
+                        helpTitle: "DHCP excluded-address parameters"
+                        helpText: "Start IP: first IPv4 address the local DHCP server must never allocate, commonly a gateway or statically assigned device.\n\n" +
+                                  "End IP: optional last address of a contiguous excluded range. It must be in the same relevant subnet and not lower than Start IP. Leave it empty to exclude only the Start IP."
+                    }
                 }
 
                 Rectangle {

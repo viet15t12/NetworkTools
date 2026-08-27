@@ -19,6 +19,7 @@ class SmartFilterTests(unittest.TestCase):
         )
 
         self.assertEqual(result["host"], "192.0.2.10")
+        self.assertEqual(result["hosts"], ["192.0.2.10"])
         self.assertEqual(result["per_host"], 20)
         self.assertEqual(result["severities"], [3, 4])
         self.assertEqual(result["protocols"], ["udp"])
@@ -35,6 +36,17 @@ class SmartFilterTests(unittest.TestCase):
 
         self.assertEqual(result["from_time"], "2026-08-26T17:30:00.000+00:00")
         self.assertEqual(result["search"], "changed")
+
+    def test_supports_multiple_structured_and_smart_hosts(self) -> None:
+        structured = build_log_filters(
+            {"hosts": ["192.0.2.1", "192.0.2.2"]}, ""
+        )
+        smart = build_log_filters({}, "host:192.0.2.3,192.0.2.4")
+
+        self.assertEqual(structured["hosts"], ["192.0.2.1", "192.0.2.2"])
+        self.assertEqual(structured["host"], "")
+        self.assertEqual(smart["hosts"], ["192.0.2.3", "192.0.2.4"])
+        self.assertEqual(smart["host"], "")
 
     def test_rejects_unknown_keys_and_invalid_ranges(self) -> None:
         with self.assertRaisesRegex(SmartFilterError, "Unknown filter"):

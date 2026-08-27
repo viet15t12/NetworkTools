@@ -26,7 +26,12 @@ Rectangle {
         anchors.margins: Theme.spacing16
         spacing: Theme.spacing12
 
-        SectionTitle { text: "EIGRP PASSIVE INTERFACES" }
+        SectionTitle {
+            text: "EIGRP PASSIVE INTERFACES"
+            helpText: "Interface: exact IOS interface name.\n\n" +
+                      "Passive: suppresses EIGRP hellos and prevents neighbors while still advertising the connected network.\n\n" +
+                      "No passive: explicitly permits neighbors, typically used to override Passive Default."
+        }
 
         GridLayout {
             Layout.fillWidth: true

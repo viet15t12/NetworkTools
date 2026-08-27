@@ -153,6 +153,12 @@ FormLayout {
                     font.bold: true
                     font.family: Theme.fontFamily
                 }
+                ParameterHelpButton {
+                    Layout.preferredWidth: 22
+                    Layout.preferredHeight: 22
+                    helpTitle: "Default route parameters"
+                    helpText: "Gateway/Next hop is the reachable upstream router used for 0.0.0.0/0 traffic. Interface optionally identifies the exit link. Administrative distance controls preference among competing default routes; lower values win, while a higher value can provide a floating backup."
+                }
                 StandardButton { text: "+ Add"; type: "Primary"; onClicked: form.addRoute() }
                 StandardButton {
                     text: form.isSaving ? "Saving..." : "Save Default"

@@ -145,12 +145,23 @@ Rectangle {
             SplitView.minimumHeight: natInterfaceForm.compactLayout ? interfaceSplit.height * 0.4 : 0
             SplitView.maximumHeight: natInterfaceForm.compactLayout ? interfaceSplit.height * 0.4 : Number.POSITIVE_INFINITY
 
-                Text {
-                    text:           natInterfaceForm.isEditing() ? "Edit NAT Interface" : "Assign NAT Interface"
-                    color:          Theme.textPrimary
-                    font.pixelSize: Theme.fontSizeLarge
-                    font.family:    Theme.fontFamily
-                    font.bold:      true
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Theme.spacing8
+                    Text {
+                        Layout.fillWidth: true
+                        text:           natInterfaceForm.isEditing() ? "Edit NAT Interface" : "Assign NAT Interface"
+                        color:          Theme.textPrimary
+                        font.pixelSize: Theme.fontSizeLarge
+                        font.family:    Theme.fontFamily
+                        font.bold:      true
+                    }
+                    ParameterHelpButton {
+                        Layout.preferredWidth: 22
+                        Layout.preferredHeight: 22
+                        helpTitle: "NAT interface parameters"
+                        helpText: "Interface Name selects a routed interface. NAT Role Inside marks the private side where inside-local addresses originate; Outside marks the public/upstream side. A working translation path normally requires at least one interface in each role."
+                    }
                 }
 
                 Text {

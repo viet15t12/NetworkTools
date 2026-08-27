@@ -219,12 +219,23 @@ Rectangle {
             SplitView.minimumHeight: natPatForm.compactLayout ? patSplit.height * 0.4 : 0
             SplitView.maximumHeight: natPatForm.compactLayout ? patSplit.height * 0.4 : Number.POSITIVE_INFINITY
 
-                Text {
-                    text:           natPatForm.isEditing() ? "Edit PAT Rule" : "Add PAT Rule"
-                    color:          Theme.textPrimary
-                    font.pixelSize: Theme.fontSizeLarge
-                    font.family:    Theme.fontFamily
-                    font.bold:      true
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Theme.spacing8
+                    Text {
+                        Layout.fillWidth: true
+                        text:           natPatForm.isEditing() ? "Edit PAT Rule" : "Add PAT Rule"
+                        color:          Theme.textPrimary
+                        font.pixelSize: Theme.fontSizeLarge
+                        font.family:    Theme.fontFamily
+                        font.bold:      true
+                    }
+                    ParameterHelpButton {
+                        Layout.preferredWidth: 22
+                        Layout.preferredHeight: 22
+                        helpTitle: "PAT parameters"
+                        helpText: "NAT ACL Name identifies inside addresses to translate. Source Type chooses whether translations use an Outside Interface address or a named public Pool. Select the corresponding interface or pool.\n\nPAT/overload lets many inside hosts share public addresses by assigning unique transport ports. NAT inside/outside interface roles must also be configured."
+                    }
                 }
 
                 Text {

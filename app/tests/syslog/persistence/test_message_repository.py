@@ -84,6 +84,8 @@ class MessageRepositoryV2Tests(unittest.TestCase):
                 "mnemonic": "up",
             }, limit=20)
             self.assertEqual({row["device_host"] for row in filtered}, {"r1", "r2"})
+            only_r2 = repository.query_messages({"hosts": ["r2", "missing"]}, limit=20)
+            self.assertEqual({row["device_host"] for row in only_r2}, {"r2"})
             self.assertEqual(repository.distinct_hosts(), ["r1", "r2"])
 
 

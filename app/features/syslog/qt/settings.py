@@ -185,6 +185,22 @@ class SyslogSettings(QObject):
     def retentionDays(self, value: int) -> None:
         self._set("retention_days", max(1, int(value)))
 
+    @pyqtProperty(int, notify=changed)
+    def maxMessageBytes(self) -> int:
+        return int(self._get("max_message_bytes", 16 * 1024))
+
+    @maxMessageBytes.setter
+    def maxMessageBytes(self, value: int) -> None:
+        self._set("max_message_bytes", min(1024 * 1024, max(1024, int(value))))
+
+    @pyqtProperty(int, notify=changed)
+    def maxTcpClients(self) -> int:
+        return int(self._get("max_tcp_clients", 64))
+
+    @maxTcpClients.setter
+    def maxTcpClients(self, value: int) -> None:
+        self._set("max_tcp_clients", min(4096, max(1, int(value))))
+
     @pyqtSlot(result="QVariant")
     def validateListener(self) -> dict[str, object]:
         try:
@@ -193,6 +209,10 @@ class SyslogSettings(QObject):
                 raise ValueError("Port must be between 1 and 65535")
             if self.protocol != "both":
                 raise ValueError("The Syslog listener must enable UDP and TCP")
+            if not 1024 <= self.maxMessageBytes <= 1024 * 1024:
+                raise ValueError("Maximum message size must be between 1024 and 1048576 bytes")
+            if not 1 <= self.maxTcpClients <= 4096:
+                raise ValueError("Maximum TCP clients must be between 1 and 4096")
         except ValueError as exc:
             return {"ok": False, "message": str(exc)}
         return {"ok": True, "message": "Syslog listener settings are valid."}
@@ -216,7 +236,14 @@ class SyslogSettings(QObject):
         result = self.validateListener()
         if not result["ok"]:
             raise ValueError(str(result["message"]))
-        return ListenerConfig(self.bindIp, self.advertisedIp, self.port, self.protocol)
+        return ListenerConfig(
+            self.bindIp,
+            self.advertisedIp,
+            self.port,
+            self.protocol,
+            self.maxMessageBytes,
+            self.maxTcpClients,
+        )
 
 
 __all__ = ["SyslogSettings", "_local_ipv4_addresses", "_validate_ip"]

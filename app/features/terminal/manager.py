@@ -172,8 +172,8 @@ class InternalTerminalManager(QObject):
                 "ok": False,
                 "severity": "warning",
                 "message": (
-                    f"{host} is marked Up (Dev), which disables real SSH/Telnet. "
-                    "Use Down (Dev), then Connect before opening CLI."
+                    f"{host} is in development mode, which disables real SSH/Telnet. "
+                    "Switch to Live Connection, then Connect before opening CLI."
                 ),
             }
         method = str(device.get("method") or "").strip().lower()

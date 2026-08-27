@@ -53,6 +53,7 @@ class MessageRepository:
         clauses: list[str] = []
         params: list[Any] = []
         host = str(filters.get("host") or "").strip()
+        hosts = self._valid_hosts(filters.get("hosts", []))
         search = str(filters.get("search") or "").strip()
         from_time = str(filters.get("from_time") or "").strip()
         to_time = str(filters.get("to_time") or "").strip()
@@ -61,7 +62,10 @@ class MessageRepository:
         per_host = max(0, min(int(filters.get("per_host") or 0), 500))
         severities = self._valid_severities(filters.get("severities", []))
         protocols = self._valid_protocols(filters.get("protocols", []))
-        if host:
+        if hosts:
+            clauses.append(f"device_host IN ({','.join('?' for _ in hosts)})")
+            params.extend(hosts)
+        elif host:
             clauses.append("device_host = ?")
             params.append(host)
         if search:
@@ -163,6 +167,20 @@ class MessageRepository:
             protocol = str(value or "").strip().lower()
             if protocol in {"udp", "tcp"} and protocol not in result:
                 result.append(protocol)
+        return result
+
+    @staticmethod
+    def _valid_hosts(values: Any) -> list[str]:
+        if not isinstance(values, (list, tuple)):
+            return []
+        result: list[str] = []
+        seen: set[str] = set()
+        for value in values:
+            host = str(value or "").strip()
+            key = host.casefold()
+            if host and key not in seen:
+                result.append(host)
+                seen.add(key)
         return result
 
     def delete_expired(self, retention_days: int, batch_size: int = 5_000) -> int:

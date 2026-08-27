@@ -408,6 +408,7 @@ Item {
                 SwitchInspectorSection {
                     Layout.fillWidth: true
                     title: "VLAN interface"
+                    helpText: "VLAN ID selects the existing VLAN whose switched virtual interface is created. Valid normal-range IDs are 1-4094; the corresponding VLAN must exist before the SVI can forward traffic."
                     description: "The VLAN must already exist in the local VLAN database."
 
                     SwitchPropertyRow { visible: root.formMode === 0; label: "Interface"; value: "Vlan" + String(root.activeData().vlan_id || "—"); emphasize: true }
@@ -426,6 +427,7 @@ Item {
                 SwitchInspectorSection {
                     Layout.fillWidth: true
                     title: "IPv4 gateway"
+                    helpText: "IP address is the Layer-3 address clients may use as their gateway. Subnet mask accepts dotted decimal or CIDR such as /24. Supply both fields together and avoid address overlap with another routed interface."
                     description: "Address and subnet mask must be supplied together."
 
                     SwitchPropertyRow { visible: root.formMode === 0; label: "IP address"; value: String(root.activeData().ip_address || "Not assigned"); monospaced: true }
@@ -451,6 +453,7 @@ Item {
                 SwitchInspectorSection {
                     Layout.fillWidth: true
                     title: "Administrative state"
+                    helpText: "Administratively enabled emits no shutdown. The SVI becomes operational only when its VLAN exists and at least one associated Layer-2 port is active, depending on platform behavior."
                     showDivider: false
 
                     SwitchPropertyRow {

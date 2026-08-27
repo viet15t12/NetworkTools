@@ -145,12 +145,26 @@ Rectangle {
             SplitView.minimumHeight: dhcpHelperForm.compactLayout ? helperSplit.height * 0.4 : 0
             SplitView.maximumHeight: dhcpHelperForm.compactLayout ? helperSplit.height * 0.4 : Number.POSITIVE_INFINITY
 
-            Text {
-                text: "Add Helper Address"
-                color: Theme.textPrimary
-                font.pixelSize: Theme.fontSizeLarge
-                font.family: Theme.fontFamily
-                font.bold: true
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Theme.spacing8
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Add Helper Address"
+                    color: Theme.textPrimary
+                    font.pixelSize: Theme.fontSizeLarge
+                    font.family: Theme.fontFamily
+                    font.bold: true
+                }
+
+                ParameterHelpButton {
+                    Layout.preferredWidth: 22
+                    Layout.preferredHeight: 22
+                    helpTitle: "DHCP helper parameters"
+                    helpText: "Interface: Layer-3 interface that receives client DHCP broadcasts. It must have an IP address and be reachable by the clients.\n\n" +
+                              "Helper IP: unicast IPv4 address of the remote DHCP server. The router relays supported UDP broadcasts from this interface to that server. Add one entry per server when redundancy is required."
+                }
             }
 
             Rectangle {

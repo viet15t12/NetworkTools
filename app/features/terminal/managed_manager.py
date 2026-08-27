@@ -295,8 +295,8 @@ class ManagedTerminalManager(QObject):
             raise TerminalLaunchError(f"Device {host} was not found.")
         if int(device.get("dev") or 0) == 1:
             raise TerminalLaunchError(
-                f"{host} is marked Up (Dev), which disables real SSH. "
-                "Use Down (Dev) before opening the terminal."
+                f"{host} is in development mode, which disables real SSH. "
+                "Switch to Live Connection before opening the terminal."
             )
         return device
 

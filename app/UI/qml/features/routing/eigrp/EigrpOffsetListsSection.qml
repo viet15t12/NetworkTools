@@ -26,7 +26,13 @@ Rectangle {
         anchors.margins: Theme.spacing16
         spacing: Theme.spacing12
 
-        SectionTitle { text: "EIGRP OFFSET LISTS" }
+        SectionTitle {
+            text: "EIGRP OFFSET LISTS"
+            helpText: "List Name: ACL identifying routes whose metric is adjusted.\n\n" +
+                      "Direction: applies the offset to incoming or outgoing updates.\n\n" +
+                      "Offset: non-negative value added to the EIGRP metric.\n\n" +
+                      "Interface: optional exact interface name; leave empty for all interfaces."
+        }
 
         GridLayout {
             Layout.fillWidth: true

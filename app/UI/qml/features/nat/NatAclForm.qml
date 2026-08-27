@@ -167,12 +167,23 @@ Rectangle {
             SplitView.minimumHeight: natAclForm.compactLayout ? aclSplit.height * 0.4 : 0
             SplitView.maximumHeight: natAclForm.compactLayout ? aclSplit.height * 0.4 : Number.POSITIVE_INFINITY
 
-                Text {
-                    text:           natAclForm.isEditing() ? "Edit NAT ACL" : "Add NAT ACL"
-                    color:          Theme.textPrimary
-                    font.pixelSize: Theme.fontSizeLarge
-                    font.family:    Theme.fontFamily
-                    font.bold:      true
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Theme.spacing8
+                    Text {
+                        Layout.fillWidth: true
+                        text:           natAclForm.isEditing() ? "Edit NAT ACL" : "Add NAT ACL"
+                        color:          Theme.textPrimary
+                        font.pixelSize: Theme.fontSizeLarge
+                        font.family:    Theme.fontFamily
+                        font.bold:      true
+                    }
+                    ParameterHelpButton {
+                        Layout.preferredWidth: 22
+                        Layout.preferredHeight: 22
+                        helpTitle: "NAT ACL parameters"
+                        helpText: "NAT ACL Name selects an existing list or creates a new named list. Action Permit makes matching inside addresses eligible for translation; Deny exempts matching traffic from that NAT rule.\n\nSource Type Network uses address plus wildcard, Host matches one IPv4 address, and Any matches every source. Rule order matters because the first ACL match wins."
+                    }
                 }
 
                 Rectangle {

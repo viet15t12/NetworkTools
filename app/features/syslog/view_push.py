@@ -7,6 +7,7 @@ from typing import Any
 from core.view_push import BaseViewPushController
 
 from .device_config.commands import build_cancel_commands, build_enable_commands
+from .device_config.service import SUPPORTED_DEVICE_OS
 from .device_config.verifier import verify_destination, verify_source_interface
 from .device_config.worker import CiscoSyslogWorker
 from .repository import SyslogRepository
@@ -53,8 +54,10 @@ class SyslogViewPushController(BaseViewPushController):
         if not clean_host:
             return []
         context = self.db._routing_device_context(clean_host)
-        if context["template_folder"] != "cisco_ios":
-            raise ValueError("Syslog View & Push currently supports Cisco IOS/IOS-XE only")
+        if context["template_folder"] not in SUPPORTED_DEVICE_OS:
+            raise ValueError(
+                "Syslog View & Push currently supports Cisco IOS/IOS-XE only"
+            )
         tasks: list[dict[str, Any]] = []
         for row in self._repository().device_configurations(clean_host):
             state = str(row.get("sync_status") or "pending_apply")

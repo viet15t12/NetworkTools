@@ -27,7 +27,14 @@ Rectangle {
         anchors.margins: Theme.spacing16
         spacing: Theme.spacing12
 
-        SectionTitle { text: "OSPF AREAS" }
+        SectionTitle {
+            text: "OSPF AREAS"
+            helpText: "Area ID: decimal or dotted OSPF area identifier.\n\n" +
+                      "Type: normal, stub, or NSSA. All routers in an area must use compatible area types.\n\n" +
+                      "Auth: area authentication mode; interface keys must match between neighbors.\n\n" +
+                      "No summary: blocks inter-area summaries into stub/NSSA areas.\n\n" +
+                      "Area for Range: area whose routes are summarized. Range IP/Mask define the summary; Cost optionally fixes its metric; Advertise controls whether the summary is announced."
+        }
 
         GridLayout {
             Layout.fillWidth: true

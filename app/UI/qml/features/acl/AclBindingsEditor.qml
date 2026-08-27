@@ -80,11 +80,22 @@ Rectangle {
         anchors.margins: 10
         spacing: Theme.spacing8
 
-        Text {
-            text: "Interface Bindings"
-            color: Theme.textPrimary
-            font.bold: true
-            font.family: Theme.fontFamily
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Theme.spacing8
+            Text {
+                Layout.fillWidth: true
+                text: "Interface Bindings"
+                color: Theme.textPrimary
+                font.bold: true
+                font.family: Theme.fontFamily
+            }
+            ParameterHelpButton {
+                Layout.preferredWidth: 22
+                Layout.preferredHeight: 22
+                helpTitle: "ACL interface binding parameters"
+                helpText: "Interface selects where the ACL is applied. Direction In filters packets as they enter the interface; Out filters packets before they leave. Avoid applying the same policy in both directions unless that behavior is intentional."
+            }
         }
 
         RowLayout {

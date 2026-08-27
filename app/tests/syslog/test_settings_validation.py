@@ -31,11 +31,18 @@ class SyslogSettingsValidationTests(unittest.TestCase):
             settings = SyslogSettings(settings_path=path)
             settings.bindIp = "127.0.0.1"
             settings.port = 15514
+            settings.maxMessageBytes = 32768
+            settings.maxTcpClients = 128
 
             stored = json.loads(path.read_text(encoding="utf-8"))
             self.assertEqual(stored["bind_ip"], "127.0.0.1")
             self.assertEqual(stored["port"], 15514)
             self.assertEqual(stored["protocol"], "both")
+            self.assertEqual(stored["max_message_bytes"], 32768)
+            self.assertEqual(stored["max_tcp_clients"], 128)
+            config = settings.listener_config()
+            self.assertEqual(config.max_message_bytes, 32768)
+            self.assertEqual(config.max_tcp_clients, 128)
 
 
 if __name__ == "__main__":

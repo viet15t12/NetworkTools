@@ -24,6 +24,8 @@ Column {
         }
     }
     signal deviceActivated(string host)
+    signal deviceToggleSelectionRequested(string host)
+    signal deviceRangeSelectionRequested(string host)
     signal deviceContextRequested(string host, string status, real sceneX, real sceneY)
     signal groupContextRequested(real sceneX, real sceneY)
 
@@ -110,6 +112,10 @@ Column {
                 displayFormat: deviceSection.displayFormat
 
                 onActivated: host => deviceSection.deviceActivated(host)
+                onToggleSelectionRequested: host =>
+                    deviceSection.deviceToggleSelectionRequested(host)
+                onRangeSelectionRequested: host =>
+                    deviceSection.deviceRangeSelectionRequested(host)
                 onRightClicked: (ip, mx, my) => deviceSection.deviceContextRequested(
                     ip, modelData.status, mx, my
                 )

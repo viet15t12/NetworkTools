@@ -61,14 +61,17 @@ class _NonReentrantRegistry:
 
 
 class _Database:
-    def __init__(self, info_db: Path, device_db: Path) -> None:
+    def __init__(
+        self, info_db: Path, device_db: Path, template_folder: str = "cisco_ios"
+    ) -> None:
         self.info_db_path = info_db
         self.db_path = device_db
+        self.template_folder = template_folder
 
     def _routing_device_context(self, host: str):
         return {
-            "platform": "cisco_ios",
-            "template_folder": "cisco_ios",
+            "platform": self.template_folder,
+            "template_folder": self.template_folder,
             "method": "SSH",
         }
 
@@ -146,6 +149,16 @@ class SyslogViewPushTests(unittest.TestCase):
             self.repository.device_configurations(HOST)[0]["sync_status"],
             "pending_apply",
         )
+
+    def test_preview_accepts_ios_xe_platform_used_by_new_device_workflow(self) -> None:
+        controller = SyslogViewPushController(
+            _Database(self.info_db, self.device_db, "cisco_xe"), self.registry
+        )
+
+        result = controller.preview(HOST, "servers")
+
+        self.assertTrue(result["ok"], result)
+        self.assertIn("logging host", result["commands"])
 
 
 if __name__ == "__main__":

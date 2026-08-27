@@ -137,6 +137,7 @@ SwitchInspectorPane {
     SwitchInspectorSection {
         Layout.fillWidth: true
         title: root.viewMode === "interfaces" ? "Identity and link" : "Target interface"
+        helpText: "Interface identifies the physical switch port. Description documents its purpose. Mode selects access, trunk, or routed operation. Administrative state controls shutdown/no shutdown; operational state reports the observed link."
         description: root.viewMode === "interfaces"
                      ? root.modeOnly
                        ? "Review current link state before converting the port mode."
@@ -230,6 +231,7 @@ SwitchInspectorPane {
         Layout.fillWidth: true
         visible: root.viewMode === "interfaces"
         title: "Port mode"
+        helpText: "Access carries one untagged data VLAN. Trunk carries multiple VLANs using 802.1Q tags. Routed removes Layer-2 switchport behavior and makes the port suitable for Layer-3 addressing."
         description: root.modeOnly
                      ? "Change only between Access and Trunk; advanced settings live in their dedicated tabs."
                      : !root.allowModeChange
@@ -260,6 +262,7 @@ SwitchInspectorPane {
         Layout.fillWidth: true
         visible: root.viewMode === "interfaces" && root.accessPort && !root.modeOnly
         title: "Access configuration"
+        helpText: "Access VLAN is the untagged data VLAN assigned to this port, normally 1-4094. Voice VLAN is an optional separate VLAN advertised to an attached IP phone. Both VLANs should already exist."
         description: "One untagged data VLAN with an optional voice VLAN."
 
         SwitchPropertyRow {
@@ -297,6 +300,7 @@ SwitchInspectorPane {
         Layout.fillWidth: true
         visible: root.viewMode === "interfaces" && root.trunkPort && !root.modeOnly
         title: "Trunk configuration"
+        helpText: "Allowed VLANs limits which VLAN tags cross the trunk; use IOS list/range syntax or all. Native VLAN is sent untagged and must match the peer. Encapsulation is normally dot1q. Pruning limits unnecessary VLAN forwarding."
         description: "Tagged VLAN transport with explicit native VLAN and encapsulation."
 
         SwitchPropertyRow {
@@ -412,6 +416,7 @@ SwitchInspectorPane {
         Layout.fillWidth: true
         visible: root.viewMode === "interfaces" && root.layer2Port && !root.modeOnly
         title: "Loop protection"
+        helpText: "PortFast skips normal STP convergence and should be used only on edge ports. BPDU Guard disables an edge port that receives BPDUs. BPDU Filter suppresses BPDUs and requires caution. Root Guard blocks an unexpected superior root; Loop Guard protects against missing BPDUs on redundant links."
         description: "Edge and guard controls for Layer 2 topology safety."
         showDivider: false
 
@@ -441,6 +446,7 @@ SwitchInspectorPane {
         Layout.fillWidth: true
         visible: root.viewMode === "portSecurity" && root.layer2Port
         title: "MAC admission policy"
+        helpText: "Enable Port Security to restrict learned source MAC addresses. Maximum MAC sets the allowed count. Violation chooses protect, restrict, or shutdown behavior. Sticky saves dynamically learned addresses. Aging type/time controls when secure MAC entries expire."
         description: "Limit learned source addresses and define violation handling."
         showDivider: false
 

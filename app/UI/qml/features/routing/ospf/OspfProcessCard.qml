@@ -12,6 +12,13 @@ ProcessCard {
     showArea: true
     processIdLabel: "Process ID"
     processIdPlaceholder: "e.g., 1"
+    helpTitle: "OSPF process parameters"
+    helpText: "Process ID: local OSPF process number, 1-65535; it does not need to match neighboring routers.\n\n" +
+              "Router ID: unique 32-bit identifier written as an IPv4 address, for example 1.1.1.1. Leave empty to let IOS select it.\n\n" +
+              "Reference BW: reference bandwidth in Mbps used to calculate OSPF cost; use the same value throughout the domain.\n\n" +
+              "Passive Default: suppresses OSPF hellos on every interface unless explicitly enabled.\n\n" +
+              "Default Originate: advertises a default route; Always advertises it even when no default route exists locally.\n\n" +
+              "AuthenticationCFG: enables message-digest authentication for configured areas; matching keys are still required on interfaces."
 
     property int processUid: 0
     property var payload: ({})

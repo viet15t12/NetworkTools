@@ -32,6 +32,10 @@ ColumnLayout {
         Layout.fillWidth: true
         visible: root.protocol === "ospf"
         title: "Common OSPF parameters"
+        helpText: "Reference bandwidth: Mbps baseline used for OSPF cost; keep it identical across the domain.\n\n" +
+                  "Passive default: disables neighbor formation on all interfaces unless overridden.\n\n" +
+                  "Default originate advertises a default route; Originate always does so without requiring a local default.\n\n" +
+                  "AuthenticationCFG enables area message-digest authentication; matching interface keys are required."
         StandardTextField {
             id: refBwField
             Layout.fillWidth: true
@@ -58,6 +62,9 @@ ColumnLayout {
         Layout.fillWidth: true
         visible: root.protocol === "eigrp"
         title: "Common EIGRP parameters"
+        helpText: "Metric weights: K-value tuple, normally 0 1 0 1 0 0; neighbors must use compatible K-values.\n\n" +
+                  "Variance: multiplier used for unequal-cost load balancing. Maximum paths limits installed parallel paths.\n\n" +
+                  "BFD all interfaces enables fast failure detection. Auto summary enables classful summarization. Passive default prevents neighbor formation unless overridden."
         GridLayout {
             Layout.fillWidth: true
             columns: 3

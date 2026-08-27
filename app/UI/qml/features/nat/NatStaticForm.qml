@@ -132,12 +132,23 @@ Rectangle {
             SplitView.minimumHeight: natStaticForm.compactLayout ? staticSplit.height * 0.4 : 0
             SplitView.maximumHeight: natStaticForm.compactLayout ? staticSplit.height * 0.4 : Number.POSITIVE_INFINITY
 
-                Text {
-                    text:           natStaticForm.isEditing() ? "Edit Static NAT" : "Add Static NAT"
-                    color:          Theme.textPrimary
-                    font.pixelSize: Theme.fontSizeLarge
-                    font.family:    Theme.fontFamily
-                    font.bold:      true
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Theme.spacing8
+                    Text {
+                        Layout.fillWidth: true
+                        text:           natStaticForm.isEditing() ? "Edit Static NAT" : "Add Static NAT"
+                        color:          Theme.textPrimary
+                        font.pixelSize: Theme.fontSizeLarge
+                        font.family:    Theme.fontFamily
+                        font.bold:      true
+                    }
+                    ParameterHelpButton {
+                        Layout.preferredWidth: 22
+                        Layout.preferredHeight: 22
+                        helpTitle: "Static NAT parameters"
+                        helpText: "Inside Local IP is the private address seen inside the network. Inside Global IP is its public translated address.\n\nProtocol and local/global ports optionally create a static TCP or UDP port mapping; when used, provide both ports. Ensure NAT inside/outside roles are assigned to the relevant interfaces."
+                    }
                 }
 
                 Text {

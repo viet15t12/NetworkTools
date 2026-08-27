@@ -27,7 +27,12 @@ Rectangle {
         anchors.margins: Theme.spacing16
         spacing: Theme.spacing12
 
-        SectionTitle { text: "OSPF INTERFACE SETTINGS" }
+        SectionTitle {
+            text: "OSPF INTERFACE SETTINGS"
+            helpText: "Process: OSPF process to update.\n\n" +
+                      "Interface: exact IOS interface name.\n\n" +
+                      "Area: area assigned directly to this interface. Direct interface settings take precedence over broad network matching."
+        }
 
         Text {
             Layout.fillWidth: true
@@ -49,7 +54,14 @@ Rectangle {
             StandardTextField { id: areaField; Layout.fillWidth: true; labelText: "Area"; placeholderText: "0" }
         }
 
-        SectionTitle { text: "PATH AND ADJACENCY" }
+        SectionTitle {
+            text: "PATH AND ADJACENCY"
+            helpText: "Cost: OSPF interface metric; lower cost is preferred.\n\n" +
+                      "Priority: DR/BDR election priority, 0-255; 0 makes the router ineligible.\n\n" +
+                      "Hello/Dead: neighbor timers in seconds; values must match on the link.\n\n" +
+                      "Network type: broadcast, non-broadcast, point-to-point, or point-to-multipoint.\n\n" +
+                      "MTU ignore: allows adjacency despite an MTU mismatch. BFD: enables rapid neighbor failure detection."
+        }
         GridLayout {
             Layout.fillWidth: true
             columns: width < 720 ? 2 : 4
@@ -64,7 +76,11 @@ Rectangle {
             StandardCheckBox { id: bfdCheck; text: "BFD"; Layout.alignment: Qt.AlignBottom }
         }
 
-        SectionTitle { text: "AUTHENTICATION" }
+        SectionTitle {
+            text: "AUTHENTICATION"
+            helpText: "Auth: authentication method for OSPF packets on this interface. Both neighbors must use the same method.\n\n" +
+                      "Authentication key: shared secret used by the selected method. Configure the identical key on the peer and protect it as sensitive data."
+        }
         GridLayout {
             Layout.fillWidth: true
             columns: width < 720 ? 1 : 2

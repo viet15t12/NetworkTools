@@ -605,6 +605,9 @@ Rectangle {
                 FormSection {
                     Layout.fillWidth: true
                     title: "Gateway identity"
+                    helpText: "Group number / VRID: protocol group identifier shared by routers providing this virtual gateway. Valid range depends on HSRP, VRRP, or GLBP version.\n\n" +
+                              "Default Gateway IP: virtual IPv4 address used by clients; it must belong to the connected LAN subnet and must not duplicate a physical host address.\n\n" +
+                              "Description: optional operational label for the redundant gateway group."
                     GridLayout {
                         Layout.fillWidth: true
                         columns: width < 700 ? 1 : 2
@@ -638,6 +641,7 @@ Rectangle {
                 FormSection {
                     Layout.fillWidth: true
                     title: "Participating routers"
+                    helpText: "Select the connected routers that share this virtual gateway. Each selected router needs a gateway-facing interface in the same Layer-2 segment and an address in the virtual IP subnet."
 
                     Text {
                         Layout.fillWidth: true
@@ -721,6 +725,8 @@ Rectangle {
                 FormSection {
                     Layout.fillWidth: true
                     title: "Group authentication"
+                    helpText: "Authentication: optional protection for FHRP control messages. All group members must use the same mode and secret.\n\n" +
+                              "Key / Key-chain: enter the shared text key or the name of an existing IOS key-chain according to the selected mode. Treat authentication values as sensitive."
 
                     GridLayout {
                         Layout.fillWidth: true
@@ -786,6 +792,9 @@ Rectangle {
                 FormSection {
                     Layout.fillWidth: true
                     title: "Member policy"
+                    helpText: "Configure each selected router independently. Gateway-facing Interface carries the FHRP group.\n\n" +
+                              "Priority selects the active/master router; higher wins. Preempt allows a higher-priority router to retake the role, with optional minimum/reload delays.\n\n" +
+                              "GLBP Weighting and thresholds control forwarder eligibility. Tracking objects reduce priority or weight when a monitored path fails."
 
                     EmptyState {
                         visible: memberModel.count === 0

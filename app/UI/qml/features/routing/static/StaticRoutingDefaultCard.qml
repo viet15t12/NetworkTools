@@ -31,12 +31,23 @@ Rectangle {
         anchors.margins: 8
         spacing: 8
 
-        Text {
-            text: "Default Route"
-            color: Theme.textPrimary
-            font.pixelSize: Theme.fontSizeNormal
-            font.family: Theme.fontFamily
-            font.bold: true
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Theme.spacing8
+            Text {
+                Layout.fillWidth: true
+                text: "Default Route"
+                color: Theme.textPrimary
+                font.pixelSize: Theme.fontSizeNormal
+                font.family: Theme.fontFamily
+                font.bold: true
+            }
+            ParameterHelpButton {
+                Layout.preferredWidth: 22
+                Layout.preferredHeight: 22
+                helpTitle: "Default route parameters"
+                helpText: "Next hop is the reachable router IP or exit interface used when no more-specific route matches. Ensure recursive reachability to the next hop. Administrative distance optionally controls preference when multiple default routes exist; lower values are preferred."
+            }
         }
 
         RowLayout {

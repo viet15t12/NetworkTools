@@ -314,7 +314,11 @@ class DeviceSlotsMixin:
         """Update development and connection flags together for one device."""
         target_host = (host or "").strip()
         dev_value = 1 if dev else 0
-        action_name = "Up (Dev)" if dev_value else "Down (Dev)"
+        action_name = (
+            "Enable Development Mode"
+            if dev_value
+            else "Switch to Live Connection"
+        )
         if not target_host:
             return {"ok": False, "severity": "warning", "message": f"{action_name} failed: host is empty."}
 
@@ -441,7 +445,7 @@ class DeviceSlotsMixin:
             with self._connect() as conn:
                 rows = conn.execute(
                     """
-                    SELECT host, device_name, connection_status, role, device_type
+                    SELECT host, device_name, connection_status, role, device_type, dev
                     FROM t01_devices
                     ORDER BY host COLLATE NOCASE;
                     """
@@ -460,6 +464,7 @@ class DeviceSlotsMixin:
                         "connectionStatus": status,
                         "role": role,
                         "type": device_type,
+                        "dev": int(row["dev"] or 0),
                     }
                 )
             return _variant_list(out)

@@ -84,6 +84,8 @@ Rectangle {
            itemHover.hovered ? Theme.panelSideBarItemHover    : "transparent"
 
     signal activated(string host)
+    signal toggleSelectionRequested(string host)
+    signal rangeSelectionRequested(string host)
     signal rightClicked(string ip, int mouseX, int mouseY)
 
     // ── Active border bên trái ────────────────────────────────────────────────
@@ -128,7 +130,8 @@ Rectangle {
         anchors.left:           iconContainer.right
         anchors.leftMargin:     10
         anchors.verticalCenter: parent.verticalCenter
-        anchors.right: operationBadge.left
+        anchors.right: deviceItem.selectionMode
+                       ? selectionIndicator.left : operationBadge.left
         anchors.rightMargin: 6
 
         text:           deviceItem.displayText
@@ -136,6 +139,32 @@ Rectangle {
         font.pixelSize: Theme.fontSizeNormal
         font.family:    Theme.fontFamily
         elide:          Text.ElideRight
+    }
+
+    Rectangle {
+        id: selectionIndicator
+        visible: deviceItem.selectionMode
+        anchors.right: operationBadge.left
+        anchors.rightMargin: Theme.spacing4
+        anchors.verticalCenter: parent.verticalCenter
+        width: 18
+        height: 18
+        radius: 4
+        color: deviceItem.isBatchSelected
+               ? Theme.panelSideBarAccentColor : "transparent"
+        border.color: deviceItem.isBatchSelected
+                      ? Theme.panelSideBarAccentColor : Theme.panelSideBarTextSecondary
+        border.width: Theme.borderWidth
+
+        Text {
+            anchors.centerIn: parent
+            text: "✓"
+            visible: deviceItem.isBatchSelected
+            color: Theme.selectionForeground
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSizeSmall
+            font.bold: true
+        }
     }
 
     DeviceOperationBadge {
@@ -152,7 +181,20 @@ Rectangle {
     TapHandler {
         enabled: deviceItem.selectionMode || !deviceItem.blockedByStatus
         acceptedButtons: Qt.LeftButton
+        acceptedModifiers: Qt.NoModifier
         onTapped: deviceItem.activated(deviceItem.deviceIp)
+    }
+
+    TapHandler {
+        acceptedButtons: Qt.LeftButton
+        acceptedModifiers: Qt.ControlModifier
+        onTapped: deviceItem.toggleSelectionRequested(deviceItem.deviceIp)
+    }
+
+    TapHandler {
+        acceptedButtons: Qt.LeftButton
+        acceptedModifiers: Qt.ShiftModifier
+        onTapped: deviceItem.rangeSelectionRequested(deviceItem.deviceIp)
     }
 
     TapHandler {

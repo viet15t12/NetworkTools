@@ -27,7 +27,11 @@ Rectangle {
         anchors.margins: Theme.spacing16
         spacing: Theme.spacing12
 
-        SectionTitle { text: "OSPF PASSIVE INTERFACES" }
+        SectionTitle {
+            text: "OSPF PASSIVE INTERFACES"
+            helpText: "Interface: exact IOS interface name, for example GigabitEthernet0/0.\n\n" +
+                      "Passive: stops OSPF hello packets and neighbor formation on the interface while still advertising its connected network. Clear it to override a passive-default policy."
+        }
 
         GridLayout {
             Layout.fillWidth: true

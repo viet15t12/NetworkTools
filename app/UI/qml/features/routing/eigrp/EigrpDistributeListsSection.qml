@@ -26,7 +26,12 @@ Rectangle {
         anchors.margins: Theme.spacing16
         spacing: Theme.spacing12
 
-        SectionTitle { text: "EIGRP DISTRIBUTE LISTS" }
+        SectionTitle {
+            text: "EIGRP DISTRIBUTE LISTS"
+            helpText: "List Name: existing ACL or prefix-list used to match routes.\n\n" +
+                      "Direction: In filters received routes; Out filters advertised routes.\n\n" +
+                      "Interface: optional exact interface name. Leave empty to apply the filter to the whole EIGRP process."
+        }
 
         GridLayout {
             Layout.fillWidth: true

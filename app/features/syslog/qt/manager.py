@@ -13,6 +13,7 @@ from infrastructure.database.paths import DEVICE_NETWORK_DB, INFO_COLLECTED_DB
 from ..application.retention import run_retention
 from ..application.server_service import SyslogServerService
 from ..export import export_logs_xlsx, file_url_to_path
+from ..group_service import SyslogGroupService
 from ..native import NativeSyslogCollector
 from ..smart_filter import SmartFilterError, build_log_filters
 from .settings import SyslogSettings
@@ -238,6 +239,40 @@ class SyslogManager(QObject):
             )
         except Exception as exc:
             return {"ok": False, "message": str(exc)}
+
+    @pyqtSlot(result="QVariant")
+    def getSyslogGroupOptions(self) -> dict[str, Any]:
+        """Return eligible hosts plus practical defaults from listener settings."""
+        try:
+            result = SyslogGroupService(self.repository).options()
+            result["defaults"] = {
+                "server_ip": self.settings.advertisedIp,
+                "protocol": "udp",
+                "port": self.settings.port,
+                "trap_severity": 5,
+                "timestamps": True,
+                "sequence_numbers": True,
+            }
+            return result
+        except Exception as exc:
+            return {"ok": False, "hosts": [], "defaults": {}, "message": str(exc)}
+
+    @pyqtSlot("QVariant", "QVariant", result="QVariant")
+    def saveSyslogGroup(self, targets: Any, common: Any) -> dict[str, Any]:
+        """Stage one shared Syslog destination for several selected devices."""
+        try:
+            normalized = [_variant_dict(row) for row in _variant_list(targets)]
+            return SyslogGroupService(self.repository).save(
+                normalized, _variant_dict(common)
+            )
+        except Exception as exc:
+            return {
+                "ok": False,
+                "partial": False,
+                "successful": [],
+                "failed": [],
+                "message": str(exc),
+            }
 
     def _device_action(self, host: str, action: str, source_interface: str = "") -> None:
         host = host.strip()

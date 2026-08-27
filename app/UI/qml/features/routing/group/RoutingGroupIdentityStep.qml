@@ -9,6 +9,9 @@ FormSection {
     required property var targetModel
     required property string protocol
     title: "Per-host Process ID and Router ID"
+    helpText: protocol === "ospf"
+              ? "Process ID: local OSPF process number from 1 to 65535; it may differ between routers.\n\nRouter ID: optional unique IPv4-form identifier for each router. Do not reuse a Router ID within the OSPF domain."
+              : "AS Number: EIGRP autonomous-system number. All intended neighbors must use the same AS number.\n\nRouter ID: optional unique IPv4-form identifier for each router."
 
     Repeater {
         model: root.targetModel

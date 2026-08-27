@@ -100,10 +100,29 @@ Rectangle {
 
     onTextFeaturesChanged: {
         if (activeText >= 0 && !isTextFeatureAllowed(activeText)) {
-            activeMain = 0
-            activeText = -1
             userChangedFeature(0, -1)
         }
+    }
+
+    // activeMain/activeText are bound to DeviceTabs by Main.qml. Never assign
+    // to them here: doing so destroys those bindings and leaves the visual
+    // selection stuck on the previous host's feature.
+    function selectMainFeature(index) {
+        if (index < 0 || index >= mainFeatures.length)
+            return false
+        if (mainFeatures[index].id === "cli") {
+            cliOpenRequested()
+            return true
+        }
+        userChangedFeature(index, -1)
+        return true
+    }
+
+    function selectTextFeature(globalIndex) {
+        if (!isTextFeatureAllowed(globalIndex))
+            return false
+        userChangedFeature(-1, globalIndex)
+        return true
     }
 
     Row {
@@ -126,11 +145,9 @@ Rectangle {
                     onClicked: {
                         if (modelData.id === "cli") {
                             mainItemDelegate.triggerFlash()
-                            featureBar.cliOpenRequested()
+                            featureBar.selectMainFeature(index)
                         } else {
-                            featureBar.activeMain = index
-                            featureBar.activeText = -1
-                            featureBar.userChangedFeature(index, -1)
+                            featureBar.selectMainFeature(index)
                         }
                     }
                 }
@@ -160,11 +177,7 @@ Rectangle {
                     height: textFeatureList.height; label: modelData.label
                     selectable: modelData.implemented
                     isActive: featureBar.activeText === modelData.globalIndex
-                    onClicked: {
-                        featureBar.activeText = modelData.globalIndex
-                        featureBar.activeMain = -1
-                        featureBar.userChangedFeature(-1, modelData.globalIndex)
-                    }
+                    onClicked: featureBar.selectTextFeature(modelData.globalIndex)
                 }
                 ScrollBar.horizontal: ScrollBar { policy: ScrollBar.AlwaysOff }
             }
@@ -209,9 +222,7 @@ Rectangle {
         anchors.right: parent.right; anchors.top: parent.bottom
 
         onFeatureSelected: function(globalIndex) {
-            featureBar.activeText = globalIndex
-            featureBar.activeMain = -1
-            featureBar.userChangedFeature(-1, globalIndex)
+            featureBar.selectTextFeature(globalIndex)
         }
     }
 

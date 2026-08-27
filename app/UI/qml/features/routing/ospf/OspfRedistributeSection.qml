@@ -27,7 +27,15 @@ Rectangle {
         anchors.margins: Theme.spacing16
         spacing: Theme.spacing12
 
-        SectionTitle { text: "OSPF REDISTRIBUTE" }
+        SectionTitle {
+            text: "OSPF REDISTRIBUTE"
+            helpText: "Protocol: source routing protocol imported into OSPF.\n\n" +
+                      "Process ID: source process/AS when the selected protocol requires one.\n\n" +
+                      "Metric: seed OSPF cost for redistributed routes.\n\n" +
+                      "Metric type: E1 adds internal path cost; E2 keeps the external metric dominant.\n\n" +
+                      "Route map: optional policy controlling which routes and attributes are imported.\n\n" +
+                      "Subnets: includes subnetted routes, not only classful networks."
+        }
 
         GridLayout {
             Layout.fillWidth: true

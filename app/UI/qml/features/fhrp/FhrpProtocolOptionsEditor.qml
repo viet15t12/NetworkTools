@@ -19,6 +19,11 @@ FormSection {
     signal optionChanged(string field, var value)
 
     title: root.protocol.toUpperCase() + " protocol options"
+    helpText: root.protocol === "hsrp"
+              ? "HSRP version: version 1 or 2; all members in the group must be compatible.\n\nHello/Hold timers: advertisement interval and failure timeout in milliseconds; Hold must be greater than Hello."
+              : root.protocol === "vrrp"
+                ? "VRRP version: version 2 or 3; all members must use a compatible version.\n\nAdvertisement interval: time in milliseconds between VRRP announcements."
+                : "Hello/Hold timers control GLBP peer discovery in milliseconds.\n\nLoad balancing selects how clients are distributed among active virtual forwarders."
 
     GridLayout {
         Layout.fillWidth: true

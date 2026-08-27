@@ -42,6 +42,13 @@ Rectangle {
                 Layout.fillWidth: true
             }
 
+            ParameterHelpButton {
+                Layout.preferredWidth: 22
+                Layout.preferredHeight: 22
+                helpTitle: "Static route parameters"
+                helpText: "Network and Mask identify the destination prefix; masks accept dotted decimal or supported prefix notation. Next hop is a reachable router IP or exit interface. AD is administrative distance, normally 1 for a static route; lower values are preferred and values above the dynamic protocol can create a floating backup route."
+            }
+
             // ── Nút Add ──
             StandardButton {
                 text: "+ Add"

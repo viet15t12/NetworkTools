@@ -3733,6 +3733,7 @@ class QmlSmokeTests(unittest.TestCase):
         )
         syslog_config = content.findChild(QObject, "loadedSyslogDeviceConfigPage")
         self.assertEqual(syslog_config.property("host"), "192.0.2.10")
+        self.assertIsNotNone(syslog_config.findChild(QObject, "syslogGroupButton"))
         self.assertIsNotNone(syslog_config.findChild(QObject, "syslogViewPushButton"))
         self.assertIsNotNone(syslog_config.findChild(QObject, "syslogCrudActions"))
 
@@ -4170,6 +4171,40 @@ class QmlSmokeTests(unittest.TestCase):
         self.app.processEvents()
         self.assertEqual(tabs.property("tabCount"), 2)
         self.assertEqual(tabs.property("activeUid"), "192.0.2.2")
+        self.assertEqual(self.warnings, [])
+
+    def test_each_device_tab_keeps_feature_bar_and_content_state_in_sync(self) -> None:
+        harness = self._create("tests/qml/DeviceFeatureStateHarness.qml")
+        self.assertTrue(QTest.qWaitForWindowExposed(harness, 1000))
+
+        QMetaObject.invokeMethod(harness, "openFirstHost")
+        self.app.processEvents()
+        self.assertEqual(harness.property("activeHost"), "192.0.2.1")
+        self.assertEqual(harness.property("selectedMainFeature"), 0)
+        self.assertEqual(harness.property("selectedTextFeature"), -1)
+
+        QMetaObject.invokeMethod(harness, "selectNat")
+        self.app.processEvents()
+        self.assertEqual(harness.property("selectedMainFeature"), -1)
+        self.assertEqual(harness.property("selectedTextFeature"), 5)
+        self.assertEqual(harness.property("contentMainFeature"), -1)
+        self.assertEqual(harness.property("contentTextFeature"), 5)
+
+        QMetaObject.invokeMethod(harness, "openSecondHost")
+        self.app.processEvents()
+        self.assertEqual(harness.property("activeHost"), "192.0.2.2")
+        self.assertEqual(harness.property("selectedMainFeature"), 0)
+        self.assertEqual(harness.property("selectedTextFeature"), -1)
+        self.assertEqual(harness.property("contentMainFeature"), 0)
+        self.assertEqual(harness.property("contentTextFeature"), -1)
+
+        QMetaObject.invokeMethod(harness, "selectFirstHost")
+        self.app.processEvents()
+        self.assertEqual(harness.property("activeHost"), "192.0.2.1")
+        self.assertEqual(harness.property("selectedMainFeature"), -1)
+        self.assertEqual(harness.property("selectedTextFeature"), 5)
+        self.assertEqual(harness.property("contentMainFeature"), -1)
+        self.assertEqual(harness.property("contentTextFeature"), 5)
         self.assertEqual(self.warnings, [])
 
     def test_open_editors_tracks_selects_and_closes_device_tabs(self) -> None:

@@ -17,6 +17,8 @@ Item {
     property bool   showAd: false
     property string processIdLabel: "Process ID"
     property string processIdPlaceholder: "e.g., 1"
+    property string helpTitle: "Routing process parameters"
+    property string helpText: ""
     property string activeSection: "Process"
     property bool showSectionTabs: true
 
@@ -67,6 +69,14 @@ Item {
                     font.pixelSize: Theme.fontSizeNormal
                     font.family:    Theme.fontFamily
                     font.bold:      true
+                }
+
+                ParameterHelpButton {
+                    Layout.preferredWidth: 22
+                    Layout.preferredHeight: 22
+                    visible: processCard.helpText.trim() !== ""
+                    helpTitle: processCard.helpTitle
+                    helpText: processCard.helpText
                 }
 
                 Item { Layout.fillWidth: true }

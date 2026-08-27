@@ -8,6 +8,5 @@ SubBar {
     activeTab: "Interfaces"
     // Cisco workflow: mark interfaces and define the source ACL before
     // creating translation rules. Route-map remains the optional final step.
-    tabs: ["Interfaces", "ACL", "Static", "Dynamic", "PAT", "Route Map", "Info"]
-    disabledTabs: ["Info"]
+    tabs: ["Interfaces", "ACL", "Static", "Dynamic", "PAT", "Route Map"]
 }

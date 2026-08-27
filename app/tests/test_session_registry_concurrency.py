@@ -151,7 +151,7 @@ class SessionRegistryConcurrencyTests(unittest.TestCase):
 
         self.assertFalse(result["ok"])
         self.assertEqual(result["severity"], "warning")
-        self.assertIn("Down (Dev)", result["message"])
+        self.assertIn("Switch to Live Connection", result["message"])
         self.assertFalse(factory_called)
         self.assertFalse(operation_called)
 

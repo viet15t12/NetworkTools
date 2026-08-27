@@ -143,12 +143,23 @@ Rectangle {
             SplitView.minimumHeight: natDynamicForm.compactLayout ? dynamicSplit.height * 0.4 : 0
             SplitView.maximumHeight: natDynamicForm.compactLayout ? dynamicSplit.height * 0.4 : Number.POSITIVE_INFINITY
 
-                Text {
-                    text:           natDynamicForm.isEditing() ? "Edit Dynamic NAT Pool" : "Add Dynamic NAT Pool"
-                    color:          Theme.textPrimary
-                    font.pixelSize: Theme.fontSizeLarge
-                    font.family:    Theme.fontFamily
-                    font.bold:      true
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Theme.spacing8
+                    Text {
+                        Layout.fillWidth: true
+                        text:           natDynamicForm.isEditing() ? "Edit Dynamic NAT Pool" : "Add Dynamic NAT Pool"
+                        color:          Theme.textPrimary
+                        font.pixelSize: Theme.fontSizeLarge
+                        font.family:    Theme.fontFamily
+                        font.bold:      true
+                    }
+                    ParameterHelpButton {
+                        Layout.preferredWidth: 22
+                        Layout.preferredHeight: 22
+                        helpTitle: "Dynamic NAT pool parameters"
+                        helpText: "Pool Name uniquely identifies the public address pool. Start/End IP define the inclusive translated-address range. Netmask or prefix describes that public subnet.\n\nNAT ACL Name selects the inside local addresses allowed to use the pool. Dynamic NAT assigns one public IP per active translation and therefore requires enough pool capacity."
+                    }
                 }
 
                 Text {

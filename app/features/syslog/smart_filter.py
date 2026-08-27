@@ -52,6 +52,19 @@ def _as_list(value: Any) -> list[Any]:
     return [value]
 
 
+def _parse_hosts(values: Any) -> list[str]:
+    result: list[str] = []
+    seen: set[str] = set()
+    for raw in _as_list(values):
+        for item in str(raw or "").split(","):
+            host = item.strip()
+            key = host.casefold()
+            if host and key not in seen:
+                result.append(host)
+                seen.add(key)
+    return result
+
+
 def _parse_time(value: Any, field: str, *, end_of_day: bool = False) -> str:
     text_value = str(value or "").strip()
     if not text_value:
@@ -129,8 +142,13 @@ def build_log_filters(
     """
 
     base = dict(base_filters or {})
+    base_host = str(base.get("host") or "").strip()
+    base_hosts = _parse_hosts(base.get("hosts", []))
+    if base_host and not base_hosts:
+        base_hosts = [base_host]
     filters: dict[str, Any] = {
-        "host": str(base.get("host") or "").strip(),
+        "host": base_hosts[0] if len(base_hosts) == 1 else "",
+        "hosts": base_hosts,
         "search": str(base.get("search") or "").strip(),
         "severities": _parse_severities(base.get("severities", [])),
         "protocols": _parse_protocols(base.get("protocols", [])),
@@ -170,7 +188,9 @@ def build_log_filters(
 
         target = _KEY_ALIASES[key]
         if target == "host":
-            filters["host"] = value.strip()
+            hosts = _parse_hosts(value)
+            filters["hosts"] = hosts
+            filters["host"] = hosts[0] if len(hosts) == 1 else ""
         elif target == "from_time":
             filters["from_time"] = _parse_time(value, "from")
         elif target == "to_time":

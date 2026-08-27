@@ -17,7 +17,7 @@ StandardDialog {
 
         Text {
             Layout.fillWidth: true
-            text: "Type plain words to search message, mnemonic, and facility. Add any of the keys below; smart keys override the matching dropdown or time field."
+            text: "Click the Smart Filter field to open the visual builder. It generates the key:value expression below; smart keys override the matching toolbar filter."
             color: Theme.textSecondary
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeNormal
@@ -32,7 +32,7 @@ StandardDialog {
 
             Repeater {
                 model: [
-                    { key: "host:<host>", detail: "Only one device host" },
+                    { key: "host:<host[,host]>", detail: "One or more hosts, separated by commas" },
                     { key: "from:<time>", detail: "Received at or after ISO time" },
                     { key: "to:<time>", detail: "Received at or before ISO time" },
                     { key: "since:<duration>", detail: "Recent window: 30m, 2h, 7d, 1w" },
@@ -85,7 +85,7 @@ StandardDialog {
         }
         Text {
             Layout.fillWidth: true
-            text: "host:192.168.122.101 last:20\nfrom:2026-08-26T18:00 to:2026-08-26T19:00\nseverity:error protocol:udp\nfacility:LINK mnemonic:UPDOWN\nsince:30m \"Loopback99 changed state\""
+            text: "host:192.168.122.101,192.168.122.102 last:20\nfrom:2026-08-26T18:00 to:2026-08-26T19:00\nseverity:error,warning protocol:udp\nfacility:LINK mnemonic:UPDOWN\nsince:30m text:\"Loopback99 changed state\""
             color: Theme.textSecondary
             font.family: Theme.monoFontFamily
             font.pixelSize: Theme.fontSizeSmall

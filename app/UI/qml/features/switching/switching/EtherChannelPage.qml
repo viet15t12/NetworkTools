@@ -451,6 +451,7 @@ Item {
                 SwitchInspectorSection {
                     Layout.fillWidth: true
                     title: "Channel identity"
+                    helpText: "Port-channel number uniquely identifies the logical bundle on this switch. Description is an optional operational note. Use a number supported by the target IOS platform."
                     description: "The Port-channel number must be unique on this switch."
 
                     SwitchPropertyRow { visible: root.formMode === 0; label: "Interface"; value: "Port-channel" + String(root.activeData().po_number || "—"); emphasize: true }
@@ -480,6 +481,7 @@ Item {
                 SwitchInspectorSection {
                     Layout.fillWidth: true
                     title: "Negotiation"
+                    helpText: "LACP uses active/passive, PAgP uses desirable/auto, and Static uses on. At least one side must actively negotiate for LACP or PAgP. Protocol and compatible mode must match the peer design."
                     description: "Protocol and mode are constrained to valid Cisco IOS pairs."
 
                     SwitchPropertyRow { visible: root.formMode === 0; label: "Protocol"; value: String(root.activeData().protocol || "lacp").toUpperCase() }
@@ -509,6 +511,7 @@ Item {
                 SwitchInspectorSection {
                     Layout.fillWidth: true
                     title: "Member interfaces"
+                    helpText: "Enter comma-separated physical interface names. Members must have compatible speed, duplex, VLAN mode, and trunk/access settings, and an interface must not belong to another channel."
                     description: "Enter physical interfaces separated by commas."
                     showDivider: false
 

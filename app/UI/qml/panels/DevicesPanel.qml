@@ -173,11 +173,73 @@ Item {
         setHostSelected(host, selectedHosts[host] !== true)
     }
 
+    function handleToggleHostSelection(host) {
+        const target = String(host || "")
+        if (target === "") return
+        multiSelectMode = true
+        toggleHostSelection(target)
+        if (selectedHostList.length === 0)
+            clearSelection()
+    }
+
     function visibleHosts() {
         return connectedSection.devices.concat(
             waitingSection.devices,
             disconnectedSection.devices
         ).map(device => String(device.ip || ""))
+    }
+
+    function selectAllVisibleHosts() {
+        const next = ({})
+        const hosts = visibleHosts()
+        for (let i = 0; i < hosts.length; ++i)
+            next[hosts[i]] = true
+        selectedHosts = next
+        multiSelectMode = hosts.length > 0
+        if (hosts.length > 0)
+            anchorHost = hosts[0]
+        deviceSelectionChanged(selectedHostList)
+    }
+
+    function selectRangeTo(host) {
+        const target = String(host || "")
+        const hosts = visibleHosts()
+        const targetIndex = hosts.indexOf(target)
+        if (targetIndex < 0)
+            return
+        let anchorIndex = hosts.indexOf(anchorHost)
+        if (anchorIndex < 0)
+            anchorIndex = targetIndex
+        const first = Math.min(anchorIndex, targetIndex)
+        const last = Math.max(anchorIndex, targetIndex)
+        const next = ({})
+        for (let i = first; i <= last; ++i)
+            next[hosts[i]] = true
+        selectedHosts = next
+        multiSelectMode = true
+        deviceSelectionChanged(selectedHostList)
+    }
+
+    function hostStatusMap() {
+        const statuses = ({})
+        for (let i = 0; i < allDevices.length; ++i)
+            statuses[String(allDevices[i].ip || "")] = String(allDevices[i].status || "")
+        return statuses
+    }
+
+    function eligibleHosts(operation, hosts) {
+        const requiredStatus = operation === "connect" ? "waiting"
+                             : operation === "running-config" ? "connected"
+                             : operation === "disconnect" ? "connected" : ""
+        const targets = []
+        for (let i = 0; i < (hosts || []).length; ++i) {
+            const host = String(hosts[i] || "")
+            const device = deviceByHost(host)
+            if (host !== "" && device
+                    && (requiredStatus === "" || device.status === requiredStatus))
+                targets.push(host)
+        }
+        return targets
     }
 
     function startMultipleSelection(host) {
@@ -231,9 +293,17 @@ Item {
 
     function handleDeviceRightClicked(ip, status, mx, my) {
         contextTargetHost = String(ip || "")
+        // Desktop selection convention: right-click preserves a selected
+        // batch, but an unselected row becomes an independent context target.
+        if (multiSelectMode && selectedHosts[contextTargetHost] !== true)
+            clearSelection()
         const batchHosts = multiSelectMode && selectedHostList.length > 0
                          ? selectedHostList : [contextTargetHost]
-        deviceContextMenu.openForHost(contextTargetHost, status, batchHosts, mx, my)
+        const contextDevice = deviceByHost(contextTargetHost)
+        deviceContextMenu.targetIsDevelopment = Boolean(
+            contextDevice && Number(contextDevice.dev || 0) === 1)
+        deviceContextMenu.openForHost(
+            contextTargetHost, status, batchHosts, hostStatusMap(), mx, my)
     }
 
     function handlePingDevice(ip) {
@@ -243,14 +313,14 @@ Item {
 
     function handleUpDevDevice(ip) {
         const result = dbManager.setDeviceDevState(ip, 1, StatusValues.connected)
-        notifyOperationResult(result, "Up (Dev) finished for " + ip + ".")
+        notifyOperationResult(result, "Development mode enabled for " + ip + ".")
         if (result && result.ok)
             devicesPanel.reloadDevices()
     }
 
     function handleDownDevDevice(ip) {
         const result = dbManager.setDeviceDevState(ip, 0, StatusValues.waiting)
-        notifyOperationResult(result, "Down (Dev) finished for " + ip + ".")
+        notifyOperationResult(result, "Switched " + ip + " to live connection mode.")
         if (result && result.ok)
             devicesPanel.reloadDevices()
     }
@@ -349,8 +419,19 @@ Item {
     }
 
     function handleBatchOperation(operation, hosts) {
-        const targets = (hosts || []).map(host => String(host || "")).filter(host => host !== "")
-        if (targets.length === 0 || typeof cli === "undefined") return
+        const requested = (hosts || []).map(host => String(host || ""))
+                .filter(host => host !== "")
+        const targets = eligibleHosts(operation, requested)
+        if (targets.length === 0 || typeof cli === "undefined") {
+            showDeviceShortcutMessage(
+                "No selected host is eligible for " + operation + ".", "warning")
+            return
+        }
+        if (targets.length < requested.length) {
+            showDeviceShortcutMessage(
+                "Starting " + operation + " for " + targets.length + " eligible host(s); "
+                + (requested.length - targets.length) + " skipped by status.", "info")
+        }
         let batchId = ""
         if (operation === "connect" && cli.connectHostsAsync)
             batchId = cli.connectHostsAsync(targets)
@@ -405,14 +486,19 @@ Item {
     }
 
     function handleShortcutDownDev() {
-        const dev = requireShortcutDevice("Down (Dev)")
-        if (requireShortcutStatus(dev, "Down (Dev)", "connected"))
-            devicesPanel.handleDownDevDevice(dev.ip)
+        const dev = requireShortcutDevice("Switch to Live Connection")
+        if (!requireShortcutStatus(dev, "Switch to Live Connection", "connected"))
+            return
+        if (Number(dev.dev || 0) !== 1) {
+            showDeviceShortcutMessage(dev.ip + " already uses a live connection.", "info")
+            return
+        }
+        devicesPanel.handleDownDevDevice(dev.ip)
     }
 
     function handleShortcutUpDev() {
-        const dev = requireShortcutDevice("Up (Dev)")
-        if (requireShortcutStatus(dev, "Up (Dev)", "waiting"))
+        const dev = requireShortcutDevice("Enable Development Mode")
+        if (requireShortcutStatus(dev, "Enable Development Mode", "waiting"))
             devicesPanel.handleUpDevDevice(dev.ip)
     }
 
@@ -442,7 +528,7 @@ Item {
 
     function handleDeviceActivated(host) {
         if (multiSelectMode) {
-            toggleHostSelection(host)
+            handleToggleHostSelection(host)
             return
         }
         activateDevice(host)
@@ -504,6 +590,16 @@ Item {
             onTextChanged: searchDebounceTimer.restart()
         }
 
+        DeviceBatchActionBar {
+            objectName: "deviceBatchActionBar"
+            Layout.fillWidth: true
+            visible: devicesPanel.multiSelectMode
+            selectedCount: devicesPanel.selectedHostList.length
+            visibleCount: devicesPanel.visibleHosts().length
+            onSelectAllRequested: devicesPanel.selectAllVisibleHosts()
+            onClearRequested: devicesPanel.clearSelection()
+        }
+
         ScrollView {
             id: deviceScrollView
             objectName: "deviceGroupScrollView"
@@ -527,6 +623,8 @@ Item {
                     selectionMode: devicesPanel.multiSelectMode
                     hostOperations: devicesPanel.hostOperations; displayFormat: devicesPanel.displayFormat
                     onDeviceActivated: host => devicesPanel.handleDeviceActivated(host)
+                    onDeviceToggleSelectionRequested: host => devicesPanel.handleToggleHostSelection(host)
+                    onDeviceRangeSelectionRequested: host => devicesPanel.selectRangeTo(host)
                     onDeviceContextRequested: (host, status, mx, my) => devicesPanel.handleDeviceRightClicked(host, status, mx, my)
                     onGroupContextRequested: (sceneX, sceneY) => devicesPanel.openDeviceGroupContext(sceneX, sceneY)
                 }
@@ -536,6 +634,8 @@ Item {
                     selectionMode: devicesPanel.multiSelectMode
                     hostOperations: devicesPanel.hostOperations; displayFormat: devicesPanel.displayFormat
                     onDeviceActivated: host => devicesPanel.handleDeviceActivated(host)
+                    onDeviceToggleSelectionRequested: host => devicesPanel.handleToggleHostSelection(host)
+                    onDeviceRangeSelectionRequested: host => devicesPanel.selectRangeTo(host)
                     onDeviceContextRequested: (host, status, mx, my) => devicesPanel.handleDeviceRightClicked(host, status, mx, my)
                     onGroupContextRequested: (sceneX, sceneY) => devicesPanel.openDeviceGroupContext(sceneX, sceneY)
                 }
@@ -545,6 +645,8 @@ Item {
                     selectionMode: devicesPanel.multiSelectMode
                     hostOperations: devicesPanel.hostOperations; displayFormat: devicesPanel.displayFormat
                     onDeviceActivated: host => devicesPanel.handleDeviceActivated(host)
+                    onDeviceToggleSelectionRequested: host => devicesPanel.handleToggleHostSelection(host)
+                    onDeviceRangeSelectionRequested: host => devicesPanel.selectRangeTo(host)
                     onDeviceContextRequested: (host, status, mx, my) => devicesPanel.handleDeviceRightClicked(host, status, mx, my)
                     onGroupContextRequested: (sceneX, sceneY) => devicesPanel.openDeviceGroupContext(sceneX, sceneY)
                 }
@@ -584,6 +686,7 @@ Item {
         onConnectBatchRequested: hosts => devicesPanel.handleBatchOperation("connect", hosts)
         onRunningConfigBatchRequested: hosts => devicesPanel.handleBatchOperation("running-config", hosts)
         onDisconnectBatchRequested: hosts => devicesPanel.handleBatchOperation("disconnect", hosts)
+        onSelectAllVisibleRequested: devicesPanel.selectAllVisibleHosts()
         onClearSelectionRequested: devicesPanel.clearSelection()
         onStartMultipleSelectionRequested: host => devicesPanel.startMultipleSelection(host)
         onReconnectRequested: (ip) => devicesPanel.handleReconnectDevice(ip)
@@ -777,13 +880,7 @@ Item {
     Shortcut { sequence: "Ctrl+Shift+C"; enabled: devicesPanel.deviceShortcutEnabled; onActivated: devicesPanel.handleBatchOperation("connect", devicesPanel.selectedHostList) }
     Shortcut { sequence: "Ctrl+Shift+R"; enabled: devicesPanel.deviceShortcutEnabled; onActivated: devicesPanel.handleBatchOperation("running-config", devicesPanel.selectedHostList) }
     Shortcut { sequence: "Ctrl+Shift+D"; enabled: devicesPanel.deviceShortcutEnabled; onActivated: devicesPanel.handleBatchOperation("disconnect", devicesPanel.selectedHostList) }
-    Shortcut { sequence: StandardKey.SelectAll; enabled: devicesPanel.deviceShortcutEnabled && devicesPanel.multiSelectMode; onActivated: {
-        const next = ({})
-        const hosts = devicesPanel.visibleHosts()
-        for (let i = 0; i < hosts.length; i++) next[hosts[i]] = true
-        devicesPanel.selectedHosts = next
-        devicesPanel.deviceSelectionChanged(devicesPanel.selectedHostList)
-    } }
+    Shortcut { sequence: StandardKey.SelectAll; enabled: devicesPanel.deviceShortcutEnabled && devicesPanel.multiSelectMode; onActivated: devicesPanel.selectAllVisibleHosts() }
     Shortcut { sequence: "Escape"; enabled: devicesPanel.deviceShortcutEnabled; onActivated: devicesPanel.clearSelection() }
 
     Loader {

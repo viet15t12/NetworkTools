@@ -10,6 +10,8 @@ Rectangle {
 
     property string selectedHost: ""
     property string chosenHost: ""
+    property var selectedHosts: []
+    property var selectedSeverities: []
     property var hostOptions: []
     property int displayedCount: 0
     property string validationMessage: ""
@@ -19,8 +21,8 @@ Rectangle {
     readonly property bool wideLayout: width >= 1180
     readonly property bool twoColumnLayout: !wideLayout && width >= 560
     readonly property var hostValues: {
-        const values = [""]
-        const seen = ({"": true})
+        const values = []
+        const seen = ({})
         const selected = String(root.selectedHost || "").trim()
         if (selected !== "") {
             values.push(selected)
@@ -36,12 +38,22 @@ Rectangle {
         }
         return values
     }
-    readonly property var hostLabels: {
-        const labels = ["All connected hosts"]
-        for (let i = 1; i < root.hostValues.length; ++i)
-            labels.push(root.hostValues[i])
-        return labels
+    readonly property var hostFilterOptions: {
+        const options = []
+        for (let i = 0; i < root.hostValues.length; ++i)
+            options.push({label: root.hostValues[i], value: root.hostValues[i]})
+        return options
     }
+    readonly property var severityFilterOptions: [
+        {label: "0 · Emergency", value: 0},
+        {label: "1 · Alert", value: 1},
+        {label: "2 · Critical", value: 2},
+        {label: "3 · Error", value: 3},
+        {label: "4 · Warning", value: 4},
+        {label: "5 · Notice", value: 5},
+        {label: "6 · Informational", value: 6},
+        {label: "7 · Debug", value: 7}
+    ]
 
     signal filtersChanged(var filters)
     signal resetHostRequested()
@@ -54,15 +66,17 @@ Rectangle {
     radius: Theme.radiusSmall
 
     function currentFilters(hostOverride) {
-        const severity = severityBox.currentIndex > 0
-                       ? [severityBox.currentIndex - 1]
-                       : []
         const protocols = protocolBox.currentIndex === 1 ? ["udp"]
                         : protocolBox.currentIndex === 2 ? ["tcp"] : []
+        const hosts = hostOverride === undefined
+                    ? root.selectedHosts.slice()
+                    : (String(hostOverride || "").trim() === ""
+                       ? [] : [String(hostOverride).trim()])
         return {
-            "host": hostOverride === undefined ? root.chosenHost : hostOverride,
+            "host": hosts.length === 1 ? hosts[0] : "",
+            "hosts": hosts,
             "search": "",
-            "severities": severity,
+            "severities": root.selectedSeverities.slice(),
             "protocols": protocols,
             "from_time": fromField.text.trim(),
             "to_time": toField.text.trim(),
@@ -96,7 +110,8 @@ Rectangle {
         root.resetting = true
         debounce.stop()
         smartSearch.clear()
-        severityBox.currentIndex = 0
+        root.selectedSeverities = []
+        root.selectedHosts = []
         protocolBox.currentIndex = 0
         fromField.clear()
         toField.clear()
@@ -111,9 +126,13 @@ Rectangle {
 
     onSelectedHostChanged: {
         root.chosenHost = String(root.selectedHost || "")
+        root.selectedHosts = root.chosenHost === "" ? [] : [root.chosenHost]
     }
 
-    Component.onCompleted: root.chosenHost = String(root.selectedHost || "")
+    Component.onCompleted: {
+        root.chosenHost = String(root.selectedHost || "")
+        root.selectedHosts = root.chosenHost === "" ? [] : [root.chosenHost]
+    }
 
     Timer {
         id: debounce
@@ -131,50 +150,75 @@ Rectangle {
         columnSpacing: Theme.spacing8
         rowSpacing: Theme.spacing8
 
-        StandardTextField {
-            id: smartSearch
-            objectName: "syslogMessageSearch"
+        Item {
             Layout.row: 0
             Layout.column: 0
             Layout.columnSpan: root.wideLayout || root.twoColumnLayout ? 2 : 1
             Layout.fillWidth: true
             Layout.minimumWidth: 0
-            placeholderText: "Smart filter… e.g. host:192.0.2.10 last:20 error"
-            onTextEdited: debounce.restart()
-            onAccepted: root.emitFilters()
+            implicitHeight: smartSearch.implicitHeight
+
+            StandardTextField {
+                id: smartSearch
+                objectName: "syslogMessageSearch"
+                anchors.fill: parent
+                readOnly: true
+                rightPadding: 38
+                placeholderText: "Click to build a Smart Filter…"
+            }
+            ThemedIcon {
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.spacing12
+                anchors.verticalCenter: parent.verticalCenter
+                z: 11
+                iconSource: AppAssets.actionFilter
+                iconSize: Theme.iconSizeSmall
+                iconColor: Theme.accentColor
+            }
+            MouseArea {
+                anchors.fill: parent
+                z: 12
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: smartFilterBuilder.openFor(smartSearch.text)
+            }
         }
 
-        StandardComboBox {
+        SyslogMultiSelectFilter {
             id: hostBox
-            // Keep the historical object name for UI automation while the
-            // former read-only chip is now an interactive host selector.
             objectName: "syslogHostFilterChip"
             Layout.row: root.wideLayout ? 0 : 1
             Layout.column: root.wideLayout ? 2 : 0
             Layout.fillWidth: !root.wideLayout
             Layout.preferredWidth: root.wideLayout ? 190 : Theme.inputMinimumWidth
-            model: root.hostLabels
-            valueModel: root.hostValues
-            currentIndex: Math.max(0, root.hostValues.indexOf(root.chosenHost))
-            onActivated: function() {
-                root.chosenHost = currentValue
+            options: root.hostFilterOptions
+            selectedValues: root.selectedHosts
+            allText: "All connected hosts"
+            pluralText: "hosts"
+            accessibleName: "Syslog hosts"
+            onSelectionChanged: values => {
+                root.selectedHosts = values
+                root.chosenHost = values.length === 1 ? String(values[0]) : ""
                 root.emitFilters()
             }
         }
 
-        StandardComboBox {
+        SyslogMultiSelectFilter {
             id: severityBox
             objectName: "syslogSeverityFilter"
             Layout.row: root.wideLayout ? 0 : (root.twoColumnLayout ? 1 : 2)
             Layout.column: root.wideLayout ? 3 : (root.twoColumnLayout ? 1 : 0)
             Layout.fillWidth: !root.wideLayout
             Layout.preferredWidth: root.wideLayout ? 174 : Theme.inputMinimumWidth
-            model: [
-                "All severities", "0 · Emergency", "1 · Alert", "2 · Critical",
-                "3 · Error", "4 · Warning", "5 · Notice",
-                "6 · Informational", "7 · Debug"
-            ]
-            onActivated: root.emitFilters()
+            options: root.severityFilterOptions
+            selectedValues: root.selectedSeverities
+            allText: "All severities"
+            pluralText: "severities"
+            accessibleName: "Syslog severities"
+            onSelectionChanged: values => {
+                root.selectedSeverities = values
+                root.emitFilters()
+            }
         }
 
         StandardComboBox {
@@ -219,10 +263,10 @@ Rectangle {
                 Layout.fillWidth: !root.wideLayout
                 text: "Reset"
                 type: "Secondary"
-                enabled: smartSearch.text !== "" || severityBox.currentIndex > 0
+                enabled: smartSearch.text !== "" || root.selectedSeverities.length > 0
                          || protocolBox.currentIndex > 0 || fromField.text !== ""
                          || toField.text !== "" || latestPerHost.value > 0
-                         || root.chosenHost !== ""
+                         || root.selectedHosts.length > 0
                 onClicked: root.resetFilters()
             }
         }
@@ -281,4 +325,11 @@ Rectangle {
     }
 
     SyslogSmartFilterHelp { id: smartFilterHelp }
+    SyslogSmartFilterBuilder {
+        id: smartFilterBuilder
+        onApplyRequested: expression => {
+            smartSearch.text = expression
+            root.emitFilters()
+        }
+    }
 }

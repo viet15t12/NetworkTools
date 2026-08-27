@@ -69,6 +69,14 @@ AclScrollablePane {
             font.family: Theme.fontFamily
             font.bold: true
         }
+        ParameterHelpButton {
+            Layout.preferredWidth: 22
+            Layout.preferredHeight: 22
+            helpTitle: "ACL parameters"
+            helpText: "ACL Name: unique IOS access-list name. Description is an optional operational note.\n\n" +
+                      "Sequence: rule order; lower numbers are evaluated first. Action Permit allows matching traffic and Deny blocks it.\n\n" +
+                      "Rule Builder fields depend on ACL type: Standard matches source IPv4, Extended adds protocol/source/destination/ports, MAC matches Layer-2 addresses, and Dynamic/Reflexive create state-related rules. ACL processing stops at the first match and ends with an implicit deny."
+        }
         StandardButton {
             visible: pane.editing || pane.viewing
             text: pane.viewing ? "Close View" : "Cancel"

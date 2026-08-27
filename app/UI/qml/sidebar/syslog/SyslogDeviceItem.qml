@@ -10,6 +10,8 @@ Rectangle {
 
     required property var deviceData
     property bool selected: false
+    property bool batchSelected: false
+    property bool selectionMode: false
     readonly property string host: String(deviceData.host || "")
     readonly property string deviceName: String(deviceData.device_name || "").trim()
     readonly property string displayLabel: deviceName !== "" && host !== ""
@@ -22,9 +24,13 @@ Rectangle {
                                         ? AppAssets.deviceSwitch : AppAssets.deviceStatusDot
 
     signal clicked(string host)
+    signal toggleSelectionRequested(string host)
+    signal rangeSelectionRequested(string host)
+    signal rightClicked(string host, bool configured, real sceneX, real sceneY)
 
     height: 52
     color: selected ? Theme.panelSideBarItemSelected
+                    : batchSelected ? Theme.alertInfoSubtle
                     : itemHover.hovered ? Theme.panelSideBarItemHover
                     : "transparent"
 
@@ -66,9 +72,31 @@ Rectangle {
 
         Text {
             text: "Connected"
+            visible: !root.selectionMode
             color: Theme.statusConnected
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeSmall
+        }
+
+        Rectangle {
+            visible: root.selectionMode
+            Layout.preferredWidth: 18
+            Layout.preferredHeight: 18
+            radius: 4
+            color: root.batchSelected ? Theme.panelSideBarAccentColor : "transparent"
+            border.color: root.batchSelected
+                          ? Theme.panelSideBarAccentColor : Theme.panelSideBarTextSecondary
+            border.width: Theme.borderWidth
+
+            Text {
+                anchors.centerIn: parent
+                visible: root.batchSelected
+                text: "✓"
+                color: Theme.selectionForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeSmall
+                font.bold: true
+            }
         }
     }
 
@@ -76,7 +104,30 @@ Rectangle {
 
     TapHandler {
         acceptedButtons: Qt.LeftButton
+        acceptedModifiers: Qt.NoModifier
         onTapped: root.clicked(root.host)
+    }
+
+    TapHandler {
+        acceptedButtons: Qt.LeftButton
+        acceptedModifiers: Qt.ControlModifier
+        onTapped: root.toggleSelectionRequested(root.host)
+    }
+
+    TapHandler {
+        acceptedButtons: Qt.LeftButton
+        acceptedModifiers: Qt.ShiftModifier
+        onTapped: root.rangeSelectionRequested(root.host)
+    }
+
+    TapHandler {
+        acceptedButtons: Qt.RightButton
+        onTapped: function(eventPoint) {
+            const point = root.mapToItem(
+                null, eventPoint.position.x, eventPoint.position.y)
+            root.rightClicked(
+                root.host, Boolean(root.deviceData.configured), point.x, point.y)
+        }
     }
 
 }

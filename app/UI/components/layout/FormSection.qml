@@ -8,6 +8,8 @@ Rectangle {
     id: root
 
     property string title: ""
+    property string helpTitle: title + " parameters"
+    property string helpText: ""
     default property alias content: body.data
 
     implicitHeight: layout.implicitHeight + Theme.spacing16 * 2
@@ -22,12 +24,23 @@ Rectangle {
         anchors.margins: Theme.spacing16
         spacing: Theme.spacing12
 
-        Text {
-            text: root.title
-            color: Theme.textPrimary
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeNormal
-            font.bold: true
+        RowLayout {
+            Layout.fillWidth: true
+
+            Text {
+                Layout.fillWidth: true
+                text: root.title
+                color: Theme.textPrimary
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeNormal
+                font.bold: true
+            }
+
+            ParameterHelpButton {
+                visible: root.helpText !== ""
+                helpTitle: root.helpTitle
+                helpText: root.helpText
+            }
         }
 
         ColumnLayout {

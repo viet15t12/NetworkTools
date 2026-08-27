@@ -1,5 +1,16 @@
 # Cisco Syslog
 
+`Syslog Group` dùng cùng cơ chế với Routing Group: chọn từ hai đến năm thiết bị
+Cisco đang kết nối, chọn source-interface riêng cho từng host, nhập destination
+và message policy một lần, sau đó Save hoặc batch View & Push. Mỗi host được lưu
+độc lập nên lỗi ở một host không rollback các host thành công và draft có thể
+retry an toàn.
+
+Bộ lọc log hỗ trợ chọn đồng thời nhiều host và nhiều severity bằng dropdown
+checkbox. Ô Smart Filter mở visual builder cho message, host, severity, protocol,
+facility, mnemonic, khoảng UTC/relative time và giới hạn mới nhất theo host; biểu
+thức `key:value` sinh ra vẫn tương thích với API và automation cũ.
+
 Trạng thái: **implemented** cho listener UDP+TCP đồng thời trên cùng port, parser ưu tiên
 Cisco IOS/IOS-XE, persistence SQLite và cấu hình destination trên thiết bị.
 
@@ -22,6 +33,7 @@ QML device configuration → qt/manager.py → device_config service → Cisco s
 | `application/` | Server lifecycle, queue/batch, processor, resolver, retention |
 | `persistence/` | Message, device-state và read-only device lookup repository |
 | `device_config/` | Pure command builder, verifier, Cisco worker và service |
+| `group_service.py`, `group_repository.py` | Validation, inventory ownership và persistence Syslog Group đa host |
 | `qt/` | QML adapter và QProcess bridge; không nhận socket hoặc parse message |
 
 Các module cũ như `parser.py`, `repository.py`, `manager.py` vẫn là compatibility

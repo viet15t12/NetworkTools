@@ -163,12 +163,23 @@ Rectangle {
             SplitView.minimumHeight: routeMapForm.compactLayout ? routeMapSplit.height * 0.4 : 0
             SplitView.maximumHeight: routeMapForm.compactLayout ? routeMapSplit.height * 0.4 : Number.POSITIVE_INFINITY
 
-            Text {
-                text: routeMapForm.isEditing() ? "Edit Route Map Entry" : "Add Route Map Entry"
-                color: Theme.textPrimary
-                font.pixelSize: Theme.fontSizeLarge
-                font.family: Theme.fontFamily
-                font.bold: true
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Theme.spacing8
+                Text {
+                    Layout.fillWidth: true
+                    text: routeMapForm.isEditing() ? "Edit Route Map Entry" : "Add Route Map Entry"
+                    color: Theme.textPrimary
+                    font.pixelSize: Theme.fontSizeLarge
+                    font.family: Theme.fontFamily
+                    font.bold: true
+                }
+                ParameterHelpButton {
+                    Layout.preferredWidth: 22
+                    Layout.preferredHeight: 22
+                    helpTitle: "NAT route-map parameters"
+                    helpText: "Route Map Name groups ordered policy entries. Sequence determines evaluation order; lower values run first. Action Permit accepts a successful match and Deny rejects it.\n\nNAT ACL Name optionally supplies the match condition. Route maps allow policy NAT to select traffic more precisely than a single ACL reference."
+                }
             }
 
             Text {

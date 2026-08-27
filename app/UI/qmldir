@@ -51,6 +51,7 @@ ConfigTextContextMenu 1.0 components/standard/ConfigTextContextMenu.qml
 StandardDropdown 1.0 components/standard/StandardDropdown.qml
 StandardDialog 1.0 components/standard/StandardDialog.qml
 StandardNetworkField 1.0 components/standard/StandardNetworkField.qml
+ParameterHelpButton 1.0 components/standard/ParameterHelpButton.qml
 RemoveIconButton 1.0 components/standard/RemoveIconButton.qml
 RoutingProcessComboBox 1.0 components/standard/RoutingProcessComboBox.qml
 # StandardSideBar DELETED — was UI-P1-06 legacy duplicate of DevicesPanel; use DevicesPanel directly
@@ -148,8 +149,11 @@ SyslogFilterBar 1.0 qml/features/syslog/SyslogFilterBar.qml
 SyslogLogTable 1.0 qml/features/syslog/SyslogLogTable.qml
 SyslogLogRow 1.0 qml/features/syslog/SyslogLogRow.qml
 SyslogMessageDetails 1.0 qml/features/syslog/SyslogMessageDetails.qml
+SyslogMultiSelectFilter 1.0 qml/features/syslog/SyslogMultiSelectFilter.qml
 SyslogServerSettings 1.0 qml/features/syslog/SyslogServerSettings.qml
+SyslogSmartFilterBuilder 1.0 qml/features/syslog/SyslogSmartFilterBuilder.qml
 SyslogDeviceConfigPage 1.0 qml/features/syslog/SyslogDeviceConfigPage.qml
+SyslogGroupDialog 1.0 qml/features/syslog/SyslogGroupDialog.qml
 SyslogSmartFilterHelp 1.0 qml/features/syslog/SyslogSmartFilterHelp.qml
 
 SwitchWorkspace 1.0 qml/features/switching/SwitchWorkspace.qml
@@ -243,6 +247,7 @@ ViewPushButton 1.0 qml/shared/ViewPushButton.qml
 ViewPushDialog 1.0 qml/shared/ViewPushDialog.qml
 
 DeviceContextMenu 1.0 qml/sidebar/devices/DeviceContextMenu.qml
+DeviceBatchActionBar 1.0 qml/sidebar/devices/DeviceBatchActionBar.qml
 DeviceItem 1.0 qml/sidebar/devices/DeviceItem.qml
 DeviceOperationBadge 1.0 qml/sidebar/devices/DeviceOperationBadge.qml
 DeviceSection 1.0 qml/sidebar/devices/DeviceSection.qml

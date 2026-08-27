@@ -11,7 +11,7 @@ Rectangle {
 
     property string selectedHost: ""
     property var activeFilters: ({
-        "host": "", "search": "", "severities": [], "protocols": [],
+        "host": "", "hosts": [], "search": "", "severities": [], "protocols": [],
         "from_time": "", "to_time": "", "per_host": 0,
         "facility": "", "mnemonic": "", "smart_query": ""
     })
@@ -48,8 +48,13 @@ Rectangle {
     }
 
     function matchesFilters(row) {
+        const hosts = activeFilters.hosts || []
+        if (hosts.length > 0
+                && hosts.indexOf(String(row.device_host || "")) < 0)
+            return false
         const host = String(activeFilters.host || "")
-        if (host !== "" && String(row.device_host || "") !== host)
+        if (hosts.length === 0 && host !== ""
+                && String(row.device_host || "") !== host)
             return false
 
         const severities = activeFilters.severities || []

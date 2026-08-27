@@ -86,8 +86,8 @@ class DeviceSessionRegistry:
                     "ok": False,
                     "severity": "warning",
                     "message": (
-                        f"{host} is marked Up (Dev), so real network access is disabled. "
-                        "Use Down (Dev), then Connect before opening CLI."
+                        f"{host} is in development mode, so real network access is disabled. "
+                        "Switch to Live Connection, then Connect before opening CLI."
                     ),
                 }
             if device.get("method") not in {"ssh", "telnet"}:

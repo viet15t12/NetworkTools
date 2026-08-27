@@ -9,9 +9,13 @@ Rectangle {
     // ── Thông tin thiết bị đang được right-click ──
     property string targetHost: ""
     property string targetStatus: ""
+    property bool targetIsDevelopment: false
     property var batchHosts: []
+    property var hostStatuses: ({})
     property var hostOperations: ({})
     property bool selectionMode: false
+    readonly property var connectedBatchHosts: filteredBatchHosts("connected")
+    readonly property var waitingBatchHosts: filteredBatchHosts("waiting")
     readonly property bool canPing: targetStatus === "connected"
     readonly property bool isWaiting: targetStatus === "waiting"
     readonly property bool isConnected: targetStatus === "connected"
@@ -51,14 +55,26 @@ Rectangle {
     signal connectBatchRequested(var hosts)
     signal runningConfigBatchRequested(var hosts)
     signal disconnectBatchRequested(var hosts)
+    signal selectAllVisibleRequested()
     signal clearSelectionRequested()
     signal startMultipleSelectionRequested(string host)
 
     // ── Hàm mở menu tại tọa độ cửa sổ ──
-    function openForHost(host, status, selectedHosts, x, y) {
+    function filteredBatchHosts(status) {
+        const result = []
+        for (let i = 0; i < batchHosts.length; ++i) {
+            const host = String(batchHosts[i] || "")
+            if (String(hostStatuses[host] || "") === status)
+                result.push(host)
+        }
+        return result
+    }
+
+    function openForHost(host, status, selectedHosts, statuses, x, y) {
         targetHost = String(host || "")
         targetStatus = status || ""
         batchHosts = (selectedHosts || []).slice(0)
+        hostStatuses = Object.assign({}, statuses || ({}))
 
         // Ngăn menu bị tràn ra ngoài cạnh phải / dưới màn hình
         const win = Window.window
@@ -77,7 +93,9 @@ Rectangle {
         visible = false
         targetHost = ""
         targetStatus = ""
+        targetIsDevelopment = false
         batchHosts = []
+        hostStatuses = ({})
     }
 
     // ── Giao diện ──
@@ -126,6 +144,42 @@ Rectangle {
         anchors.bottomMargin: 4
         spacing: 0
 
+        Rectangle {
+            visible: contextMenu.selectionMode
+            width: parent.width
+            height: visible ? 48 : 0
+            radius: Theme.radiusSmall
+            color: Theme.alertInfoSubtle
+
+            Column {
+                anchors.fill: parent
+                anchors.leftMargin: Theme.spacing8
+                anchors.rightMargin: Theme.spacing8
+                anchors.topMargin: Theme.spacing4
+                anchors.bottomMargin: Theme.spacing4
+                spacing: Theme.spacing2
+
+                Text {
+                    width: parent.width
+                    text: contextMenu.batchHosts.length + " hosts selected"
+                    color: Theme.textPrimary
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeNormal
+                    font.bold: true
+                    elide: Text.ElideRight
+                }
+                Text {
+                    width: parent.width
+                    text: contextMenu.connectedBatchHosts.length + " connected · "
+                          + contextMenu.waitingBatchHosts.length + " waiting"
+                    color: Theme.textSecondary
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeSmall
+                    elide: Text.ElideRight
+                }
+            }
+        }
+
         ContextMenuItem {
             visible: !contextMenu.selectionMode
             text: "Select multiple"
@@ -137,18 +191,20 @@ Rectangle {
 
         ContextMenuItem {
             visible: contextMenu.selectionMode
-            text: "Exit multiple selection"
+            text: "Select all visible hosts"
             onTriggered: {
-                contextMenu.clearSelectionRequested()
+                contextMenu.selectAllVisibleRequested()
                 contextMenu.close()
             }
         }
 
         ContextMenuDivider {
+            visible: !contextMenu.selectionMode
             lineColor: contextMenu.menuDividerColor
         }
 
         ContextMenuItem {
+            visible: !contextMenu.selectionMode
             text: "Edit"
             shortcutText: "F2"
             iconSource: AppAssets.actionEdit
@@ -159,10 +215,12 @@ Rectangle {
         }
 
         ContextMenuDivider {
+            visible: !contextMenu.selectionMode
             lineColor: contextMenu.menuDividerColor
         }
 
         ContextMenuItem {
+            visible: !contextMenu.selectionMode
             text: "Ping"
             enabled: contextMenu.canPing
             reserveIconSpace: true
@@ -174,7 +232,7 @@ Rectangle {
         }
 
         ContextMenuItem {
-            visible: contextMenu.isConnected
+            visible: !contextMenu.selectionMode && contextMenu.isConnected
             enabled: !contextMenu.targetConnectRunning
             text: "Get running-config"
             iconSource: AppAssets.actionBackup
@@ -199,7 +257,7 @@ Rectangle {
         }
 
         ContextMenuItem {
-            visible: contextMenu.isConnected
+            visible: !contextMenu.selectionMode && contextMenu.isConnected
             enabled: !contextMenu.targetConnectRunning
             text: "Save configuration"
             iconSource: AppAssets.actionSave
@@ -211,7 +269,7 @@ Rectangle {
         }
 
         ContextMenuItem {
-            visible: contextMenu.isConnected
+            visible: !contextMenu.selectionMode && contextMenu.isConnected
             enabled: !contextMenu.targetConnectRunning
             text: "Sync"
             reserveIconSpace: true
@@ -223,8 +281,10 @@ Rectangle {
         }
 
         ContextMenuItem {
-            visible: contextMenu.isConnected
-            text: "Down (Dev)"
+            visible: !contextMenu.selectionMode
+                     && contextMenu.isConnected
+                     && contextMenu.targetIsDevelopment
+            text: "Switch to Live Connection"
             shortcutText: "Ctrl+Alt+Down"
             iconSource: AppAssets.actionMonitorStop
             onTriggered: {
@@ -237,7 +297,7 @@ Rectangle {
             // Keep the DEV transition available to existing internal flows and
             // shortcuts, but do not expose the development-only menu action.
             visible: false
-            text: "Up (Dev)"
+            text: "Enable Development Mode"
             shortcutText: "Ctrl+Alt+Up"
             iconSource: AppAssets.actionMonitorStart
             onTriggered: {
@@ -247,7 +307,7 @@ Rectangle {
         }
 
         ContextMenuItem {
-            visible: contextMenu.isWaiting
+            visible: !contextMenu.selectionMode && contextMenu.isWaiting
             enabled: !contextMenu.targetConnectRunning
             text: contextMenu.targetConnectRunning
                   ? "Connect (Running...)"
@@ -260,7 +320,7 @@ Rectangle {
         }
 
         ContextMenuItem {
-            visible: contextMenu.isDisconnected
+            visible: !contextMenu.selectionMode && contextMenu.isDisconnected
             text: "Reconnect"
             shortcutText: "Ctrl+Alt+R"
             iconSource: AppAssets.actionMonitorStart
@@ -271,43 +331,46 @@ Rectangle {
         }
 
         ContextMenuDivider {
-            visible: contextMenu.batchHosts.length > 1
+            visible: contextMenu.selectionMode
             lineColor: contextMenu.menuDividerColor
         }
 
         ContextMenuItem {
-            visible: contextMenu.batchHosts.length > 1
-            text: "Connect selected (" + contextMenu.batchHosts.length + ")"
+            visible: contextMenu.selectionMode
+            enabled: contextMenu.waitingBatchHosts.length > 0
+            text: "Connect waiting (" + contextMenu.waitingBatchHosts.length + ")"
             shortcutText: "Ctrl+Shift+C"
             onTriggered: {
-                contextMenu.connectBatchRequested(contextMenu.batchHosts.slice(0))
+                contextMenu.connectBatchRequested(contextMenu.waitingBatchHosts.slice(0))
                 contextMenu.close()
             }
         }
 
         ContextMenuItem {
-            visible: contextMenu.batchHosts.length > 1
-            text: "Get configs selected (" + contextMenu.batchHosts.length + ")"
+            visible: contextMenu.selectionMode
+            enabled: contextMenu.connectedBatchHosts.length > 0
+            text: "Get configs from connected (" + contextMenu.connectedBatchHosts.length + ")"
             shortcutText: "Ctrl+Shift+R"
             onTriggered: {
-                contextMenu.runningConfigBatchRequested(contextMenu.batchHosts.slice(0))
+                contextMenu.runningConfigBatchRequested(contextMenu.connectedBatchHosts.slice(0))
                 contextMenu.close()
             }
         }
 
         ContextMenuItem {
-            visible: contextMenu.batchHosts.length > 1
-            text: "Disconnect selected (" + contextMenu.batchHosts.length + ")"
+            visible: contextMenu.selectionMode
+            enabled: contextMenu.connectedBatchHosts.length > 0
+            text: "Disconnect connected (" + contextMenu.connectedBatchHosts.length + ")"
             shortcutText: "Ctrl+Shift+D"
             onTriggered: {
-                contextMenu.disconnectBatchRequested(contextMenu.batchHosts.slice(0))
+                contextMenu.disconnectBatchRequested(contextMenu.connectedBatchHosts.slice(0))
                 contextMenu.close()
             }
         }
 
         ContextMenuItem {
-            visible: contextMenu.batchHosts.length > 1
-            text: "Clear selection"
+            visible: contextMenu.selectionMode
+            text: "Clear selection and exit"
             onTriggered: {
                 contextMenu.clearSelectionRequested()
                 contextMenu.close()
@@ -315,10 +378,12 @@ Rectangle {
         }
 
         ContextMenuDivider {
+            visible: !contextMenu.selectionMode
             lineColor: contextMenu.menuDividerColor
         }
 
         ContextMenuItem {
+            visible: !contextMenu.selectionMode
             text: "NetworkTools Terminal"
             shortcutText: "Ctrl+`"
             iconSource: AppAssets.navigationTerminal
@@ -329,10 +394,12 @@ Rectangle {
         }
 
         ContextMenuDivider {
+            visible: !contextMenu.selectionMode
             lineColor: contextMenu.menuDividerColor
         }
 
         ContextMenuItem {
+            visible: !contextMenu.selectionMode
             text: "Delete"
             shortcutText: "Del"
             iconSource: AppAssets.actionDelete

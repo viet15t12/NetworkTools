@@ -182,12 +182,30 @@ Rectangle {
             SplitView.minimumHeight: dhcpPoolForm.compactLayout ? poolSplit.height * 0.4 : 0
             SplitView.maximumHeight: dhcpPoolForm.compactLayout ? poolSplit.height * 0.4 : Number.POSITIVE_INFINITY
 
-            Text {
-                text: dhcpPoolForm.isEditing() ? "Edit DHCP Pool" : "Add DHCP Pool"
-                color: Theme.textPrimary
-                font.pixelSize: Theme.fontSizeLarge
-                font.family: Theme.fontFamily
-                font.bold: true
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Theme.spacing8
+
+                Text {
+                    Layout.fillWidth: true
+                    text: dhcpPoolForm.isEditing() ? "Edit DHCP Pool" : "Add DHCP Pool"
+                    color: Theme.textPrimary
+                    font.pixelSize: Theme.fontSizeLarge
+                    font.family: Theme.fontFamily
+                    font.bold: true
+                }
+
+                ParameterHelpButton {
+                    Layout.preferredWidth: 22
+                    Layout.preferredHeight: 22
+                    helpTitle: "DHCP pool parameters"
+                    helpText: "Pool Name: IOS DHCP pool identifier, for example POOL_VLAN10. Use a clear unique name without spaces.\n\n" +
+                              "Network: subnet served by this pool, such as 192.168.10.0.\n\n" +
+                              "Subnet Mask: dotted mask or CIDR prefix, for example 255.255.255.0 or /24.\n\n" +
+                              "Default Router: gateway offered to clients; normally an address on the served subnet.\n\n" +
+                              "DNS Server: DNS resolver address offered to clients.\n\n" +
+                              "Lease: IOS lease duration. Enter days (1) or days hours minutes (7 12 0)."
+                }
             }
 
             Rectangle {

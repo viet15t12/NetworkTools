@@ -16,7 +16,7 @@ Item {
         anchors.rightMargin: Theme.spacing8
         anchors.verticalCenter: parent.verticalCenter
         height: Theme.borderWidth
-        color: Theme.borderColor
+        color: Theme.panelSideBarBorderColor
         opacity: Theme.isHighContrast ? 1.0 : 0.68
     }
 }

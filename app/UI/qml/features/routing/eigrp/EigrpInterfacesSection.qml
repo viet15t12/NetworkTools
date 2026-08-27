@@ -26,7 +26,15 @@ Rectangle {
         anchors.margins: Theme.spacing16
         spacing: Theme.spacing12
 
-        SectionTitle { text: "EIGRP INTERFACE SETTINGS" }
+        SectionTitle {
+            text: "EIGRP INTERFACE SETTINGS"
+            helpText: "Interface: exact IOS interface name. Bandwidth (Kbps) and Delay influence the EIGRP metric; they do not directly rate-limit traffic.\n\n" +
+                      "Hello/Hold: neighbor timers in seconds; hold should be greater than hello.\n\n" +
+                      "Auth Key Chain: existing IOS key-chain name.\n\n" +
+                      "Summary IP/Mask: route summary advertised on this interface. BW Percent limits EIGRP control traffic.\n\n" +
+                      "Split Horizon prevents advertising a learned route back out the same interface. Next Hop Self rewrites the next hop.\n\n" +
+                      "BFD enables fast failure detection; BFD TX/RX are intervals and Multiplier is the missed-packet threshold."
+        }
 
         GridLayout {
             Layout.fillWidth: true

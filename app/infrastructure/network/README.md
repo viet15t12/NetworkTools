@@ -23,7 +23,7 @@ Terminal companion hiện mở SSH child riêng và không dùng registry automa
 `features/terminal/worker.py` chỉ thuộc compatibility embedded terminal; nếu
 compatibility path được dùng trong test/adapter, nó phải giữ khóa registry trong
 toàn bộ phiên để input không xen vào push cùng host.
-Registry trả warning trước khi tạo connector cho host `Up (Dev)` hoặc protocol
+Registry trả warning trước khi tạo connector cho host ở development mode hoặc protocol
 không hỗ trợ, và chỉ gọi operation sau khi xác nhận connector còn sống.
 
 `BatchExecutor` giới hạn mặc định 5 worker, cô lập exception theo host và chỉ

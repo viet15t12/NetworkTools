@@ -30,7 +30,13 @@ Item {
                 anchors.margins: Theme.spacing16
                 spacing: Theme.spacing12
 
-                SectionTitle { text: "EIGRP NETWORKS" }
+                SectionTitle {
+                    text: "EIGRP NETWORKS"
+                    helpText: "Process: EIGRP AS/process to update.\n\n" +
+                              "Network: IPv4 network or interface address that enables EIGRP.\n\n" +
+                              "Wildcard: optional inverse subnet mask; CIDR shorthand such as -/24 is accepted. Leave empty for IOS classful matching behavior.\n\n" +
+                              "Interface: optional explicit interface association used by this application."
+                }
 
                 GridLayout {
                     Layout.fillWidth: true

@@ -31,6 +31,22 @@ Rectangle {
         validationMessage = String(result.message || "")
     }
 
+    function restartListener() {
+        if (manager === null)
+            return
+        const stopped = manager.stopServer()
+        if (!stopped || !stopped.ok) {
+            validationOk = false
+            validationMessage = String(stopped && stopped.message
+                                       ? stopped.message : "Could not stop the listener.")
+            return
+        }
+        const started = manager.startServer()
+        validationOk = Boolean(started && started.ok)
+        validationMessage = String(started && started.message
+                                   ? started.message : "Listener restart finished.")
+    }
+
     ScrollView {
         id: settingsScroll
         anchors.fill: parent
@@ -53,27 +69,47 @@ Rectangle {
                 subtitle: "Configure the local Syslog listener, the destination advertised to devices, and retention. Changes are saved automatically."
             }
 
+            InlineMessage {
+                Layout.fillWidth: true
+                Layout.leftMargin: Theme.spacing24
+                Layout.rightMargin: Theme.spacing24
+                severity: "info"
+                message: "Settings controls how the collector listens and stores data. Use the System Logs workspace to start or stop normal collection, filter messages, and inspect logs."
+            }
+
             Rectangle {
                 visible: root.listenerActive
                 Layout.fillWidth: true
                 Layout.leftMargin: Theme.spacing24
                 Layout.rightMargin: Theme.spacing24
-                Layout.preferredHeight: 42
+                implicitHeight: restartRow.implicitHeight + Theme.spacing16
                 color: Theme.alertWarningSubtle
                 border.color: Theme.contentPanelBorder
                 border.width: Theme.borderWidth
                 radius: Theme.radiusSmall
 
-                Text {
+                RowLayout {
+                    id: restartRow
                     anchors.fill: parent
-                    anchors.leftMargin: Theme.spacing12
-                    anchors.rightMargin: Theme.spacing12
-                    text: "Restart the listener after changing the bind address or port."
-                    color: Theme.textPrimary
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeSmall
-                    verticalAlignment: Text.AlignVCenter
-                    elide: Text.ElideRight
+                    anchors.margins: Theme.spacing8
+                    spacing: Theme.spacing8
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: "Listener is running. Restart it after changing listener or capacity settings."
+                        color: Theme.textPrimary
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSizeSmall
+                        elide: Text.ElideRight
+                    }
+
+                    StandardButton {
+                        objectName: "syslogSettingsRestartButton"
+                        text: "Restart Listener"
+                        icon.source: AppAssets.actionRefresh
+                        type: "Secondary"
+                        onClicked: root.restartListener()
+                    }
                 }
             }
 
@@ -82,6 +118,7 @@ Rectangle {
                 Layout.leftMargin: Theme.spacing24
                 Layout.rightMargin: Theme.spacing24
                 title: "Listener"
+                helpText: "Start on launch: Automatically starts the local Syslog collector when NetworkTools opens.\n\nListener transports: The collector receives UDP and TCP simultaneously.\n\nListener port: Local destination port, from 1 to 65535. Devices must send to the same port.\n\nBind address: Local address used by the socket. 0.0.0.0 listens on every IPv4 interface. Restart the listener after changing the bind address or port."
 
                 StandardCheckBox {
                     Layout.fillWidth: true
@@ -135,7 +172,55 @@ Rectangle {
                 Layout.fillWidth: true
                 Layout.leftMargin: Theme.spacing24
                 Layout.rightMargin: Theme.spacing24
+                title: "Capacity and safety"
+                helpText: "Maximum message size: Largest accepted UDP datagram or TCP Syslog frame in bytes. The practical default is 16384 bytes. Oversized messages are dropped to protect memory.\n\nMaximum TCP clients: Number of simultaneous TCP Syslog connections accepted by the collector. Keep 64 for a small or medium lab; increase only when many devices use TCP. Restart the listener after changing either value."
+
+                GridLayout {
+                    Layout.fillWidth: true
+                    columns: width >= 680 ? 2 : 1
+                    columnSpacing: Theme.spacing12
+                    rowSpacing: Theme.spacing8
+
+                    StandardSpinBox {
+                        Layout.fillWidth: true
+                        labelText: "Maximum message size (bytes)"
+                        from: 1024
+                        to: 1048576
+                        stepSize: 1024
+                        editable: true
+                        enabled: root.backend !== null
+                        value: root.backend !== null ? root.backend.maxMessageBytes : 16384
+                        onValueChanged: {
+                            if (root.backend !== null
+                                    && root.backend.maxMessageBytes !== value)
+                                root.backend.maxMessageBytes = value
+                        }
+                    }
+
+                    StandardSpinBox {
+                        Layout.fillWidth: true
+                        labelText: "Maximum TCP clients"
+                        from: 1
+                        to: 4096
+                        stepSize: 1
+                        editable: true
+                        enabled: root.backend !== null
+                        value: root.backend !== null ? root.backend.maxTcpClients : 64
+                        onValueChanged: {
+                            if (root.backend !== null
+                                    && root.backend.maxTcpClients !== value)
+                                root.backend.maxTcpClients = value
+                        }
+                    }
+                }
+            }
+
+            FormSection {
+                Layout.fillWidth: true
+                Layout.leftMargin: Theme.spacing24
+                Layout.rightMargin: Theme.spacing24
                 title: "Device destination"
+                helpText: "Advertised server address: Active IPv4 address that routers and switches can reach. This address is written into the Cisco logging host command. Do not choose 127.0.0.1 or an address that exists only on an isolated adapter.\n\nRefresh Addresses: Reloads active local IPv4 addresses after a network adapter, VPN, or lab bridge changes."
 
                 Text {
                     Layout.fillWidth: true
@@ -179,6 +264,7 @@ Rectangle {
                 Layout.leftMargin: Theme.spacing24
                 Layout.rightMargin: Theme.spacing24
                 title: "Storage"
+                helpText: "Retention period: Number of days received Syslog messages remain in the information database. The minimum is 1 day and maximum is 3650 days. Expired rows are removed by retention maintenance; device Syslog configuration is not deleted."
 
                 StandardSpinBox {
                     Layout.preferredWidth: 260
