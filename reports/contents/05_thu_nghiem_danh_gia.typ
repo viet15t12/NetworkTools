@@ -271,42 +271,12 @@ VPCS> ping 192.168.20.10
 === Kịch bản 3: 
 
 
-=== Kịch bản 4: Biên dịch địa chỉ mạng và Dự phòng Gateway (NAT/PAT & HSRP)
-
-*Mục tiêu kịch bản:* Triển khai giải pháp biên dịch địa chỉ mạng (PAT / NAT Overload) kết hợp với giao thức dự phòng cổng mặc định (HSRP) trên hai router gateway (`Router-GW1` và `Router-GW2`) nhằm đảm bảo mạng nội bộ luôn duy trì kết nối Internet liên tục kể cả khi một gateway vật lý gặp sự cố.
-
-#figure(
-  image("diagrams/lab_4.svg", width: 90%),
-  caption: [Sơ đồ Topo Kịch bản 4: Biên dịch địa chỉ NAT/PAT và Dự phòng Gateway HSRP],
-) <fig-topo-scenario-4>
+=== Kịch bản 4: 
 
 
-== Đo đạc và đánh giá hiệu năng
 
-Để đánh giá tính thực tiễn và hiệu quả của NetworkTools, nhóm nghiên cứu đã tiến hành đo đạc thời gian triển khai và tỷ lệ thành công giữa hai phương pháp: Cấu hình thủ công qua CLI truyền thống và Cấu hình tự động hóa qua NetworkTools trên quy mô 1, 5 và 10 thiết bị mạng.
 
-#report-table(
-  columns: (22%, 26%, 26%, 26%),
-  header: ([Quy mô thử nghiệm], [Thời gian CLI thủ công], [Thời gian NetworkTools], [Mức tiết kiệm thời gian]),
-  rows: (
-    ([1 Thiết bị (Router/SW)], [8 phút 30 giây], [1 phút 15 giây], [Giảm ~85.3%]),
-    ([5 Thiết bị], [41 phút 00 giây], [2 phút 40 giây], [Giảm ~93.5%]),
-    ([10 Thiết bị], [85 phút 30 giây], [4 phút 10 giây], [Giảm ~95.1%]),
-  ),
-  caption: [So sánh thời gian triển khai cấu hình giữa phương pháp thủ công và NetworkTools],
-) <tab-performance-comparison>
 
-#report-table(
-  columns: (28%, 22%, 50%),
-  header: ([Chỉ số vận hành], [Giá trị đo đạc], [Ghi chú đánh giá]),
-  rows: (
-    ([Mức chiếm dụng CPU máy trạm], [2.5% -- 8.0%], [Rất thấp, luồng UI luôn duy trì 60 FPS mượt mà]),
-    ([Mức chiếm dụng RAM], [120 MB -- 185 MB], [Tối ưu nhờ cơ chế nạp lười Lazy Loading trên QML]),
-    ([Tỷ lệ hoàn thành tác vụ Push], [99.2%], [Chỉ gặp lỗi khi thiết bị đích bị ngắt nguồn đột ngột]),
-    ([Thời gian sinh mã Preview], [< 0.25 giây], [Engine Jinja2 xử lý cực nhanh trên dữ liệu SQLite]),
-  ),
-  caption: [Chỉ số tiêu thụ tài nguyên và hiệu năng vận hành của ứng dụng],
-) <tab-system-resource>
 
 == Đánh giá tổng hợp
 
