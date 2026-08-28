@@ -14,6 +14,7 @@ Rectangle {
     property var hostStatuses: ({})
     property var hostOperations: ({})
     property bool selectionMode: false
+    property bool allowHostDeletion: false
     readonly property var connectedBatchHosts: filteredBatchHosts("connected")
     readonly property var waitingBatchHosts: filteredBatchHosts("waiting")
     readonly property bool canPing: targetStatus === "connected"
@@ -400,8 +401,9 @@ Rectangle {
 
         ContextMenuItem {
             visible: !contextMenu.selectionMode
+            enabled: contextMenu.allowHostDeletion
             text: "Delete"
-            shortcutText: "Del"
+            shortcutText: contextMenu.allowHostDeletion ? "Del" : "Disabled"
             iconSource: AppAssets.actionDelete
             danger: true
             onTriggered: {

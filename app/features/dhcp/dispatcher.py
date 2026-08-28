@@ -59,7 +59,10 @@ def _apply_successful_results(valid_data, results, table_names):
             if succeeded and task:
                 ids = task["ids"]
                 for row_id in ids["pool_add"]:
-                    cursor.execute(f"UPDATE {table_names['pool']} SET sync_status = 'synchronized' WHERE dhcp_id = ?", (row_id,))
+                    cursor.execute(
+                        f"UPDATE {table_names['pool']} SET sync_status = 'synchronized', action_Cfg = '000' WHERE dhcp_id = ?",
+                        (row_id,),
+                    )
                     changes += cursor.rowcount
                 for row_id in ids["pool_del"]:
                     cursor.execute(f"DELETE FROM {table_names['pool']} WHERE dhcp_id = ?", (row_id,))

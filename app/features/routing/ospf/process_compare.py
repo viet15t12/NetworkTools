@@ -39,7 +39,8 @@ def load_process_for_compare(conn: sqlite3.Connection, db: Any, ospf_id: int) ->
     process = conn.execute(
         """
         SELECT ospf_id, process_id, router_id, reference_bandwidth,
-               passive_default, default_originate, default_originate_always
+               passive_default, default_originate, default_originate_always,
+               action_Cfg
         FROM t04_ospf_processes
         WHERE ospf_id = ? AND sync_status != 'pending_delete'
         LIMIT 1;

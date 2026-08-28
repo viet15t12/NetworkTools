@@ -19,22 +19,28 @@ ip dhcp pool {{ pool.name }}
  {% if pool.network %}network {{ pool.network }} {{ pool.subnet_mask }}{% endif %}
  
  {# --- XỬ LÝ LỆNH BITMASK --- #}
- {% if pool.push_default and pool.default_gateway %}
+ {% if pool.push_default %}
+ {% if pool.default_gateway %}
  default-router {{ pool.default_gateway }}
- {% elif pool.push_default == False %}
+ {% else %}
  no default-router
  {% endif %}
-
- {% if pool.push_dns and pool.dns_server %}
- dns-server {{ pool.dns_server }}
- {% elif pool.push_dns == False %}
- no dns-server
  {% endif %}
 
- {% if pool.push_lease and pool.lease %}
+ {% if pool.push_dns %}
+ {% if pool.dns_server %}
+ dns-server {{ pool.dns_server }}
+ {% else %}
+ no dns-server
+ {% endif %}
+ {% endif %}
+
+ {% if pool.push_lease %}
+ {% if pool.lease %}
  lease {{ pool.lease }}
- {% elif pool.push_lease == False %}
+ {% else %}
  no lease
+ {% endif %}
  {% endif %}
 
  {% if pool.domain_name %}domain-name {{ pool.domain_name }}{% endif %}

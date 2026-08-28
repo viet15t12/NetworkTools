@@ -10,6 +10,7 @@ from ._engine import (
     parse_eigrp_block,
     parse_interface_block,
     parse_interface_brief,
+    parse_interface_fhrp_lines,
     parse_interface_ospf_line,
     parse_ospf_area_line,
     parse_ospf_block,

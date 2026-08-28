@@ -12,6 +12,7 @@ Rectangle {
 
     property string currentHostIp: ""
     property int editingDhcpId: -1
+    property int editingModelIndex: -1
     property int nextLocalId: -1
     property var pendingDeletes: []
     property bool hasPendingLocalChanges: false
@@ -19,7 +20,7 @@ Rectangle {
     signal dataChanged()
 
     function isEditing() {
-        return editingDhcpId >= 0
+        return editingModelIndex >= 0
     }
 
     function hasValidFormDraft() {
@@ -31,6 +32,7 @@ Rectangle {
 
     function clearForm() {
         editingDhcpId = -1
+        editingModelIndex = -1
         poolField.text = ""
         networkField.text = ""
         subnetField.text = ""
@@ -39,7 +41,33 @@ Rectangle {
         leaseField.text = "1"
     }
 
-    function editPool(row) {
+    function poolSignature(row) {
+        return JSON.stringify([
+            String(row.pool || "").trim(),
+            String(row.network || "").trim(),
+            String(row.subnetmask || "").trim(),
+            String(row.defaut || "").trim(),
+            String(row.dns || "").trim(),
+            String(row.lease || "1").trim() || "1"
+        ])
+    }
+
+    function draftValues() {
+        return {
+            pool: poolField.text.trim(), network: networkField.text.trim(),
+            subnetmask: subnetField.text.trim(), defaut: gatewayField.text.trim(),
+            dns: dnsField.text.trim(), lease: leaseField.text.trim() || "1"
+        }
+    }
+
+    function draftHasChanges() {
+        if (!isEditing() || editingModelIndex >= poolListModel.count)
+            return hasValidFormDraft()
+        return poolSignature(draftValues()) !== poolSignature(poolListModel.get(editingModelIndex))
+    }
+
+    function editPool(index, row) {
+        editingModelIndex = index
         editingDhcpId = row.dhcp_id
         poolField.text = row.pool || ""
         networkField.text = row.network || ""
@@ -66,6 +94,7 @@ Rectangle {
             lease: row.lease === undefined || row.lease === null || String(row.lease).trim() === "" ? "1" : String(row.lease),
             syncStatus: String(row.sync_status || StatusValues.pendingApply),
             action_Cfg: String(row.action_Cfg || "111"),
+            _baselineSignature: poolSignature(row),
             _isNew: false,
             _isEdited: false
         }
@@ -79,24 +108,25 @@ Rectangle {
     }
 
     function stagePool() {
-        const values = {
-            pool: poolField.text.trim(), network: networkField.text.trim(),
-            subnetmask: subnetField.text.trim(), defaut: gatewayField.text.trim(),
-            dns: dnsField.text.trim(), lease: leaseField.text.trim() || "1"
-        }
+        const values = draftValues()
         if (isEditing()) {
-            for (let i = 0; i < poolListModel.count; i++) {
-                if (poolListModel.get(i).dhcp_id !== editingDhcpId) continue
-                for (const key in values) poolListModel.setProperty(i, key, values[key])
-                if (!poolListModel.get(i)._isNew) poolListModel.setProperty(i, "_isEdited", true)
-                break
+            if (editingModelIndex >= poolListModel.count) return
+            const index = editingModelIndex
+            for (const key in values) poolListModel.setProperty(index, key, values[key])
+            if (!poolListModel.get(index)._isNew) {
+                poolListModel.setProperty(
+                    index,
+                    "_isEdited",
+                    poolSignature(values) !== poolListModel.get(index)._baselineSignature
+                )
             }
         } else {
             poolListModel.append({
                 dhcp_id: nextLocalId--, host: currentHostIp,
                 pool: values.pool, network: values.network, subnetmask: values.subnetmask,
                 defaut: values.defaut, dns: values.dns, lease: values.lease,
-                syncStatus: StatusValues.pendingApply, action_Cfg: "111", _isNew: true, _isEdited: false
+                syncStatus: StatusValues.pendingApply, action_Cfg: "000",
+                _baselineSignature: poolSignature(values), _isNew: true, _isEdited: false
             })
         }
         clearForm()
@@ -106,7 +136,8 @@ Rectangle {
     function removePool(index, row) {
         if (!row._isNew) pendingDeletes = pendingDeletes.concat([row.dhcp_id])
         poolListModel.remove(index)
-        if (editingDhcpId === row.dhcp_id) clearForm()
+        if (editingModelIndex === index) clearForm()
+        else if (editingModelIndex > index) editingModelIndex--
         refreshDirtyFlag()
     }
 
@@ -279,8 +310,9 @@ Rectangle {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 36
                     type: "Primary"
-                    text: dhcpPoolForm.isEditing() ? "Apply Edit" : "Add Locally"
-                    enabled: dhcpPoolForm.hasValidFormDraft()
+                text: dhcpPoolForm.isEditing() ? "Apply Edit" : "Add Locally"
+                    enabled: dhcpPoolForm.hasValidFormDraft() &&
+                             (!dhcpPoolForm.isEditing() || dhcpPoolForm.draftHasChanges())
 
                     onClicked: dhcpPoolForm.stagePool()
                 }
@@ -293,7 +325,7 @@ Rectangle {
                 SplitView.minimumWidth: 0
                 SplitView.minimumHeight: dhcpPoolForm.compactLayout ? 220 : 0
                 poolModel: poolListModel
-                onEditRequested: (row) => dhcpPoolForm.editPool(row)
+                onEditRequested: (index, row) => dhcpPoolForm.editPool(index, row)
                 onDeleteRequested: (index, row) => dhcpPoolForm.removePool(index, row)
             }
         }
@@ -337,8 +369,10 @@ Rectangle {
                 text: "Save"
                 icon.source: AppAssets.actionSave
                 type: "Primary"
-                enabled: (hasPendingLocalChanges || dhcpPoolForm.hasValidFormDraft()) &&
-                         currentHostIp !== ""
+                enabled: currentHostIp !== "" &&
+                         (hasPendingLocalChanges ||
+                          (dhcpPoolForm.hasValidFormDraft() &&
+                           (!dhcpPoolForm.isEditing() || dhcpPoolForm.draftHasChanges())))
                 onClicked: dhcpPoolForm.saveChanges()
             }
 

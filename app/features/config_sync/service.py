@@ -86,8 +86,14 @@ class ConfigSyncService:
                     "summary": {},
                 }
             try:
+                switch_snapshot = dict(switch_state)
+                if role == "sw3":
+                    switch_snapshot["running_config"] = str(running_config or "")
                 summary = self._switch_synchronizer(
-                    self.db_path, normalized_host, dict(switch_state), mode
+                    self.db_path,
+                    normalized_host,
+                    switch_snapshot,
+                    mode,
                 )
                 return {
                     **base,

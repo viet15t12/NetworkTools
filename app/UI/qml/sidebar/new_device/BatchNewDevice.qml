@@ -10,9 +10,9 @@ import UI
 
 Window {
     id: batchWindow
-    width: 1280; height: 620
-    minimumWidth: 1280; maximumWidth: 1280
-    minimumHeight: 620; maximumHeight: 620
+    width: 1280; height: 700
+    minimumWidth: 1080; maximumWidth: 1440
+    minimumHeight: 620; maximumHeight: 820
     color: "transparent"
     modality: Qt.ApplicationModal
     flags: Qt.Dialog | Qt.FramelessWindowHint
@@ -35,6 +35,19 @@ Window {
     readonly property string defaultOs: "cisco_ios"
     readonly property string defaultRole: "rou"
     readonly property string sampleFileName: "Template_NetworkTools-MultipleDevices.xlsx"
+    property int rowRevision: 0
+    property string formMessage: ""
+    property string formSeverity: "info"
+    readonly property int inputRowCount: {
+        rowRevision
+        let count = 0
+        for (let i = 0; i < rowModel.count; ++i) {
+            const row = rowModel.get(i)
+            if ((row.host || "").trim() !== "" || (row.name || "").trim() !== "")
+                ++count
+        }
+        return count
+    }
 
     signal devicesAdded(var addedDevices, int totalRows, int skipped, bool foldersOk)
 
@@ -103,7 +116,7 @@ Window {
     }
 
     function resetAndOpen() {
-        initRows(5)
+        initRows(1)
         escPressCount = 0
         escResetTimer.stop()
 
@@ -118,31 +131,54 @@ Window {
             rowModel.append({
                 host: "",
                 name: "",
-                protocol: "SSH",
-                port: "22",
-                username: "",
-                password: "",
-                os: batchWindow.defaultOs,
-                role: batchWindow.defaultRole
+                protocol: sharedProtocol.currentText || "SSH",
+                port: sharedPort.text || "22",
+                username: sharedUsername.text,
+                password: sharedPassword.text,
+                os: sharedOs.currentText || batchWindow.defaultOs,
+                role: sharedRole.currentText || batchWindow.defaultRole
             })
         }
+        touchRows()
     }
 
     function addEmptyRow() {
         rowModel.append({
             host: "",
             name: "",
-            protocol: "SSH",
-            port: "22",
-            username: "",
-            password: "",
-            os: batchWindow.defaultOs,
-            role: batchWindow.defaultRole
+            protocol: sharedProtocol.currentText || "SSH",
+            port: sharedPort.text || "22",
+            username: sharedUsername.text,
+            password: sharedPassword.text,
+            os: sharedOs.currentText || batchWindow.defaultOs,
+            role: sharedRole.currentText || batchWindow.defaultRole
         })
+        touchRows()
     }
 
     function clearRows() {
-        initRows(5)
+        initRows(1)
+        formMessage = ""
+    }
+
+    function touchRows() {
+        rowRevision++
+        if (formSeverity === "error")
+            formMessage = ""
+    }
+
+    function applySharedSettings() {
+        for (let i = 0; i < rowModel.count; ++i) {
+            rowModel.setProperty(i, "protocol", sharedProtocol.currentText)
+            rowModel.setProperty(i, "port", sharedPort.text || defaultPortForProtocol(sharedProtocol.currentText))
+            rowModel.setProperty(i, "os", sharedOs.currentText)
+            rowModel.setProperty(i, "role", sharedRole.currentText)
+            rowModel.setProperty(i, "username", sharedUsername.text)
+            rowModel.setProperty(i, "password", sharedPassword.text)
+        }
+        formSeverity = "success"
+        formMessage = "Shared settings applied to %1 row(s). You can still override any row below.".arg(rowModel.count)
+        touchRows()
     }
 
     function removeRow(rowIndex) {
@@ -159,6 +195,7 @@ Window {
         }
 
         rowModel.remove(rowIndex)
+        touchRows()
     }
 
     function collectRows() {
@@ -302,67 +339,45 @@ Window {
     function submitBatch() {
         const rows = collectRows()
         if (rows.length === 0) {
-            errorDialog.messageText = "No input rows found. Fill at least one row in the table."
-            errorDialog.openAlert()
+            formSeverity = "warning"
+            formMessage = "Enter at least one host before adding devices."
             return
         }
 
-        const added = []
-        let skipped = 0
+        const normalizedRows = []
+        const seenHosts = ({})
 
         for (let i = 0; i < rows.length; i++) {
             const check = validateAndNormalize(rows[i])
             if (!check.ok) {
-                errorDialog.messageText = check.message
-                errorDialog.openAlert()
+                formSeverity = "error"
+                formMessage = check.message
                 return
             }
-
-            const item = check.row
-            const ok = dbManager.addDevice(
-                item.host,
-                item.name,
-                item.protocol,
-                item.port,
-                item.username,
-                item.password,
-                item.os,
-                item.role,
-                item.role === "rou" ? "router" : item.role
-            )
-
-            if (ok) {
-                added.push({
-                    ip: item.host,
-                    name: item.name,
-                    protocol: item.protocol,
-                    port: item.port,
-                    user: item.username,
-                    pass: item.password,
-                    os: item.os,
-                    role: item.role,
-                    status: "disconnected",
-                    type: item.role === "rou" ? "router" : item.role
-                })
-            } else {
-                skipped++
+            const normalizedHost = check.row.host.toLowerCase()
+            if (seenHosts[normalizedHost]) {
+                formSeverity = "error"
+                formMessage = "Line %1 duplicates host %2 in this list.".arg(rows[i].lineNumber).arg(check.row.host)
+                return
             }
+            seenHosts[normalizedHost] = true
+            normalizedRows.push(check.row)
         }
 
-        const foldersOk = true
-
-        if (added.length > 0) {
+        const result = dbManager.addDevicesBatch(normalizedRows)
+        const message = result && result.message ? String(result.message) : "Could not add devices."
+        if (result && result.ok) {
+            const added = result.devices || []
+            const skipped = result.skipped || 0
+            const foldersOk = result.foldersOk !== false
             batchWindow.devicesAdded(added, rows.length, skipped, foldersOk)
-            let msg = "Added %1/%2 devices. Skipped (already exists): %3".arg(added.length).arg(rows.length).arg(skipped)
-            if (!foldersOk)
-                msg += "\nBackup folder creation failed."
             if (typeof statusBar !== "undefined") {
-                statusBar.showMessage(msg, "success")
+                statusBar.showMessage(message, skipped > 0 ? "warning" : "success")
             }
             batchWindow.close()
         } else {
-            errorDialog.messageText = "No device was added. All rows were skipped (already exists)."
-            errorDialog.openAlert()
+            formSeverity = "error"
+            formMessage = message
         }
     }
 
@@ -425,6 +440,92 @@ Window {
                 title: "Add Multiple Devices"
                 closeTooltip: "Close batch device form"
                 onCloseRequested: batchWindow.close()
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: Theme.spacing8
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: Theme.spacing4
+
+                    Text {
+                        text: "Shared connection settings"
+                        color: Theme.textPrimary
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSizeNormal
+                        font.bold: true
+                    }
+                    Text {
+                        text: "New rows inherit these values. Use Apply to all after changing settings for existing rows."
+                        color: Theme.textSecondary
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSizeSmall
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Theme.spacing8
+
+                    StandardComboBox {
+                        id: sharedProtocol
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        labelText: "Protocol"
+                        model: batchWindow.protocolOptions
+                        onActivated: (selectedIndex) => sharedPort.text = batchWindow.defaultPortForProtocol(batchWindow.protocolOptions[selectedIndex])
+                    }
+                    StandardTextField {
+                        id: sharedPort
+                        Layout.preferredWidth: 76
+                        Layout.minimumWidth: 60
+                        labelText: "Port"
+                        text: "22"
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+                    StandardComboBox {
+                        id: sharedOs
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        labelText: "OS"
+                        model: batchWindow.osOptions
+                    }
+                    StandardComboBox {
+                        id: sharedRole
+                        Layout.preferredWidth: 104
+                        Layout.minimumWidth: 80
+                        labelText: "Role"
+                        model: batchWindow.roleOptions
+                    }
+                    StandardTextField {
+                        id: sharedUsername
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        labelText: "Username"
+                        placeholderText: "admin"
+                    }
+                    StandardPasswordField {
+                        id: sharedPassword
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        labelText: "Password"
+                        placeholderText: "Optional"
+                    }
+                    StandardButton {
+                        Layout.alignment: Qt.AlignBottom
+                        text: "Apply to all"
+                        type: "Secondary"
+                        onClicked: batchWindow.applySharedSettings()
+                    }
+                }
+            }
+
+            InlineMessage {
+                Layout.fillWidth: true
+                message: batchWindow.formMessage
+                severity: batchWindow.formSeverity
             }
 
             DataTableFrame {
@@ -496,20 +597,25 @@ Window {
 
                                 StandardTextField {
                                     Layout.preferredWidth: batchWindow.hostColumnWidth
+                                    Layout.minimumWidth: 0
                                     text: host
                                     placeholderText: "192.168.1.10"
                                     onTextChanged: rowModel.setProperty(index, "host", text)
+                                    onTextEdited: batchWindow.touchRows()
                                 }
 
                                 StandardTextField {
                                     Layout.preferredWidth: batchWindow.nameColumnWidth
+                                    Layout.minimumWidth: 0
                                     text: name
                                     placeholderText: "Core-R1"
                                     onTextChanged: rowModel.setProperty(index, "name", text)
+                                    onTextEdited: batchWindow.touchRows()
                                 }
 
                                 StandardComboBox {
                                     Layout.preferredWidth: batchWindow.protocolColumnWidth
+                                    Layout.minimumWidth: 0
                                     model: batchWindow.protocolOptions
                                     currentIndex: batchWindow.protocolIndex(protocol)
                                     onCurrentTextChanged: rowModel.setProperty(index, "protocol", currentText)
@@ -517,47 +623,58 @@ Window {
                                         const selectedProtocol = batchWindow.protocolOptions[selectedIndex]
                                         rowModel.setProperty(index, "protocol", selectedProtocol)
                                         rowModel.setProperty(index, "port", batchWindow.defaultPortForProtocol(selectedProtocol))
+                                        batchWindow.touchRows()
                                     }
                                 }
 
                                 StandardTextField {
                                     Layout.preferredWidth: batchWindow.portColumnWidth
+                                    Layout.minimumWidth: 0
                                     text: port
                                     placeholderText: "22"
                                     horizontalAlignment: Text.AlignHCenter
                                     onTextChanged: rowModel.setProperty(index, "port", text)
+                                    onTextEdited: batchWindow.touchRows()
                                 }
 
                                 StandardComboBox {
                                     Layout.preferredWidth: batchWindow.osColumnWidth
+                                    Layout.minimumWidth: 0
                                     model: batchWindow.osOptions
                                     currentIndex: batchWindow.comboIndex(batchWindow.osOptions, os, 0)
                                     onCurrentTextChanged: rowModel.setProperty(index, "os", currentText)
+                                    onActivated: batchWindow.touchRows()
                                 }
 
                                 StandardComboBox {
                                     Layout.preferredWidth: batchWindow.roleColumnWidth
+                                    Layout.minimumWidth: 0
                                     model: batchWindow.roleOptions
                                     currentIndex: batchWindow.comboIndex(batchWindow.roleOptions, role, 0)
                                     onCurrentTextChanged: rowModel.setProperty(index, "role", currentText)
                                     onActivated: (selectedIndex) => {
                                         const selectedRole = batchWindow.roleOptions[selectedIndex]
                                         rowModel.setProperty(index, "role", selectedRole)
+                                        batchWindow.touchRows()
                                     }
                                 }
 
                                 StandardTextField {
                                     Layout.preferredWidth: batchWindow.usernameColumnWidth
+                                    Layout.minimumWidth: 0
                                     text: username
                                     placeholderText: "admin"
                                     onTextChanged: rowModel.setProperty(index, "username", text)
+                                    onTextEdited: batchWindow.touchRows()
                                 }
 
                                 StandardPasswordField {
                                     Layout.preferredWidth: batchWindow.passwordColumnWidth
+                                    Layout.minimumWidth: 0
                                     text: password
                                     placeholderText: "••••••••"
                                     onTextChanged: rowModel.setProperty(index, "password", text)
+                                    onTextEdited: batchWindow.touchRows()
                                 }
 
                                 IconButton {
@@ -584,7 +701,7 @@ Window {
                 spacing: Theme.spacing8
 
                 StandardButton {
-                    text: "Add Row"
+                    text: "Add another row"
                     type: "Secondary"
                     onClicked: addEmptyRow()
                 }
@@ -596,13 +713,13 @@ Window {
                 }
 
                 StandardButton {
-                    text: "Import"
+                    text: "Import file"
                     type: "Secondary"
                     onClicked: importDialog.open()
                 }
 
                 StandardButton {
-                    text: "Get Sample"
+                    text: "Download template"
                     type: "Secondary"
                     onClicked: {
                         sampleSaveDialog.selectedFile = batchWindow.sampleFileName
@@ -612,6 +729,15 @@ Window {
 
                 Item { Layout.fillWidth: true }
 
+                Text {
+                    text: batchWindow.inputRowCount === 0
+                          ? "No devices entered"
+                          : "%1 device%2 ready".arg(batchWindow.inputRowCount).arg(batchWindow.inputRowCount === 1 ? "" : "s")
+                    color: batchWindow.inputRowCount > 0 ? Theme.textSecondary : Theme.textDisabled
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeSmall
+                }
+
                 StandardButton {
                     text: "Cancel"
                     type: "Text"
@@ -620,16 +746,18 @@ Window {
 
                 StandardButton {
                     id: addAllButton
-                    text: "Add All"
+                    text: batchWindow.inputRowCount > 0
+                          ? "Add %1 device%2".arg(batchWindow.inputRowCount).arg(batchWindow.inputRowCount === 1 ? "" : "s")
+                          : "Add devices"
                     type: "Primary"
-                    enabled: rowModel.count > 0
+                    enabled: batchWindow.inputRowCount > 0
                     onClicked: batchWindow.submitBatch()
                 }
             }
         }
     }
 
-    Component.onCompleted: initRows(5)
+    Component.onCompleted: initRows(1)
 
     MultiEffect {
         source: mainContent

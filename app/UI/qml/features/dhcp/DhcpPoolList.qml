@@ -8,7 +8,7 @@ import UI
 SavedListPanel {
     id: panel
     property var poolModel
-    signal editRequested(var row)
+    signal editRequested(int index, var row)
     signal deleteRequested(int index, var row)
 
     SplitView.fillWidth: true
@@ -58,7 +58,7 @@ SavedListPanel {
                         spacing: 4
                         IconButton {
                             buttonSize: 24; glyph: "E"; tooltip: "Edit"
-                            onClicked: panel.editRequested(model)
+                            onClicked: panel.editRequested(index, model)
                         }
                         IconButton {
                             buttonSize: 24; glyph: "X"; danger: true; tooltip: "Delete"

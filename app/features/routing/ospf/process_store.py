@@ -3,7 +3,7 @@ from __future__ import annotations
 import sqlite3
 from typing import Any
 
-from .common import as_dict, as_list
+from .common import as_dict, as_list, process_action_cfg
 
 
 OSPF_PASSIVE_IFACE_NAME_COLUMN = "interface_name"
@@ -296,7 +296,9 @@ def insert_ospf_process(conn: sqlite3.Connection, db: Any, host: str, process: d
 
     existing = conn.execute(
         """
-        SELECT ospf_id
+        SELECT ospf_id, process_id, router_id, reference_bandwidth,
+               passive_default, default_originate, default_originate_always,
+               action_Cfg
         FROM t04_ospf_processes
         WHERE host = ? AND process_id = ?
         ORDER BY ospf_id ASC
@@ -307,6 +309,7 @@ def insert_ospf_process(conn: sqlite3.Connection, db: Any, host: str, process: d
 
     if existing is not None:
         ospf_id = existing["ospf_id"]
+        action_cfg = process_action_cfg(dict(existing), process)
         conn.execute(
             """
             UPDATE t04_ospf_processes
@@ -315,6 +318,7 @@ def insert_ospf_process(conn: sqlite3.Connection, db: Any, host: str, process: d
                 passive_default = ?,
                 default_originate = ?,
                 default_originate_always = ?,
+                action_Cfg = ?,
                 sync_status = 'pending_apply'
             WHERE ospf_id = ?;
             """,
@@ -324,6 +328,7 @@ def insert_ospf_process(conn: sqlite3.Connection, db: Any, host: str, process: d
                 db._bool_int(process.get("passive_default")),
                 db._bool_int(process.get("default_originate")),
                 db._bool_int(process.get("default_originate_always")),
+                action_cfg,
                 ospf_id,
             ),
         )
@@ -333,9 +338,10 @@ def insert_ospf_process(conn: sqlite3.Connection, db: Any, host: str, process: d
             """
             INSERT INTO t04_ospf_processes (
                 host, process_id, router_id, reference_bandwidth,
-                passive_default, default_originate, default_originate_always, sync_status
+                passive_default, default_originate, default_originate_always,
+                action_Cfg, sync_status
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'pending_apply');
+            VALUES (?, ?, ?, ?, ?, ?, ?, '1111', 'pending_apply');
             """,
             (
                 host,

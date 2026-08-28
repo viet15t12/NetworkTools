@@ -449,10 +449,12 @@ class ButtonIconContractTests(unittest.TestCase):
         # ParameterHelpButton uses a literal circled "i" so the affordance
         # remains visible even when an SVG theme asset is unavailable.
         # The System Logs Settings restart action adds one semantic icon
-        # button after ParameterHelpButton moved to a literal circled "i".
-        self.assertEqual(len(self.button_blocks), 256)
+        # button after ParameterHelpButton moved to a literal circled "i". The
+        # batch device form also has one text-only "Apply to all" action. NAT
+        # Quick Setup adds its toolbar, apply, and cancel actions.
+        self.assertEqual(len(self.button_blocks), 260)
         self.assertEqual(len(buttons_with_icons), 102)
-        self.assertEqual(len(self.button_blocks) - len(buttons_with_icons), 154)
+        self.assertEqual(len(self.button_blocks) - len(buttons_with_icons), 158)
 
     def test_routing_group_replaces_clone_workflow(self) -> None:
         routing_root = self.ui_root / "qml" / "features" / "routing"
@@ -2032,7 +2034,7 @@ class PasswordFieldContractTests(unittest.TestCase):
     def test_every_current_password_input_uses_shared_component(self) -> None:
         expected_consumers = {
             "qml/sidebar/new_device/NewDevice.qml": 1,
-            "qml/sidebar/new_device/BatchNewDevice.qml": 1,
+            "qml/sidebar/new_device/BatchNewDevice.qml": 2,
             "qml/features/interfaces/InterfaceView.qml": 1,
             "qml/sftp/SftpConnectionBar.qml": 1,
             "qml/sftp/SftpConnectionDialog.qml": 1,

@@ -167,6 +167,30 @@ router ospf 1
         self.assertEqual(result["summary"]["vlans"], 2)
         self.assertEqual(calls[0][3], "safe")
 
+    def test_sw3_passes_running_config_to_switch_fhrp_sync(self) -> None:
+        calls = []
+
+        def sync_switch(db_path, host, snapshot, mode):
+            calls.append((db_path, host, snapshot, mode))
+            return {"fhrp_members": 1, "conflicts": []}
+
+        service = ConfigSyncService(
+            "device.db",
+            lambda _host: "sw3",
+            switch_synchronizer=sync_switch,
+        )
+        running_config = "interface Vlan20\n standby 20 ip 192.0.2.1\n!\n"
+        result = service.sync_committed_snapshot(
+            "switch-1",
+            running_config,
+            "",
+            {"changed": True, "commitId": "abc"},
+            switch_state={"vlan_brief": "20 USERS active"},
+        )
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(calls[0][2]["running_config"], running_config)
+
     def test_sync_failure_does_not_hide_committed_snapshot_context(self) -> None:
         def fail(*_args):
             raise RuntimeError("database is locked")

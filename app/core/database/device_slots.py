@@ -231,26 +231,123 @@ class DeviceSlotsMixin:
             print(f"[db] addDevice failed: {exc}", file=sys.stderr)
             return False
 
+    @pyqtSlot("QVariant", result="QVariant")
+    def addDevicesBatch(self, payload: Any) -> dict[str, Any]:
+        """Insert a validated device batch in one database transaction."""
+        raw_rows = self._as_list(payload)
+        if not raw_rows:
+            return {
+                "ok": False,
+                "message": "No device rows were provided.",
+                "added": 0,
+                "skipped": 0,
+                "devices": [],
+            }
+
+        rows: list[dict[str, Any]] = []
+        for index, raw in enumerate(raw_rows, start=1):
+            row = self._as_dict(raw)
+            host = str(row.get("host") or "").strip()
+            if not host:
+                return {
+                    "ok": False,
+                    "message": f"Row {index}: Host is required.",
+                    "added": 0,
+                    "skipped": 0,
+                    "devices": [],
+                }
+            try:
+                port = int(str(row.get("port") or "").strip())
+            except (TypeError, ValueError):
+                port = 0
+            if not 1 <= port <= 65535:
+                return {
+                    "ok": False,
+                    "message": f"Row {index}: Port must be an integer in range 1-65535.",
+                    "added": 0,
+                    "skipped": 0,
+                    "devices": [],
+                }
+            role = normalize_device_role(row.get("role"), row.get("type")) or "rou"
+            rows.append(
+                {
+                    "host": host,
+                    "name": _clean_display_text(row.get("name")),
+                    "method": str(row.get("protocol") or row.get("method") or "SSH").strip().upper(),
+                    "port": port,
+                    "username": str(row.get("username") or row.get("user") or "").strip(),
+                    "password": str(row.get("password") or row.get("pass") or "").strip(),
+                    "os": str(row.get("os") or "cisco_ios").strip() or "cisco_ios",
+                    "role": role,
+                    "type": device_type_for_role(role),
+                }
+            )
+
+        added_devices: list[dict[str, Any]] = []
+        skipped = 0
+        try:
+            with self._connect() as conn:
+                for row in rows:
+                    cursor = conn.execute(
+                        """
+                        INSERT OR IGNORE INTO t01_devices
+                            (host, device_name, method, portnumber, username, password,
+                             os, role, connection_status, dev, device_type)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'waiting', 0, ?);
+                        """,
+                        (
+                            row["host"], row["name"] or None, row["method"] or None,
+                            row["port"], row["username"] or None, row["password"] or None,
+                            row["os"] or None, row["role"], row["type"],
+                        ),
+                    )
+                    if cursor.rowcount:
+                        added_devices.append(
+                            {
+                                "ip": row["host"], "name": row["name"],
+                                "protocol": row["method"], "port": str(row["port"]),
+                                "user": row["username"], "pass": row["password"],
+                                "os": row["os"], "role": row["role"],
+                                "status": "waiting", "type": row["type"],
+                            }
+                        )
+                    else:
+                        skipped += 1
+                conn.commit()
+        except sqlite3.Error as exc:
+            print(f"[db] addDevicesBatch failed: {exc}", file=sys.stderr)
+            return {
+                "ok": False,
+                "message": f"Could not add devices: {exc}",
+                "added": 0,
+                "skipped": 0,
+                "devices": [],
+            }
+
+        added = len(added_devices)
+        message = f"Added {added}/{len(rows)} devices."
+        if skipped:
+            message += f" Skipped {skipped} existing device(s)."
+        return {
+            "ok": added > 0,
+            "message": message,
+            "added": added,
+            "skipped": skipped,
+            "devices": _variant_list(added_devices),
+            "foldersOk": True,
+        }
+
     @pyqtSlot(str, result="QVariant")
     def deleteDevice(self, host: str) -> dict[str, Any]:
         """Delete one inventory device and return a QML-friendly status payload."""
         target_host = (host or "").strip()
         if not target_host:
             return {"ok": False, "severity": "warning", "message": "Delete device failed: host is empty."}
-        try:
-            with self._connect() as conn:
-                cursor = conn.execute("DELETE FROM t01_devices WHERE host = ?;", (target_host,))
-                conn.commit()
-            if cursor.rowcount <= 0:
-                message = f"Delete device failed for {target_host}: no database row was deleted."
-                return {"ok": False, "severity": "error", "message": message}
-
-            message = f"Device {target_host} deleted."
-            return {"ok": True, "severity": "success", "message": message}
-        except sqlite3.Error as exc:
-            message = f"Delete device failed for {target_host}: {exc}"
-            print(f"[db] deleteDevice failed: {exc}", file=sys.stderr)
-            return {"ok": False, "severity": "error", "message": message}
+        return {
+            "ok": False,
+            "severity": "warning",
+            "message": "Host deletion is disabled.",
+        }
 
     @pyqtSlot(str, str, result=bool)
     def updateDeviceConnectionStatus(self, host: str, status: str) -> bool:

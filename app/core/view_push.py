@@ -566,7 +566,11 @@ class DhcpViewPushController(BaseViewPushController):
             changes += cursor.rowcount
 
         for row_id in ids.get("pool_add", []):
-            cursor.execute("UPDATE t03_dhcp_pool SET sync_status = 'synchronized' WHERE dhcp_id = ?", (row_id,))
+            cursor.execute(
+                "UPDATE t03_dhcp_pool SET sync_status = 'synchronized', "
+                "action_Cfg = '000' WHERE dhcp_id = ?",
+                (row_id,),
+            )
             changes += cursor.rowcount
         for row_id in ids.get("pool_del", []):
             cursor.execute("DELETE FROM t03_dhcp_pool WHERE dhcp_id = ?", (row_id,))

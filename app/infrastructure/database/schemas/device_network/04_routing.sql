@@ -30,6 +30,10 @@ CREATE INDEX IF NOT EXISTS ix_t04_static_routes_sync
 ON t04_static_routes(host, sync_status);
 
 -- 4b. OSPF
+-- OSPF process action_Cfg bits (left to right):
+--   0 router-id, 1 reference-bandwidth, 2 passive-interface default,
+--   3 default-information originate/always.
+-- A new process pushes all four groups; a synchronized process is reset to 0000.
 CREATE TABLE IF NOT EXISTS t04_ospf_processes (
     ospf_id                  INTEGER PRIMARY KEY AUTOINCREMENT,
     host                     TEXT    NOT NULL,
@@ -39,11 +43,13 @@ CREATE TABLE IF NOT EXISTS t04_ospf_processes (
     passive_default          INTEGER DEFAULT 0,  
     default_originate        INTEGER DEFAULT 0,  
     default_originate_always INTEGER DEFAULT 0,  
+    action_Cfg               TEXT NOT NULL DEFAULT '1111',
     sync_status                  TEXT NOT NULL DEFAULT 'pending_apply',
     CHECK(sync_status IN ('pending_apply','pending_delete','synchronized','skipped')),
     CHECK(passive_default IN (0,1)),
     CHECK(default_originate IN (0,1)),
     CHECK(default_originate_always IN (0,1)),
+    CHECK(length(action_Cfg) = 4 AND action_Cfg GLOB '[01][01][01][01]'),
     UNIQUE (host, process_id),
     FOREIGN KEY (host) REFERENCES t01_devices(host) ON DELETE CASCADE
 );

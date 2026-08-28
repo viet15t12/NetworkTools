@@ -121,6 +121,63 @@ class SwitchSyncPersistenceTests(unittest.TestCase):
         )
         self.assertEqual(preview["conflicts"], [])
 
+    def test_sw3_sync_imports_fhrp_from_a_synchronized_svi(self):
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute(
+                "UPDATE t01_devices SET role = 'sw3', device_type = 'sw3' "
+                "WHERE host = '192.0.2.20'"
+            )
+            conn.execute(
+                """
+                INSERT INTO t06_vlan_db(
+                    host, vlan_id, vlan_name, success, device_present
+                ) VALUES ('192.0.2.20', 20, 'USERS', 'synchronized', 1)
+                """
+            )
+            conn.execute(
+                """
+                INSERT INTO t06_svi_interface(
+                    host, vlan_id, ip_address, subnet_mask,
+                    shutdown, sync_status, device_present
+                ) VALUES (
+                    '192.0.2.20', 20, '192.0.2.2', '255.255.255.0',
+                    0, 'synchronized', 1
+                )
+                """
+            )
+
+        result = sync_switch_state(
+            self.db_path,
+            "192.0.2.20",
+            {
+                "running_config": """
+interface Vlan20
+ ip address 192.0.2.2 255.255.255.0
+ standby version 2
+ standby 20 ip 192.0.2.1
+ standby 20 priority 110
+ standby 20 preempt
+!
+"""
+            },
+        )
+
+        self.assertEqual(result["fhrp_members"], 1)
+        self.assertIn("fhrp", result["applied"])
+        with sqlite3.connect(self.db_path) as conn:
+            row = conn.execute(
+                """
+                SELECT m.interface_kind, g.protocol, g.group_number,
+                       g.virtual_ip, m.sync_status
+                FROM t08_fhrp_members AS m
+                JOIN t08_fhrp_groups AS g ON g.fhrp_id = m.fhrp_id
+                WHERE m.host = '192.0.2.20'
+                """
+            ).fetchone()
+        self.assertEqual(
+            row, ("svi", "hsrp", 20, "192.0.2.1", "synchronized")
+        )
+
     def test_preview_preserves_existing_unpushed_vlan(self):
         with sqlite3.connect(self.db_path) as conn:
             conn.execute(

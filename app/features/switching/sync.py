@@ -11,6 +11,11 @@ from typing import Any
 
 from .etherchannel_sync import parse_etherchannels, sync_etherchannels
 from .interface_names import INTERFACE_NAME_PATTERN, normalize_interface_name
+from features.devices.sync import (
+    clear_fhrp_members,
+    insert_fhrp_members,
+    parse_running_config_sections,
+)
 
 
 def parse_vlan_brief(output: str) -> list[dict[str, Any]]:
@@ -317,20 +322,39 @@ def sync_switch_state(
     from .schema import ensure_switch_schema
 
     ensure_switch_schema(db)
+    parsed_fhrp = parse_running_config_sections(snapshot.get("running_config", ""))
     modules = {
         "vlan": bool(parse_vlan_brief(snapshot.get("vlan_brief", ""))),
         "interfaces": bool(parse_interface_status(snapshot.get("interfaces_status", ""))),
         "vtp": parse_vtp_status(snapshot.get("vtp_status", "")) is not None,
+        "fhrp": "running_config" in snapshot,
     }
     conflicts: list[str] = []
     with db._connect() as conn:
         for module, available in modules.items():
-            if available and _module_has_local_state(conn, host, module) and _module_is_pending(db, host, module):
+            if not available:
+                continue
+            if module == "fhrp":
+                pending = conn.execute(
+                    """
+                    SELECT 1 FROM t08_fhrp_members AS m
+                    LEFT JOIN t08_fhrp_tracks AS t ON t.member_id = m.member_id
+                    WHERE m.host = ? AND (
+                        m.sync_status IN ('pending_apply', 'pending_delete')
+                        OR t.sync_status IN ('pending_apply', 'pending_delete')
+                    ) LIMIT 1;
+                    """,
+                    (host,),
+                ).fetchone()
+                if pending is not None:
+                    conflicts.append(module)
+                continue
+            if _module_has_local_state(conn, host, module) and _module_is_pending(db, host, module):
                 conflicts.append(module)
     if mode == "preview":
         return {"conflicts": conflicts, "available": [key for key, value in modules.items() if value]}
 
-    counts = {"vlans": 0, "interfaces": 0, "vtp": 0}
+    counts = {"vlans": 0, "interfaces": 0, "vtp": 0, "fhrp_members": 0}
     applied: list[str] = []
     with db._connect() as conn, conn:
         if modules["vlan"] and (mode == "force_device_state" or "vlan" not in conflicts):
@@ -342,4 +366,9 @@ def sync_switch_state(
         if modules["vtp"] and (mode == "force_device_state" or "vtp" not in conflicts):
             counts["vtp"] = _sync_vtp(conn, host, snapshot["vtp_status"])
             applied.append("vtp")
+        if modules["fhrp"] and (mode == "force_device_state" or "fhrp" not in conflicts):
+            clear_fhrp_members(conn, host)
+            insert_fhrp_members(conn, host, parsed_fhrp.fhrp_members)
+            counts["fhrp_members"] = len(parsed_fhrp.fhrp_members)
+            applied.append("fhrp")
     return {**counts, "conflicts": conflicts, "applied": applied}

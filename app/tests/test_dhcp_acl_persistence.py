@@ -20,6 +20,7 @@ from dhcp import (
     get_dhcp_pools,
     update_dhcp_pool,
 )
+from dhcp.worker import render_dhcp_template
 
 
 class DatabaseAdapter:
@@ -86,6 +87,77 @@ class DhcpAclPersistenceTests(unittest.TestCase):
             [(row[0], row[1]) for row in states],
             [("LAN20", "pending_apply")],
         )
+
+    def test_unchanged_pool_edit_is_a_database_no_op(self) -> None:
+        self.assertTrue(add_dhcp_pool(
+            self.db, "10.0.0.1", "LAN", "192.168.10.0", "/24",
+            "192.168.10.1", "8.8.8.8", "1",
+        ))
+        row = get_dhcp_pools(self.db, "10.0.0.1")[0]
+        with closing(self.db._connect()) as conn:
+            conn.execute(
+                "UPDATE t03_dhcp_pool SET sync_status = 'synchronized', "
+                "action_Cfg = '000' WHERE dhcp_id = ?",
+                (row["dhcp_id"],),
+            )
+            conn.commit()
+
+        self.assertTrue(update_dhcp_pool(
+            self.db, row["dhcp_id"], "LAN", "192.168.10.0", "/24",
+            "192.168.10.1", "8.8.8.8", "1",
+        ))
+        unchanged = get_dhcp_pools(self.db, "10.0.0.1")[0]
+        self.assertEqual(unchanged["sync_status"], "synchronized")
+        self.assertEqual(unchanged["action_Cfg"], "000")
+
+    def test_pool_template_skips_unchanged_optional_commands(self) -> None:
+        rendered = render_dhcp_template(
+            "cisco_ios",
+            {
+                "config": [{
+                    "pools": [{
+                        "name": "LAN",
+                        "network": "192.168.10.0",
+                        "subnet_mask": "255.255.255.0",
+                        "default_gateway": "192.168.10.1",
+                        "dns_server": "8.8.8.8",
+                        "lease": "1",
+                        "push_default": False,
+                        "push_dns": False,
+                        "push_lease": False,
+                        "state": "setup",
+                    }]
+                }]
+            },
+        )
+        self.assertNotIn("no default-router", rendered)
+        self.assertNotIn("no dns-server", rendered)
+        self.assertNotIn("no lease", rendered)
+        self.assertNotIn("default-router 192.168.10.1", rendered)
+        self.assertNotIn("dns-server 8.8.8.8", rendered)
+
+        removal = render_dhcp_template(
+            "cisco_ios",
+            {
+                "config": [{
+                    "pools": [{
+                        "name": "LAN",
+                        "network": "192.168.10.0",
+                        "subnet_mask": "255.255.255.0",
+                        "default_gateway": None,
+                        "dns_server": None,
+                        "lease": "1",
+                        "push_default": True,
+                        "push_dns": True,
+                        "push_lease": False,
+                        "state": "setup",
+                    }]
+                }]
+            },
+        )
+        self.assertIn("no default-router", removal)
+        self.assertIn("no dns-server", removal)
+        self.assertNotIn("no lease", removal)
 
     def test_helper_load_uses_runtime_interface_column(self) -> None:
         with closing(self.db._connect()) as conn:

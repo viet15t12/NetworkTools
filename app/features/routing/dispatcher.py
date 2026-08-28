@@ -29,6 +29,12 @@ def has_eigrp_text_bit(action_cfg: str, bit_index_from_left: int) -> bool:
     if bit_index_from_left < 0 or bit_index_from_left >= len(action_cfg): return False
     return action_cfg[bit_index_from_left] == '1'
 
+def has_ospf_action_bit(action_cfg: str, bit_index_from_left: int) -> bool:
+    if not action_cfg: return True
+    if len(action_cfg) != 4: return True
+    if bit_index_from_left < 0 or bit_index_from_left >= len(action_cfg): return False
+    return action_cfg[bit_index_from_left] == '1'
+
 def state_3(val):
     if val in (1, '1', 1.0, '1.0'): return True
     if val in (0, '0', 0.0, '0.0'): return False
@@ -107,7 +113,7 @@ def routing_dispatcher(target_ip="all", target_module="all", dry_run=False, sess
 
         # --- PHẦN 1: THU THẬP DỮ LIỆU OSPF ---
         if target_module in ['ospf', 'all']:
-            query_ospf = f"SELECT ospf_id, host, process_id, router_id, reference_bandwidth, passive_default, default_originate, default_originate_always, sync_status FROM {T_OSPF_PROC}"
+            query_ospf = f"SELECT ospf_id, host, process_id, router_id, reference_bandwidth, passive_default, default_originate, default_originate_always, sync_status, action_Cfg FROM {T_OSPF_PROC}"
             params_ospf = []
             if target_ip != "all":
                 query_ospf += " WHERE host = ?"
@@ -115,7 +121,7 @@ def routing_dispatcher(target_ip="all", target_module="all", dry_run=False, sess
 
             cursor.execute(query_ospf, tuple(params_ospf))
             for proc in cursor.fetchall():
-                ospf_id, host, proc_id, router_id, ref_bw, passive_def, def_orig, def_always, proc_success = proc
+                ospf_id, host, proc_id, router_id, ref_bw, passive_def, def_orig, def_always, proc_success, action_cfg = proc
                 p_state = success_state(proc_success)
                 
                 d_orig = state_3(def_orig)
@@ -128,10 +134,10 @@ def routing_dispatcher(target_ip="all", target_module="all", dry_run=False, sess
 
                 config_data = {
                     "process_id": proc_id, 
-                    "router_id": (router_id if router_id else "remove") if p_state != "ignore" else None,
-                    "reference_bandwidth": ref_bw if p_state != "ignore" else None,
-                    "passive_default": state_3(passive_def) if p_state != "ignore" else None,
-                    "default_originate": def_orig_final if p_state != "ignore" else None,
+                    "router_id": (router_id if router_id else "remove") if p_state != "ignore" and has_ospf_action_bit(action_cfg, 0) else None,
+                    "reference_bandwidth": (ref_bw if ref_bw else "remove") if p_state != "ignore" and has_ospf_action_bit(action_cfg, 1) else None,
+                    "passive_default": state_3(passive_def) if p_state != "ignore" and has_ospf_action_bit(action_cfg, 2) else None,
+                    "default_originate": def_orig_final if p_state != "ignore" and has_ospf_action_bit(action_cfg, 3) else None,
                     "networks": [], "areas": [], "redistribute": [], "passive_interfaces": [], "interfaces": []
                 }
                 
@@ -425,7 +431,7 @@ def routing_dispatcher(target_ip="all", target_module="all", dry_run=False, sess
                                 if item["action"] == "remove": 
                                     item_changes += apply_change(f"DELETE FROM {T_OSPF_PROC} WHERE ospf_id = ?", (o_id,))
                                 else: 
-                                    item_changes += apply_change(f"UPDATE {T_OSPF_PROC} SET sync_status = 'synchronized'{clean_sql(['passive_default', 'default_originate', 'default_originate_always'])} WHERE ospf_id = ?", (o_id,))
+                                    item_changes += apply_change(f"UPDATE {T_OSPF_PROC} SET sync_status = 'synchronized', action_Cfg = '0000'{clean_sql(['passive_default', 'default_originate', 'default_originate_always'])} WHERE ospf_id = ?", (o_id,))
                                 
                                 for n_id in item["net_ids_add"]: item_changes += apply_change(f"UPDATE {T_OSPF_NET} SET sync_status = 'synchronized' WHERE id = ?", (n_id,))
                                 for n_id in item["net_ids_del"]: item_changes += apply_change(f"DELETE FROM {T_OSPF_NET} WHERE id = ?", (n_id,))

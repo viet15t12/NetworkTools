@@ -510,6 +510,130 @@ def delete_nat_pat_rule(db: Any, nat_pat_id: int) -> bool:
         return False
 
 
+def apply_nat_pat_quick_setup(db: Any, host: str, payload: Any) -> dict[str, Any]:
+    """Create the common inside/outside + ACL + interface PAT workflow atomically."""
+    host = normalize_host(host)
+    values = db._as_dict(payload) if hasattr(db, "_as_dict") else dict(payload or {})
+    inside_interface = text_or_default(values.get("inside_interface"), "")
+    outside_interface = text_or_default(values.get("outside_interface"), "")
+    source_network = text_or_default(values.get("source_network"), "")
+    wildcard = text_or_default(values.get("wildcard"), "")
+    acl_name = text_or_default(values.get("acl_name"), "NAT_INSIDE")
+
+    if not host:
+        return {"ok": False, "message": "Select a device before using Quick PAT setup."}
+    if not inside_interface or not outside_interface:
+        return {"ok": False, "message": "Select both an inside and an outside interface."}
+    if inside_interface == outside_interface:
+        return {"ok": False, "message": "Inside and outside interfaces must be different."}
+    if not _is_ipv4(source_network) or not _is_ipv4(wildcard):
+        return {"ok": False, "message": "LAN network and wildcard must be valid IPv4 values."}
+    if not acl_name:
+        return {"ok": False, "message": "ACL name is required."}
+
+    try:
+        with closing(db._connect()) as conn:
+            available = {
+                str(row[0])
+                for row in conn.execute(
+                    "SELECT interface_name FROM t02_interface_name WHERE host = ?;",
+                    (host,),
+                ).fetchall()
+            }
+            missing = [
+                name for name in (inside_interface, outside_interface)
+                if name not in available
+            ]
+            if missing:
+                return {
+                    "ok": False,
+                    "message": "Interface not found for this device: " + ", ".join(missing),
+                }
+
+            interface_nat_id = _get_or_create_nat_id(
+                conn, host, "static", f"nat_iface_{host}"
+            )
+            for interface_name, role in (
+                (inside_interface, "inside"),
+                (outside_interface, "outside"),
+            ):
+                conn.execute(
+                    """
+                    INSERT INTO t05_nat_interfaces
+                        (nat_id, t02_interface_name, nat_role, sync_status)
+                    VALUES (?, ?, ?, 'pending_apply')
+                    ON CONFLICT(nat_id, t02_interface_name) DO UPDATE SET
+                        nat_role = excluded.nat_role,
+                        sync_status = 'pending_apply'
+                    WHERE t05_nat_interfaces.nat_role != excluded.nat_role
+                       OR t05_nat_interfaces.sync_status = 'pending_delete';
+                    """,
+                    (interface_nat_id, interface_name, role),
+                )
+
+            nat_acl_id = _get_or_create_nat_acl_id(
+                conn, host, acl_name, create=True
+            )
+            acl_rule = conn.execute(
+                """
+                SELECT id, sync_status
+                FROM t05_nat_standard_acl_rules
+                WHERE nat_acl_id = ? AND action = 'permit'
+                  AND source = ? AND COALESCE(wildcard, '') = ?
+                LIMIT 1;
+                """,
+                (nat_acl_id, source_network, wildcard),
+            ).fetchone()
+            if acl_rule is None:
+                next_sequence = int(conn.execute(
+                    """
+                    SELECT COALESCE(MAX(COALESCE(sequence, id * 10)), 0) + 10
+                    FROM t05_nat_standard_acl_rules WHERE nat_acl_id = ?;
+                    """,
+                    (nat_acl_id,),
+                ).fetchone()[0])
+                conn.execute(
+                    """
+                    INSERT INTO t05_nat_standard_acl_rules
+                        (nat_acl_id, sequence, action, source, wildcard, sync_status)
+                    VALUES (?, ?, 'permit', ?, ?, 'pending_apply');
+                    """,
+                    (nat_acl_id, next_sequence, source_network, wildcard),
+                )
+            elif acl_rule["sync_status"] == "pending_delete":
+                conn.execute(
+                    "UPDATE t05_nat_standard_acl_rules "
+                    "SET sync_status = 'pending_apply' WHERE id = ?;",
+                    (acl_rule["id"],),
+                )
+
+            pat_nat_id = _get_or_create_nat_id(conn, host, "overload", f"pat_{host}")
+            conn.execute(
+                """
+                INSERT INTO t05_nat_overload_interface_rules
+                    (nat_id, nat_acl_id, outside_interface, overload, sync_status)
+                VALUES (?, ?, ?, 1, 'pending_apply')
+                ON CONFLICT(nat_id, nat_acl_id, outside_interface) DO UPDATE SET
+                    overload = 1,
+                    sync_status = 'pending_apply'
+                WHERE t05_nat_overload_interface_rules.overload != 1
+                   OR t05_nat_overload_interface_rules.sync_status = 'pending_delete';
+                """,
+                (pat_nat_id, nat_acl_id, outside_interface),
+            )
+            conn.commit()
+        return {
+            "ok": True,
+            "message": (
+                f"Quick PAT setup saved: {source_network} via {outside_interface}. "
+                "Review the preview before pushing."
+            ),
+        }
+    except sqlite3.Error as exc:
+        log_db_error("applyNatPatQuickSetup", exc)
+        return {"ok": False, "message": f"Quick PAT setup failed: {exc}"}
+
+
 # ── NAT ACL ───────────────────────────────────────────────────────────────────
 
 def get_nat_acl_names(db: Any, host: str) -> list[str]:

@@ -25,6 +25,12 @@ def is_disable(value):
     return value in (0, "0", False)
 
 
+def has_action_bit(value, index):
+    """Treat legacy rows as fully selected and modern four-bit masks precisely."""
+    mask = str(value or "")
+    return len(mask) != 4 or (0 <= index < 4 and mask[index] == "1")
+
+
 def _table_columns(cursor, table):
     return {row[1] for row in cursor.execute(f"PRAGMA table_info({table})").fetchall()}
 
@@ -235,23 +241,24 @@ class OspfApi:
         has_body = False
 
         if is_pending(process["sync_status"]):
-            if process["router_id"]:
+            action_cfg = process["action_Cfg"] if "action_Cfg" in process.keys() else "1111"
+            if has_action_bit(action_cfg, 0) and process["router_id"]:
                 commands.append(f"router-id {process['router_id']}")
                 has_body = True
-            if process["reference_bandwidth"]:
+            if has_action_bit(action_cfg, 1) and process["reference_bandwidth"]:
                 commands.append(f"auto-cost reference-bandwidth {process['reference_bandwidth']}")
                 has_body = True
-            if is_enable(process["passive_default"]):
+            if has_action_bit(action_cfg, 2) and is_enable(process["passive_default"]):
                 commands.append("passive-interface default")
                 has_body = True
-            elif is_disable(process["passive_default"]) or is_remove(process["passive_default"]):
+            elif has_action_bit(action_cfg, 2) and (is_disable(process["passive_default"]) or is_remove(process["passive_default"])):
                 commands.append("no passive-interface default")
                 has_body = True
-            if is_enable(process["default_originate"]) or is_enable(process["default_originate_always"]):
+            if has_action_bit(action_cfg, 3) and (is_enable(process["default_originate"]) or is_enable(process["default_originate_always"])):
                 suffix = " always" if is_enable(process["default_originate_always"]) else ""
                 commands.append(f"default-information originate{suffix}")
                 has_body = True
-            elif (
+            elif has_action_bit(action_cfg, 3) and (
                 is_disable(process["default_originate"])
                 or is_disable(process["default_originate_always"])
                 or is_remove(process["default_originate"])
@@ -434,7 +441,12 @@ class OspfApi:
                     continue
 
                 if is_pending(process["sync_status"]):
-                    cursor.execute("UPDATE t04_ospf_processes SET sync_status = 'synchronized' WHERE ospf_id = ?", (process["ospf_id"],))
+                    cursor.execute(
+                        "UPDATE t04_ospf_processes "
+                        "SET sync_status = 'synchronized', action_Cfg = '0000' "
+                        "WHERE ospf_id = ?",
+                        (process["ospf_id"],),
+                    )
 
                 self._mark_child_rows(cursor, "t04_ospf_networks", item["networks"])
                 self._mark_child_rows(cursor, "t04_ospf_areas", item["areas"])

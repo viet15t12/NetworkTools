@@ -38,6 +38,18 @@ def option_action_cfg(current: dict[str, Any], submitted: dict[str, Any]) -> str
     return "".join(bits)
 
 
+def option_presence_action_cfg(data: dict[str, Any]) -> str:
+    """Select only optional commands that have values on a newly created pool."""
+    lease = str(data.get("lease") or "1").strip().lower()
+    return "".join(
+        (
+            "1" if str(data.get("defaut") or "").strip() else "0",
+            "1" if str(data.get("dns") or "").strip() else "0",
+            "1" if lease not in {"", "1"} else "0",
+        )
+    )
+
+
 def pool_identity_changed(current: dict[str, Any], submitted: dict[str, Any]) -> bool:
     return any(
         str(current.get(field) or "") != str(submitted.get(field) or "")

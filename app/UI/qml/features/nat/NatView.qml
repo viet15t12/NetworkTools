@@ -236,6 +236,15 @@ Rectangle {
                     }
                 }
 
+                StandardButton {
+                    objectName: "natQuickSetupButton"
+                    text: "Quick setup"
+                    type: "Secondary"
+                    enabled: String(natView.currentHostIp || "").trim() !== ""
+                    tooltip: "Create a standard interface PAT policy"
+                    onClicked: quickSetupDialog.openForHost(natView.currentHostIp)
+                }
+
                 ViewPushButton {
                     type: "Primary"
                     controllerName: "nat"
@@ -371,5 +380,13 @@ Rectangle {
     onCurrentHostIpChanged: {
         syncHostToCurrentTab()
         refreshViewPush()
+    }
+
+    NatQuickSetupDialog {
+        id: quickSetupDialog
+        onSetupSaved: {
+            natView.reloadNatData()
+            natView.activateTab("PAT")
+        }
     }
 }

@@ -14,3 +14,8 @@ setting không bị biến thành `QObject` rỗng. Backend validate toàn bộ 
 transaction (ID, IP, range số, duplicate và enum), nên payload lỗi không làm thay
 đổi dữ liệu đang có. Distance/Tuning được hydrate lại khi load DB hoặc đổi process;
 lỗi load/save được đưa vào `FormLayout.errorMessage` ngoài thông báo status bar.
+
+Process table dùng `action_Cfg` bốn bit cho router-id, reference bandwidth,
+passive-default và default-originate. Save chỉ bật bit của nhóm thực sự thay đổi;
+dispatcher/worker bỏ qua các bit 0 và reset mask về `0000` sau push thành công.
+Workspace cũ được bổ sung cột này bằng migration không phá dữ liệu.

@@ -19,6 +19,8 @@ class ParsedRouterConfig:
     default_routes: list[dict[str, Any]] = field(default_factory=list)
     ospf_processes: dict[int, dict[str, Any]] = field(default_factory=dict)
     eigrp_processes: dict[int, dict[str, Any]] = field(default_factory=dict)
+    fhrp_members: list[dict[str, Any]] = field(default_factory=list)
+    dhcp_helpers: list[dict[str, str]] = field(default_factory=list)
     unsupported_routes: list[dict[str, str]] = field(default_factory=list)
     unsupported_routing: list[dict[str, str]] = field(default_factory=list)
 
@@ -188,6 +190,17 @@ def parse_running_config_sections(config_text: str) -> ParsedRouterConfig:
 
     flush_current()
     merge_interface_ospf_settings(ospf_processes, interfaces)
+    fhrp_members = [
+        dict(member, interface_name=interface["name"])
+        for interface in interfaces
+        for member in interface.get("fhrp_members", [])
+        if member.get("virtual_ip")
+    ]
+    dhcp_helpers = [
+        {"interface_name": interface["name"], "helper_ip": helper_ip}
+        for interface in interfaces
+        for helper_ip in interface.get("helper_addresses", [])
+    ]
     return ParsedRouterConfig(
         hostname=hostname,
         interfaces=interfaces,
@@ -195,6 +208,8 @@ def parse_running_config_sections(config_text: str) -> ParsedRouterConfig:
         default_routes=default_routes,
         ospf_processes=ospf_processes,
         eigrp_processes=eigrp_processes,
+        fhrp_members=fhrp_members,
+        dhcp_helpers=dhcp_helpers,
         unsupported_routes=unsupported_routes,
         unsupported_routing=unsupported_routing,
     )
@@ -273,6 +288,8 @@ def default_interface(name: str) -> dict[str, Any]:
         "subif_vlan_id": None,
         "subif_native": 0,
         "ospf_settings": [],
+        "fhrp_members": [],
+        "helper_addresses": [],
     }
 
 
@@ -366,11 +383,24 @@ def parse_interface_block(name: str, body: list[str]) -> dict[str, Any]:
             row["lmi_type"] = lmi if lmi in {"cisco", "ansi", "q933a"} else ""
         elif line.startswith("ip ospf "):
             parse_interface_ospf_line(line, ospf_bindings, ospf_options)
+        elif line.startswith("ip helper-address "):
+            parts = line.split()
+            # The current database and renderer model only the non-VRF IPv4
+            # form. Do not silently flatten qualified commands.
+            if len(parts) == 3:
+                try:
+                    IPv4Address(parts[2])
+                except ValueError:
+                    continue
+                if parts[2] not in row["helper_addresses"]:
+                    row["helper_addresses"].append(parts[2])
 
     for binding in ospf_bindings:
         merged = dict(ospf_options)
         merged.update(binding)
         row["ospf_settings"].append(merged)
+
+    row["fhrp_members"] = parse_interface_fhrp_lines(body)
 
     lowered_name = row["name"].lower()
     if "." in row["name"]:
@@ -382,6 +412,173 @@ def parse_interface_block(name: str, body: list[str]) -> dict[str, Any]:
     else:
         row["interface_kind"] = "L3"
     return row
+
+
+def _default_fhrp_member(protocol: str, group_number: int) -> dict[str, Any]:
+    options: dict[str, Any]
+    if protocol == "hsrp":
+        options = {
+            # Cisco IOS defaults to HSRPv1 when no interface-level version
+            # command is present.
+            "version": 1,
+            "hello_ms": 3000,
+            "hold_ms": 10000,
+            "preempt_delay_min_sec": 0,
+            "preempt_delay_reload_sec": 0,
+            "auth_type": "none",
+            "auth_secret": None,
+        }
+    elif protocol == "vrrp":
+        options = {
+            "version": 2,
+            "advertisement_ms": 1000,
+            "accept_mode": 0,
+            "auth_type": "none",
+            "auth_secret": None,
+        }
+    else:
+        options = {
+            "hello_ms": 3000,
+            "hold_ms": 10000,
+            "load_balancing": "round-robin",
+            "weighting_max": 100,
+            "weighting_lower": None,
+            "weighting_upper": None,
+            "forwarder_preempt": 1,
+            "forwarder_preempt_delay_sec": 30,
+            "auth_type": "none",
+            "auth_secret": None,
+        }
+    return {
+        "protocol": protocol,
+        "group_number": group_number,
+        "virtual_ip": "",
+        "priority": 100,
+        # VRRP preemption is enabled by default; HSRP and GLBP require it
+        # explicitly. A persisted ``no vrrp ... preempt`` overrides this.
+        "preempt": 1 if protocol == "vrrp" else 0,
+        "shutdown": 0,
+        "tracks": [],
+        "options": options,
+    }
+
+
+def parse_interface_fhrp_lines(body: list[str]) -> list[dict[str, Any]]:
+    """Parse the Cisco IOS FHRP forms emitted by the application's renderer."""
+    members: dict[tuple[str, int], dict[str, Any]] = {}
+    hsrp_version = 1
+
+    def member(protocol: str, group_text: str) -> dict[str, Any] | None:
+        group_number = int_or_none(group_text)
+        if group_number is None:
+            return None
+        key = (protocol, group_number)
+        if key not in members:
+            members[key] = _default_fhrp_member(protocol, group_number)
+            if protocol == "hsrp":
+                members[key]["options"]["version"] = hsrp_version
+        return members[key]
+
+    for raw_line in body:
+        line = clean_text(raw_line)
+        negated = line.startswith("no ")
+        command = line[3:] if negated else line
+        parts = command.split()
+        if len(parts) == 3 and parts[:2] == ["standby", "version"]:
+            version = int_or_none(parts[2])
+            if version in {1, 2}:
+                hsrp_version = version
+                for (protocol, _group), item in members.items():
+                    if protocol == "hsrp":
+                        item["options"]["version"] = version
+            continue
+        if len(parts) < 3 or parts[0] not in {"standby", "vrrp", "glbp"}:
+            continue
+        protocol = {"standby": "hsrp", "vrrp": "vrrp", "glbp": "glbp"}[parts[0]]
+        item = member(protocol, parts[1])
+        if item is None:
+            continue
+        option = parts[2].lower()
+        options = item["options"]
+
+        if option == "ip" and len(parts) >= 4 and not negated:
+            try:
+                IPv4Address(parts[3])
+            except ValueError:
+                continue
+            item["virtual_ip"] = parts[3]
+        elif option == "priority" and len(parts) >= 4 and not negated:
+            priority = int_or_none(parts[3])
+            if priority is not None:
+                item["priority"] = priority
+        elif option == "preempt":
+            item["preempt"] = 0 if negated else 1
+            if not negated and protocol == "hsrp" and "delay" in parts:
+                for key, field_name in (
+                    ("minimum", "preempt_delay_min_sec"),
+                    ("reload", "preempt_delay_reload_sec"),
+                ):
+                    if key in parts and parts.index(key) + 1 < len(parts):
+                        options[field_name] = int_or_none(parts[parts.index(key) + 1]) or 0
+        elif option == "shutdown":
+            item["shutdown"] = 0 if negated else 1
+        elif option == "timers" and not negated:
+            values = parts[3:]
+            if protocol == "vrrp" and values[:1] == ["advertise"]:
+                values = values[1:]
+                if values[:1] == ["msec"]:
+                    values = values[1:]
+                if values:
+                    options["advertisement_ms"] = int_or_none(values[0]) or 1000
+            elif protocol in {"hsrp", "glbp"}:
+                milliseconds = "msec" in values
+                numeric = [int(value) for value in values if value.isdigit()]
+                if len(numeric) >= 2:
+                    options["hello_ms"] = numeric[0] if milliseconds else numeric[0] * 1000
+                    options["hold_ms"] = numeric[1] if milliseconds else numeric[1] * 1000
+        elif option == "authentication" and not negated:
+            auth = parts[3:]
+            if auth[:2] == ["md5", "key-string"] and len(auth) >= 3:
+                options.update(auth_type="md5-key", auth_secret=" ".join(auth[2:]))
+            elif auth[:2] == ["md5", "key-chain"] and len(auth) >= 3:
+                options.update(auth_type="md5-keychain", auth_secret=" ".join(auth[2:]))
+            elif auth[:1] == ["text"] and len(auth) >= 2:
+                options.update(auth_type="plain", auth_secret=" ".join(auth[1:]))
+            elif auth:
+                options.update(auth_type="plain", auth_secret=" ".join(auth))
+        elif option == "track" and not negated and protocol in {"hsrp", "vrrp"}:
+            if len(parts) >= 4:
+                decrement = 10
+                if "decrement" in parts and parts.index("decrement") + 1 < len(parts):
+                    decrement = int_or_none(parts[parts.index("decrement") + 1]) or 10
+                elif protocol == "hsrp" and len(parts) >= 5:
+                    decrement = int_or_none(parts[4]) or 10
+                item["tracks"].append(
+                    {"track_object": parts[3], "decrement_value": decrement}
+                )
+        elif protocol == "glbp" and option == "load-balancing" and len(parts) >= 4:
+            options["load_balancing"] = parts[3]
+        elif protocol == "glbp" and option == "weighting" and not negated:
+            if len(parts) >= 5 and parts[3] == "track":
+                decrement = 10
+                if "decrement" in parts and parts.index("decrement") + 1 < len(parts):
+                    decrement = int_or_none(parts[parts.index("decrement") + 1]) or 10
+                item["tracks"].append(
+                    {"track_object": parts[4], "decrement_value": decrement}
+                )
+            elif len(parts) >= 4:
+                options["weighting_max"] = int_or_none(parts[3]) or 100
+                for key, field_name in (("lower", "weighting_lower"), ("upper", "weighting_upper")):
+                    if key in parts and parts.index(key) + 1 < len(parts):
+                        options[field_name] = int_or_none(parts[parts.index(key) + 1])
+        elif protocol == "glbp" and option == "forwarder" and len(parts) >= 4 and parts[3] == "preempt":
+            options["forwarder_preempt"] = 0 if negated else 1
+            if not negated and "minimum" in parts and parts.index("minimum") + 1 < len(parts):
+                options["forwarder_preempt_delay_sec"] = (
+                    int_or_none(parts[parts.index("minimum") + 1]) or 0
+                )
+
+    return list(members.values())
 
 
 def parse_interface_ospf_line(line: str, bindings: list[dict[str, Any]], options: dict[str, Any]) -> None:
@@ -751,6 +948,8 @@ def sync_device_state(
             "default_routes": _table_has_pending(conn, "t04_static_default_routes", host),
             "ospf": _ospf_has_pending(conn, host),
             "eigrp": _eigrp_has_pending(conn, host),
+            "fhrp": _fhrp_has_pending(conn, host),
+            "dhcp_helpers": _dhcp_helpers_have_pending(conn, host),
         }
         if mode == "safe":
             conflicts = [name for name, exists in pending.items() if exists]
@@ -762,6 +961,8 @@ def sync_device_state(
                 "default_routes": len(parsed.default_routes),
                 "ospf_processes": len(parsed.ospf_processes),
                 "eigrp_processes": len(parsed.eigrp_processes),
+                "fhrp_members": len(parsed.fhrp_members),
+                "dhcp_helpers": len(parsed.dhcp_helpers),
                 "conflicts": [name for name, exists in pending.items() if exists],
                 "unsupported_routes": len(parsed.unsupported_routes),
                 "unsupported_route_details": parsed.unsupported_routes,
@@ -776,8 +977,25 @@ def sync_device_state(
                     "UPDATE t01_devices SET device_name = ? WHERE host = ?;",
                     (parsed.hostname, host),
                 )
-            if mode == "force_device_state" or not pending["interfaces"]:
+            sync_fhrp = mode == "force_device_state" or not pending["fhrp"]
+            sync_interfaces_allowed = (
+                mode == "force_device_state"
+                or (
+                    not pending["interfaces"]
+                    and not pending["fhrp"]
+                    and not pending["dhcp_helpers"]
+                )
+            )
+            # Remove this host's old members before interface reconciliation;
+            # FHRP deliberately guards referenced interfaces from deletion.
+            if sync_fhrp:
+                clear_fhrp_members(conn, host)
+            if sync_interfaces_allowed:
                 sync_interfaces(conn, host, interfaces)
+            if sync_fhrp:
+                insert_fhrp_members(conn, host, parsed.fhrp_members)
+            if mode == "force_device_state" or not pending["dhcp_helpers"]:
+                sync_dhcp_helpers(conn, host, parsed.dhcp_helpers)
             if mode == "force_device_state" or not pending["static_routes"]:
                 sync_static_routes(conn, host, parsed.static_routes)
             if mode == "force_device_state" or not pending["default_routes"]:
@@ -800,6 +1018,8 @@ def sync_device_state(
         "default_routes": len(parsed.default_routes),
         "ospf_processes": len(parsed.ospf_processes),
         "eigrp_processes": len(parsed.eigrp_processes),
+        "fhrp_members": len(parsed.fhrp_members),
+        "dhcp_helpers": len(parsed.dhcp_helpers),
         "conflicts": conflicts,
         "unsupported_routes": len(parsed.unsupported_routes),
         "unsupported_route_details": parsed.unsupported_routes,
@@ -830,6 +1050,14 @@ def _ensure_sync_indexes(conn: sqlite3.Connection) -> None:
     conn.execute(
         "CREATE INDEX IF NOT EXISTS ix_t04_eigrp_processes_sync "
         "ON t04_eigrp_processes(host, sync_status);"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS ix_t08_fhrp_members_sync "
+        "ON t08_fhrp_members(host, sync_status);"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS ix_t03_router_iface_helper_sync "
+        "ON t03_router_iface_helper(iface_id, sync_status);"
     )
 
 
@@ -942,6 +1170,248 @@ def _eigrp_has_pending(conn: sqlite3.Connection, host: str) -> bool:
         ).fetchone():
             return True
     return False
+
+
+def _fhrp_has_pending(conn: sqlite3.Connection, host: str) -> bool:
+    if conn.execute(
+        """
+        SELECT 1 FROM t08_fhrp_members
+        WHERE host = ? AND sync_status IN ('pending_delete', 'pending_apply')
+        LIMIT 1;
+        """,
+        (host,),
+    ).fetchone():
+        return True
+    return conn.execute(
+        """
+        SELECT 1 FROM t08_fhrp_tracks
+        WHERE sync_status IN ('pending_delete', 'pending_apply')
+          AND member_id IN (
+              SELECT member_id FROM t08_fhrp_members WHERE host = ?
+          )
+        LIMIT 1;
+        """,
+        (host,),
+    ).fetchone() is not None
+
+
+def _dhcp_helpers_have_pending(conn: sqlite3.Connection, host: str) -> bool:
+    return conn.execute(
+        """
+        SELECT 1
+        FROM t03_router_iface_helper AS h
+        JOIN t02_interface_name AS i ON i.iface_id = h.iface_id
+        WHERE i.host = ?
+          AND h.sync_status IN ('pending_delete', 'pending_apply')
+        LIMIT 1;
+        """,
+        (host,),
+    ).fetchone() is not None
+
+
+def sync_dhcp_helpers(
+    conn: sqlite3.Connection,
+    host: str,
+    helpers: list[dict[str, str]],
+) -> None:
+    """Replace observed non-VRF IPv4 helper addresses for one router."""
+    conn.execute(
+        """
+        DELETE FROM t03_router_iface_helper
+        WHERE iface_id IN (
+            SELECT iface_id FROM t02_interface_name WHERE host = ?
+        );
+        """,
+        (host,),
+    )
+    interfaces = {
+        str(row["interface_name"]): int(row["iface_id"])
+        for row in conn.execute(
+            "SELECT iface_id, interface_name FROM t02_interface_name WHERE host = ?;",
+            (host,),
+        )
+    }
+    rows: list[tuple[int, str]] = []
+    seen: set[tuple[int, str]] = set()
+    for helper in helpers:
+        iface_id = interfaces.get(clean_text(helper.get("interface_name")))
+        helper_ip = clean_text(helper.get("helper_ip"))
+        if iface_id is None or not helper_ip:
+            continue
+        key = (iface_id, helper_ip)
+        if key in seen:
+            continue
+        seen.add(key)
+        rows.append(key)
+    conn.executemany(
+        """
+        INSERT INTO t03_router_iface_helper(iface_id, helper_ip, sync_status)
+        VALUES (?, ?, 'synchronized');
+        """,
+        rows,
+    )
+
+
+def clear_fhrp_members(conn: sqlite3.Connection, host: str) -> None:
+    """Remove only one host's observed FHRP state and retain shared groups."""
+    conn.execute("DELETE FROM t08_fhrp_members WHERE host = ?;", (host,))
+    conn.execute(
+        """
+        DELETE FROM t08_fhrp_groups
+        WHERE NOT EXISTS (
+            SELECT 1 FROM t08_fhrp_members AS m
+            WHERE m.fhrp_id = t08_fhrp_groups.fhrp_id
+        );
+        """
+    )
+
+
+def insert_fhrp_members(
+    conn: sqlite3.Connection,
+    host: str,
+    members: list[dict[str, Any]],
+) -> None:
+    """Insert parsed HSRP/VRRP/GLBP members as synchronized device state."""
+    interfaces = {
+        str(row["interface_name"]): ("router", int(row["iface_id"]))
+        for row in conn.execute(
+            "SELECT iface_id, interface_name FROM t02_interface_name WHERE host = ?;",
+            (host,),
+        )
+    }
+    interfaces.update(
+        {
+            f"Vlan{int(row['vlan_id'])}": ("svi", int(row["id"]))
+            for row in conn.execute(
+                "SELECT id, vlan_id FROM t06_svi_interface WHERE host = ?;",
+                (host,),
+            )
+        }
+    )
+    for item in members:
+        interface_name = clean_text(item.get("interface_name"))
+        endpoint = interfaces.get(interface_name)
+        protocol = clean_text(item.get("protocol")).lower()
+        group_number = int_or_none(item.get("group_number"))
+        virtual_ip = clean_text(item.get("virtual_ip"))
+        if endpoint is None or protocol not in {"hsrp", "vrrp", "glbp"}:
+            continue
+        interface_kind, iface_id = endpoint
+        if group_number is None or not virtual_ip:
+            continue
+        group = conn.execute(
+            """
+            SELECT fhrp_id FROM t08_fhrp_groups
+            WHERE protocol = ? AND group_number = ? AND virtual_ip = ?
+              AND address_family = 'ipv4';
+            """,
+            (protocol, group_number, virtual_ip),
+        ).fetchone()
+        if group is None:
+            cursor = conn.execute(
+                """
+                INSERT INTO t08_fhrp_groups(
+                    protocol, group_number, virtual_ip, address_family
+                ) VALUES (?, ?, ?, 'ipv4');
+                """,
+                (protocol, group_number, virtual_ip),
+            )
+            fhrp_id = int(cursor.lastrowid)
+        else:
+            fhrp_id = int(group["fhrp_id"])
+        cursor = conn.execute(
+            """
+            INSERT INTO t08_fhrp_members(
+                fhrp_id, host, iface_id, interface_kind,
+                priority, preempt, shutdown, sync_status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, 'synchronized');
+            """,
+            (
+                fhrp_id,
+                host,
+                iface_id,
+                interface_kind,
+                int_or_none(item.get("priority")) or 100,
+                bool_int(item.get("preempt")),
+                bool_int(item.get("shutdown")),
+            ),
+        )
+        member_id = int(cursor.lastrowid)
+        options = dict(item.get("options") or {})
+        if protocol == "hsrp":
+            conn.execute(
+                """
+                INSERT INTO t08_hsrp_options(
+                    member_id, version, hello_ms, hold_ms,
+                    preempt_delay_min_sec, preempt_delay_reload_sec,
+                    auth_type, auth_secret
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+                """,
+                (
+                    member_id,
+                    options.get("version", 2),
+                    options.get("hello_ms", 3000),
+                    options.get("hold_ms", 10000),
+                    options.get("preempt_delay_min_sec", 0),
+                    options.get("preempt_delay_reload_sec", 0),
+                    options.get("auth_type", "none"),
+                    options.get("auth_secret"),
+                ),
+            )
+        elif protocol == "vrrp":
+            conn.execute(
+                """
+                INSERT INTO t08_vrrp_options(
+                    member_id, version, advertisement_ms, accept_mode,
+                    auth_type, auth_secret
+                ) VALUES (?, ?, ?, ?, ?, ?);
+                """,
+                (
+                    member_id,
+                    options.get("version", 2),
+                    options.get("advertisement_ms", 1000),
+                    bool_int(options.get("accept_mode")),
+                    options.get("auth_type", "none"),
+                    options.get("auth_secret"),
+                ),
+            )
+        else:
+            conn.execute(
+                """
+                INSERT INTO t08_glbp_options(
+                    member_id, hello_ms, hold_ms, load_balancing,
+                    weighting_max, weighting_lower, weighting_upper,
+                    forwarder_preempt, forwarder_preempt_delay_sec,
+                    auth_type, auth_secret
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                """,
+                (
+                    member_id,
+                    options.get("hello_ms", 3000),
+                    options.get("hold_ms", 10000),
+                    options.get("load_balancing", "round-robin"),
+                    options.get("weighting_max", 100),
+                    options.get("weighting_lower"),
+                    options.get("weighting_upper"),
+                    bool_int(options.get("forwarder_preempt", True)),
+                    options.get("forwarder_preempt_delay_sec", 30),
+                    options.get("auth_type", "none"),
+                    options.get("auth_secret"),
+                ),
+            )
+        for track in item.get("tracks") or []:
+            conn.execute(
+                """
+                INSERT INTO t08_fhrp_tracks(
+                    member_id, track_object, decrement_value, sync_status
+                ) VALUES (?, ?, ?, 'synchronized');
+                """,
+                (
+                    member_id,
+                    clean_text(track.get("track_object")),
+                    int_or_none(track.get("decrement_value")) or 10,
+                ),
+            )
 
 
 def sync_static_routes(

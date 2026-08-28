@@ -3,7 +3,15 @@ from __future__ import annotations
 import sqlite3
 from typing import Any
 
-from .common import db_connection, log_db_error, normalize_host, option_action_cfg, pool_identity_changed, soft_delete
+from .common import (
+    db_connection,
+    log_db_error,
+    normalize_host,
+    option_action_cfg,
+    option_presence_action_cfg,
+    pool_identity_changed,
+    soft_delete,
+)
 from .validation import pool_values
 
 
@@ -18,7 +26,13 @@ def _pool_payload(
     return pool_values(pool, network, subnetmask, default_router, dns, lease)
 
 
-def _insert_pool(conn: sqlite3.Connection, host: str, data: dict[str, Any], action_cfg: str = "111") -> None:
+def _insert_pool(
+    conn: sqlite3.Connection,
+    host: str,
+    data: dict[str, Any],
+    action_cfg: str | None = None,
+) -> None:
+    selected_actions = action_cfg or option_presence_action_cfg(data)
     conn.execute(
         """
         INSERT INTO t03_dhcp_pool
@@ -33,7 +47,7 @@ def _insert_pool(conn: sqlite3.Connection, host: str, data: dict[str, Any], acti
             data["defaut"],
             data["dns"],
             data["lease"],
-            action_cfg,
+            selected_actions,
         ),
     )
 
@@ -122,6 +136,8 @@ def update_dhcp_pool(
                 _insert_pool(conn, current["host"], data)
             else:
                 action_cfg = option_action_cfg(current, data)
+                if action_cfg == "000":
+                    return True
                 cursor = conn.execute(
                     """
                     UPDATE t03_dhcp_pool

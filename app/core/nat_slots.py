@@ -18,6 +18,7 @@ from features.nat import (
     add_nat_pat_rule,
     add_nat_route_map_entry,
     add_nat_static_entry,
+    apply_nat_pat_quick_setup,
     delete_nat_acl,
     delete_nat_dynamic_pool,
     delete_nat_interface,
@@ -36,6 +37,11 @@ from features.nat import (
 
 
 class NatSlotsMixin:
+    @pyqtSlot(str, "QVariant", result="QVariant")
+    def applyNatPatQuickSetup(self, host: str, payload: Any) -> dict[str, Any]:
+        """Create a complete interface-based PAT policy in one transaction."""
+        return apply_nat_pat_quick_setup(self, host, payload)
+
     # ── Static NAT ────────────────────────────────────────────────────────────
 
     @pyqtSlot(str, result="QVariant")

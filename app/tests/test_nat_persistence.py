@@ -19,6 +19,7 @@ from nat import (
     add_nat_pat_rule,
     add_nat_route_map_entry,
     add_nat_static_entry,
+    apply_nat_pat_quick_setup,
     delete_nat_acl,
     delete_nat_dynamic_pool,
     delete_nat_interface,
@@ -195,6 +196,42 @@ class NatPersistenceTests(unittest.TestCase):
         for row in rows:
             self.assertTrue(delete_nat_pat_rule(self.db, row["nat_pat_id"]))
         self.assertEqual(get_nat_pat_rules(self.db, "r1"), [])
+
+    def test_quick_pat_setup_creates_complete_policy_atomically(self) -> None:
+        with closing(sqlite3.connect(self.db_path)) as connection:
+            connection.executemany(
+                "INSERT INTO t02_interface_name (host, interface_name) VALUES ('r1', ?)",
+                [("GigabitEthernet0/0",), ("GigabitEthernet0/1",)],
+            )
+            connection.commit()
+
+        result = apply_nat_pat_quick_setup(self.db, "r1", {
+            "inside_interface": "GigabitEthernet0/0",
+            "outside_interface": "GigabitEthernet0/1",
+            "source_network": "192.168.10.0",
+            "wildcard": "0.0.0.255",
+            "acl_name": "NAT_INSIDE",
+        })
+
+        self.assertTrue(result["ok"], result)
+        self.assertEqual(
+            {(row["interface_name"], row["direction"]) for row in get_nat_interfaces(self.db, "r1")},
+            {("GigabitEthernet0/0", "inside"), ("GigabitEthernet0/1", "outside")},
+        )
+        self.assertEqual(get_nat_acl_names(self.db, "r1"), ["NAT_INSIDE"])
+        self.assertEqual(get_nat_acls(self.db, "r1")[0]["source_network"], "192.168.10.0")
+        self.assertEqual(get_nat_pat_rules(self.db, "r1")[0]["source_value"], "GigabitEthernet0/1")
+
+        repeated = apply_nat_pat_quick_setup(self.db, "r1", {
+            "inside_interface": "GigabitEthernet0/0",
+            "outside_interface": "GigabitEthernet0/1",
+            "source_network": "192.168.10.0",
+            "wildcard": "0.0.0.255",
+            "acl_name": "NAT_INSIDE",
+        })
+        self.assertTrue(repeated["ok"], repeated)
+        self.assertEqual(len(get_nat_acls(self.db, "r1")), 1)
+        self.assertEqual(len(get_nat_pat_rules(self.db, "r1")), 1)
 
     def test_acl_load_is_flat_for_qml_and_rule_delete_is_soft(self) -> None:
         self.assertTrue(add_nat_acl(self.db, "r1", "NAT_ACL", "permit", "10.0.0.0", "0.0.0.255"))

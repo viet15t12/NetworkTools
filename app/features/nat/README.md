@@ -17,6 +17,12 @@ vì để `NULL`.
 Tab Interfaces cũng chọn `Interface Name` từ inventory router hiện tại thay vì
 nhập tự do; bản ghi cũ vẫn được giữ trong danh sách khi sửa.
 
+Header có `Quick setup` cho mẫu PAT phổ biến: người dùng chọn inside/outside
+interface, LAN network/wildcard và ACL name một lần. Backend tạo interface roles,
+standard ACL và interface-overload PAT trong cùng transaction; chạy lại cùng dữ
+liệu không nhân đôi rule. Các tab chi tiết vẫn dùng cho static, pool và policy NAT
+tùy chỉnh.
+
 Thứ tự tab bám theo dependency cấu hình Cisco:
 `Interfaces → ACL → Static → Dynamic → PAT → Route Map`. Static NAT dùng input
 IPv4 và port 1–65535; NAT ACL cho chọn source `Network`, `Host` hoặc `Any`;

@@ -329,10 +329,12 @@ def _repair_device_network_feature_schema(db_path: Path) -> list[str]:
     """Apply feature-owned, non-destructive upgrades without rebuilding data."""
     from features.fhrp.schema import ensure_schema as ensure_fhrp_schema
     from features.interfaces.schema import ensure_schema as ensure_interface_schema
+    from features.routing.ospf.schema import ensure_schema as ensure_ospf_schema
 
     with closing(sqlite3.connect(db_path)) as connection:
         changes = ensure_interface_schema(connection)
         changes.extend(ensure_fhrp_schema(connection))
+        changes.extend(ensure_ospf_schema(connection))
         return changes
 
 

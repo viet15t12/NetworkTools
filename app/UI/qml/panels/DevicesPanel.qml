@@ -36,6 +36,7 @@ Item {
     property string pythonDepsStatusText: "STARTING..."
     property string pythonDepsStatusDetail: "Checking Python runtime and database schemas."
     readonly property bool deviceShortcutEnabled: devicesPanel.visible && !UiState.windowLock && !searchBar.inputActiveFocus
+    readonly property bool hostDeletionEnabled: false
     readonly property bool allDeviceGroupsCollapsed: !connectedSection.expanded
                                                     && !waitingSection.expanded
                                                     && !disconnectedSection.expanded
@@ -104,6 +105,10 @@ Item {
     }
 
     function handleDeleteDevice(ip) {
+        if (!hostDeletionEnabled) {
+            showDeviceShortcutMessage("Host deletion is disabled.", "warning")
+            return
+        }
         deleteConfirmLoader.active = true
         deleteConfirmLoader.item.targetIp = ip
         deleteConfirmLoader.item.openAlert()
@@ -661,6 +666,7 @@ Item {
 
     DeviceContextMenu {
         id: deviceContextMenu; parent: Overlay.overlay
+        allowHostDeletion: devicesPanel.hostDeletionEnabled
         hostOperations: devicesPanel.hostOperations
         selectionMode: devicesPanel.multiSelectMode
         onPingRequested: (ip) => devicesPanel.handlePingDevice(ip)
@@ -876,7 +882,7 @@ Item {
     Shortcut { sequence: "Ctrl+Alt+Up"; enabled: devicesPanel.deviceShortcutEnabled; onActivated: devicesPanel.handleShortcutUpDev() }
     Shortcut { sequence: "Ctrl+Alt+C"; enabled: devicesPanel.deviceShortcutEnabled; onActivated: devicesPanel.handleShortcutConnect() }
     Shortcut { sequence: "Ctrl+Alt+R"; enabled: devicesPanel.deviceShortcutEnabled; onActivated: devicesPanel.handleShortcutReconnect() }
-    Shortcut { sequence: "Del"; enabled: devicesPanel.deviceShortcutEnabled; onActivated: devicesPanel.handleShortcutDelete() }
+    Shortcut { sequence: "Del"; enabled: devicesPanel.deviceShortcutEnabled && devicesPanel.hostDeletionEnabled; onActivated: devicesPanel.handleShortcutDelete() }
     Shortcut { sequence: "Ctrl+Shift+C"; enabled: devicesPanel.deviceShortcutEnabled; onActivated: devicesPanel.handleBatchOperation("connect", devicesPanel.selectedHostList) }
     Shortcut { sequence: "Ctrl+Shift+R"; enabled: devicesPanel.deviceShortcutEnabled; onActivated: devicesPanel.handleBatchOperation("running-config", devicesPanel.selectedHostList) }
     Shortcut { sequence: "Ctrl+Shift+D"; enabled: devicesPanel.deviceShortcutEnabled; onActivated: devicesPanel.handleBatchOperation("disconnect", devicesPanel.selectedHostList) }

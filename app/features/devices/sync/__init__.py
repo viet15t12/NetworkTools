@@ -8,6 +8,8 @@ from .interfaces import (
     sync_tunnel,
     sync_wan,
 )
+from .fhrp import clear_fhrp_members, insert_fhrp_members
+from .dhcp import sync_dhcp_helpers
 from .parser import (
     ParsedRouterConfig,
     default_eigrp_process,
@@ -18,6 +20,7 @@ from .parser import (
     parse_eigrp_block,
     parse_interface_block,
     parse_interface_brief,
+    parse_interface_fhrp_lines,
     parse_interface_ospf_line,
     parse_ospf_area_line,
     parse_ospf_block,
@@ -40,15 +43,18 @@ __all__ = [
     "bool_int",
     "clean_label",
     "clean_text",
+    "clear_fhrp_members",
     "default_eigrp_process",
     "default_interface",
     "default_ospf_process",
     "int_or_none",
+    "insert_fhrp_members",
     "merge_interface_brief",
     "merge_interface_ospf_settings",
     "parse_eigrp_block",
     "parse_interface_block",
     "parse_interface_brief",
+    "parse_interface_fhrp_lines",
     "parse_interface_ospf_line",
     "parse_ospf_area_line",
     "parse_ospf_block",
@@ -57,6 +63,7 @@ __all__ = [
     "parse_running_config_sections",
     "parse_static_route_line",
     "sync_default_routes",
+    "sync_dhcp_helpers",
     "sync_device_state",
     "sync_eigrp_processes",
     "sync_interfaces",

@@ -13,6 +13,8 @@ sys.path.insert(0, str(APP_DIR / "features"))
 
 from features.routing.eigrp import get_eigrp_routing, save_eigrp_routing
 from features.routing.ospf import get_ospf_routing, save_ospf_routing
+from features.routing import dispatcher as routing_dispatcher_module
+from features.routing.ospf.schema import ensure_schema as ensure_ospf_schema
 from features.routing.clone_service import RoutingCloneService
 from core.database.conversion import ConversionMixin
 from core.database.routing_slots import RoutingSlotsMixin
@@ -64,6 +66,23 @@ class _DatabaseAdapter:
 
 
 class RoutingDatabaseContractTests(unittest.TestCase):
+    def test_ospf_schema_upgrade_adds_action_mask_to_legacy_database(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "legacy.db"
+            with closing(sqlite3.connect(path)) as connection:
+                connection.execute(
+                    "CREATE TABLE t04_ospf_processes "
+                    "(ospf_id INTEGER PRIMARY KEY, process_id INTEGER)"
+                )
+                changes = ensure_ospf_schema(connection)
+                columns = {
+                    row[1]: row for row in connection.execute(
+                        "PRAGMA table_info(t04_ospf_processes)"
+                    )
+                }
+            self.assertEqual(changes, ["t04_ospf_processes.action_Cfg"])
+            self.assertEqual(columns["action_Cfg"][4], "'1111'")
+
     def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory()
         self.db_path = Path(self.temp.name) / "device_network.db"
@@ -158,6 +177,72 @@ class RoutingDatabaseContractTests(unittest.TestCase):
         self.assertEqual(len(loaded), 1)
         self.assertEqual(loaded[0]["router_id"], "2.2.2.2")
         self.assertNotEqual(loaded[0]["sync_status"], "pending_delete")
+
+    def test_ospf_action_mask_only_selects_changed_process_commands(self) -> None:
+        payload = [{
+            "process_id": 10,
+            "router_id": "1.1.1.1",
+            "reference_bandwidth": 1000,
+            "passive_default": False,
+            "default_originate": False,
+            "tuning": {"maximum_paths": 4},
+        }]
+        self.assertTrue(save_ospf_routing(self.db, "r1", payload), self.db.error)
+        loaded = get_ospf_routing(self.db, "r1")["processes"][0]
+        payload[0]["ospf_id"] = loaded["ospf_id"]
+        with closing(self.db._connect()) as connection:
+            connection.execute(
+                "UPDATE t04_ospf_processes "
+                "SET sync_status = 'synchronized', action_Cfg = '0000'"
+            )
+            connection.execute(
+                "UPDATE t04_ospf_tuning SET sync_status = 'synchronized'"
+            )
+            connection.commit()
+
+        payload[0]["tuning"] = {"maximum_paths": 8}
+        self.assertTrue(save_ospf_routing(self.db, "r1", payload), self.db.error)
+        with closing(self.db._connect()) as connection:
+            row = connection.execute(
+                "SELECT action_Cfg FROM t04_ospf_processes WHERE ospf_id = ?",
+                (loaded["ospf_id"],),
+            ).fetchone()
+        self.assertEqual(row["action_Cfg"], "0000")
+        previous_path = routing_dispatcher_module.DB_PATH
+        try:
+            routing_dispatcher_module.DB_PATH = str(self.db_path)
+            task = routing_dispatcher_module.routing_dispatcher(
+                "r1", "ospf", dry_run=True
+            )[0]
+        finally:
+            routing_dispatcher_module.DB_PATH = previous_path
+        config = task["config"][0]
+        self.assertIsNone(config["router_id"])
+        self.assertIsNone(config["reference_bandwidth"])
+        self.assertIsNone(config["passive_default"])
+        self.assertIsNone(config["default_originate"])
+
+        payload[0]["router_id"] = "2.2.2.2"
+        self.assertTrue(save_ospf_routing(self.db, "r1", payload), self.db.error)
+        with closing(self.db._connect()) as connection:
+            row = connection.execute(
+                "SELECT action_Cfg FROM t04_ospf_processes WHERE ospf_id = ?",
+                (loaded["ospf_id"],),
+            ).fetchone()
+        self.assertEqual(row["action_Cfg"], "1000")
+        previous_path = routing_dispatcher_module.DB_PATH
+        try:
+            routing_dispatcher_module.DB_PATH = str(self.db_path)
+            task = routing_dispatcher_module.routing_dispatcher(
+                "r1", "ospf", dry_run=True
+            )[0]
+        finally:
+            routing_dispatcher_module.DB_PATH = previous_path
+        config = task["config"][0]
+        self.assertEqual(config["router_id"], "2.2.2.2")
+        self.assertIsNone(config["reference_bandwidth"])
+        self.assertIsNone(config["passive_default"])
+        self.assertIsNone(config["default_originate"])
 
     def test_ospf_rejects_unconvertible_child_rows_without_data_loss(self) -> None:
         self.assertTrue(save_ospf_routing(self.db, "r1", [{

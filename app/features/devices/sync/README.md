@@ -7,6 +7,8 @@ The package separates the public synchronization surface by responsibility:
 
 - `parser.py`: running-config parsing
 - `interfaces.py`: interface SQLite writers
+- `fhrp.py`: HSRP, VRRP, and GLBP SQLite writers
+- `dhcp.py`: interface DHCP relay/helper SQLite writer
 - `routing.py`: static route, OSPF, and EIGRP writers
 - `service.py`: transaction-level orchestration
 - `common.py`: shared normalization helpers
@@ -22,6 +24,15 @@ desired-state removal, so Router Interface UI is fully database-derived and a
 collection cannot accidentally queue `no interface` commands.
 The interface brief is reconciled even when the committed running-config text is
 unchanged, because physical inventory can change independently of configuration.
+
+FHRP configuration is parsed from each interface block and synchronized per
+device member. Shared logical groups are retained for other devices. Safe mode
+preserves pending FHRP changes; force-device-state mode replaces them with the
+observed HSRP, VRRP, and GLBP configuration.
+
+IPv4 `ip helper-address` commands are collected from router interface blocks
+and synchronized into `t03_router_iface_helper`. Multiple helpers per interface
+are preserved. Safe mode leaves pending helper changes untouched.
 
 Subinterfaces are classified independently from physical L3 profiles. The
 parser records `dot1Q`/`isl`, VLAN ID and the optional native flag, while the

@@ -183,6 +183,7 @@ NatAclForm 1.0 qml/features/nat/NatAclForm.qml
 NatDynamicForm 1.0 qml/features/nat/NatDynamicForm.qml
 NatInterfaceForm 1.0 qml/features/nat/NatInterfaceForm.qml
 NatPatForm 1.0 qml/features/nat/NatPatForm.qml
+NatQuickSetupDialog 1.0 qml/features/nat/NatQuickSetupDialog.qml
 NatRouteMapForm 1.0 qml/features/nat/NatRouteMapForm.qml
 NatStaticForm 1.0 qml/features/nat/NatStaticForm.qml
 NatSubBar 1.0 qml/features/nat/NatSubBar.qml

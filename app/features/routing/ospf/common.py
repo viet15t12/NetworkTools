@@ -5,6 +5,34 @@ from typing import Any
 from ..common import as_dict, as_list, bool_int_value, int_or_none_value, int_or_zero_value, text
 
 
+OSPF_ACTION_BITS = 4
+
+
+def normalize_action_cfg(value: Any, default: str = "1111") -> str:
+    mask = text(value)
+    return mask if len(mask) == OSPF_ACTION_BITS and all(bit in "01" for bit in mask) else default
+
+
+def process_action_cfg(current: dict[str, Any] | None, submitted: dict[str, Any]) -> str:
+    """Return a bit mask containing only changed process-level command groups."""
+    if current is None:
+        return "1111"
+    before = normalize_process_core(current)
+    after = normalize_process_core(submitted)
+    return "".join(
+        (
+            "1" if before["router_id"] != after["router_id"] else "0",
+            "1" if before["reference_bandwidth"] != after["reference_bandwidth"] else "0",
+            "1" if before["passive_default"] != after["passive_default"] else "0",
+            "1" if (
+                before["default_originate"], before["default_originate_always"]
+            ) != (
+                after["default_originate"], after["default_originate_always"]
+            ) else "0",
+        )
+    )
+
+
 def normalize_priority(value: Any) -> int:
     priority = int_or_none_value(value)
     return 1 if priority is None else priority
