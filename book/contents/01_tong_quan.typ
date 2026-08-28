@@ -26,7 +26,7 @@ NetworkTools phù hợp với các đối tượng sau:
 - Người nghiên cứu về quản trị mạng, muốn thử nghiệm các công cụ và quy trình quản lý tập trung, desired state, đồng bộ cấu hình và tự động hóa cấu hình triển khai.
 - Kỹ thuật viên hoặc quản trị viên mạng muốn thử nghiệm các công cụ quản lý tập trung và tự động hóa cấu hình trong môi trường mô phỏng trước khi triển khai trên thiết bị thực tế.
 
-NetworkTools hiện đang tỏng giai đoạn phát triển và kiểm chứng trong môi trường nghiên cứu. Các tính năng của phần mềm không nên được hiểu là đã hoàn thiện hoặc sẵn sàng triển khai trong môi trường thực tế. Người dùng nên thận trọng và kiểm tra kỹ lưỡng trước khi áp dụng các thay đổi cấu hình trên thiết bị thực tế.
+NetworkTools hiện đang trong giai đoạn phát triển và kiểm chứng trong môi trường nghiên cứu. Các tính năng của phần mềm không nên được hiểu là đã hoàn thiện hoặc sẵn sàng triển khai trong môi trường thực tế. Người dùng nên thận trọng và kiểm tra kỹ lưỡng trước khi áp dụng các thay đổi cấu hình trên thiết bị thực tế.
 
 == Các chức năng chính
 
@@ -37,7 +37,7 @@ NetworkTools cung cấp khả năng quản lý tập trung cho các thiết bị
 Các chức năng hiện có bao gồm: Router Interface, Static Routing, Default Route, OSPF, EIGRP, ACL, NAT, DHCP và FHRP.
 
 === Quản lý Switch
-Các chức năng hiện có bao gồm: VLAN, Access Port, Trunk Port, Spanning Tree Protocol (STP), Port Security, EtherChannel, SVI, VTP, DHCP SnoopingSnooping, Dynamic ARP Inspection (DAI), Storm Control, ACL, và các tính năng khác.
+Các chức năng hiện có bao gồm: VLAN, Access Port, Trunk Port, Spanning Tree Protocol (STP), Port Security, EtherChannel, SVI, VTP, DHCP Snooping, Dynamic ARP Inspection (DAI), Storm Control, ACL, và các tính năng khác.
 
 === Sao lưu và theo dõi cấu hình
 NetworkTools cung cấp khả năng sao lưu và theo dõi cấu hình thiết bị mạng. Người dùng có thể lưu lại các phiên bản cấu hình, so sánh sự khác biệt giữa các phiên bản, và khôi phục cấu hình từ các phiên bản trước đó khi cần thiết. Điều này giúp người quản trị dễ dàng quản lý lịch sử thay đổi và đảm bảo tính nhất quán trong quá trình vận hành mạng.
@@ -65,10 +65,10 @@ NetworkTools tổ chức dữ liệu làm việc dưới dạng NetworkTools Pro
   max-node-height: 21mm,
 )
 
-== Pạm vi hỗ trợ và giới hạn hiện tại
+== Phạm vi hỗ trợ và giới hạn hiện tại
 
 === Phạm vi hiện tại
-NetworkTools hiện đang tập trung vào moio trường nghiên cứu và thiết bị mạng của Cisco, bao gồm các dòng Router và Switch phổ biến. Nhiều luồng cấu hình hiện được triển khai và kiểm thử chủ yếu với thiết bị Cisco IOS thông qua SSH/Telnet.
+NetworkTools hiện đang tập trung vào môi trường nghiên cứu và thiết bị mạng của Cisco, bao gồm các dòng Router và Switch phổ biến. Nhiều luồng cấu hình hiện được triển khai và kiểm thử chủ yếu với thiết bị Cisco IOS thông qua SSH/Telnet.
 
 === Giới hạn hiện tại
 - NetworkTools hiện chưa hỗ trợ các thiết bị mạng của các nhà sản xuất khác ngoài Cisco.

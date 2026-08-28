@@ -123,14 +123,13 @@
   // Bullet/enum: Times New Roman 13 pt, 1,5 dòng, 0 pt trước/sau,
   // không thụt dòng đầu và căn trái.
   show list: it => {
-    set list(tight: false, spacing: 1.4em)
-    set par(
-      justify: false,
-      first-line-indent: 0pt,
-      leading: 1.05em,
-      spacing: 0pt,
-    )
-    it
+  set list(tight: false, spacing: 1.4em)
+  set par(
+    justify: false,
+    first-line-indent: 0pt,
+    leading: 1.05em,
+  )
+  it
   }
   show enum: it => {
     set enum(tight: false, spacing: 1.4em)
@@ -138,16 +137,12 @@
       justify: false,
       first-line-indent: 0pt,
       leading: 1.05em,
-      spacing: 0pt,
     )
     it
   }
 
   show raw.where(block: false): set text(font: "Cascadia Code", size: 11pt, weight: "light", features: ("zero",))
-  show raw.where(block: false): box.with(
-    inset: (x: 4pt, y: 0pt),
-    outset: (y: 3pt),
-  )
+  show raw.where(block: false): set text(font: "Cascadia Code", size: 11pt, weight: "light", features: ("zero",))
 
   show raw.where(block: true): set text(font: "Cascadia Code", size: 11pt, weight: "light", features: ("zero",))
   show raw.where(block: true): block.with(

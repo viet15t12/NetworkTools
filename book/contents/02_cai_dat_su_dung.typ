@@ -1,191 +1,355 @@
+#import "../config/commands.typ": report-note
+#import "../config/diagrams.typ": flow-diagram
+#import "../config/images.typ": insert-image
+
 = Cài đặt và Bắt đầu sử dụng NetworkTools
 
-Chương này hướng dẫn người dùng cách cài đặt phần mềm NetworkTools lần đầu, cũng như các bước cơ bản để bắt đầu sử dụng phần mềm. Sau khi hoàn thành chương, người dùng có thể mở ứng dụng, tạo hoặc mở một Project mới, thêm thiết bị mạng, xác định được vị trí lưu trữ dữ liệu làm việc và thực hiện các thao tác cơ bản để quản lý cấu hình thiết bị mạng.
+Chương này hướng dẫn người dùng chạy NetworkTools từ mã nguồn, đi qua cửa sổ Welcome, tạo hoặc mở một project `.ntp`, rồi xác nhận Workspace đã sẵn sàng. Chương này chưa yêu cầu thiết bị mạng thật và chưa hướng dẫn cấu hình router, switch hoặc dịch vụ mạng.
 
-== Yêu cầu hệ thống
-Trước khi cài đặt phần mềm NetworkTools, người dùng cần đảm bảo rằng hệ thống của mình đáp ứng các yêu cầu cần thiết.
+== Yêu cầu trước khi cài đặt
 
-=== Yêu cầu cơ bản
-NetworkTools yêu cầu:
-- Python phiên bản `3.11` trở lên;
-- Trình quản lý môi trường và dependency `uv`;
-- Quyền truy cập mạng tới các thiết bị mà người dùng được phép quản lý.
+=== Thành phần bắt buộc
 
-Windows và Linux (Fedora 44) là nền tảng phát triển chính của NetworkTools.
+Để chạy ứng dụng desktop từ mã nguồn, hệ thống cần có:
 
-| Ghi chú: Các yêu cầu trên áp dụng cho phiên bản NetworkTools đượ chạy trực tiếp từ mã nguồn. Trong các phiên bản tương lai, NetworkTools có thể được phát hành dưới dạng bộ cài đặt độc lập, các yêu cầu, quy trình có thể thay đổi. Người dùng nên tham khảo tài liệu hướng dẫn cài đặt đi kèm với từng phiên bản để biết thông tin chi tiết.
+- Python `3.11` trở lên;
+- `uv` để tạo môi trường Python và cài dependency từ `app/pyproject.toml` cùng `app/uv.lock`;
+- Git nếu lấy mã nguồn bằng lệnh `git clone`;
+- các thư viện hệ thống cần thiết để Qt/PyQt6 hiển thị giao diện.
 
-=== Các thành phần tuỳ chọn
-Một số chức năng yêu cầu phần mềm bổ sung hoặc các thành phần tuỳ chọn. Người dùng có thể cài đặt các thành phần này nếu muốn sử dụng các tính năng tương ứng.
-- TShark hoặc Wireshark: Cần thiết để sử dụng chức năng Device Logs, các tính năng thu thập và phân tích các gói tin mạng, giúp người quản trị theo dõi lưu lượng và phát hiện các vấn đề tiềm ẩn trong môi trường được cấp quyền.
-- Rust toolchain: Chỉ cần thết trong trường hợp phải tự biên dịch thành phần Terminal compainion đi kèm với NetworkTools. Người dùng thông thường không cần cài đặt Rust nếu thành phần Terminal đã được chuẩn bị sẵn.
+Windows là nền tảng phát triển chính. NetworkTools cũng được chạy và kiểm tra trên Linux; bản phân phối Linux phải có các thư viện đồ họa, font và thư viện Qt tương ứng với PyQt6.
 
-=== Quyền truy cập thiết bị mạng
-Để kết nối tới thiết bị thật, người dùng cần có quyền truy cập hợp lệ tới thiết bị mạng. Điều này bao gồm:
-- Địa chỉ IP hoặc hostname của thiết bị;
-- Phương thức kết nối được hỗ trợ (SSH hoặc Telnet);
-- Cổng kết nối (mặc định là 22 cho SSH và 23 cho Telnet);
-- Thông tin xác thực hợp lệ (tên người dùng và mật khẩu, hoặc khóa công khai/riêng tư cho SSH);
-- Quyền quản trị hoặc quyền truy cập đủ để thực hiện các thay đổi cấu hình trên thiết bị.
+#report-note[*Ghi chú:* Người dùng không cần quyền truy cập router, switch hoặc thiết bị thật để hoàn thành chương này. Project trống vẫn có thể được tạo, mở, lưu và quản lý snapshot.]
 
-NetworkTools chỉ nên được sử dụng để kết nối và cấu hình trên các thiết bị hoặc hệ thống mà người dùng được cấp quyền quản lý.
+=== Thành phần tùy chọn
 
-| Cảnh báo: Việc sử dụng NetworkTools để truy cập hoặc thay đổi cấu hình trên các thiết bị mà người dùng không có quyền hợp pháp là vi phạm pháp luật và chính sách bảo mật. Người dùng phải tuân thủ các quy định và chính sách của tổ chức hoặc nhà cung cấp dịch vụ mạng khi sử dụng phần mềm.
+Các thành phần sau chỉ cần khi sử dụng chức năng liên quan:
 
-== Mã nguồn NetworkTools
-Phiên bản hiện tại có thể được lấy từ kho lưu trữ GitHub chính thức của NetworkTools tại địa chỉ: https://github.com/viet15t12/NetworkTools.git. Người dùng có thể tải xuống mã nguồn, biên dịch và chạy phần mềm trên hệ thống của mình. Hướng dẫn chi tiết về cách lấy mã nguồn, cài đặt các dependency và chạy phần mềm được cung cấp trong tài liệu hướng dẫn đi kèm với kho lưu trữ.
+- TShark hoặc Wireshark: dùng cho Device Logs và thu thập gói tin trên mạng được cấp quyền;
+- Rust toolchain (`cargo`): chỉ cần khi phải tự biên dịch NetworkTools Terminal companion;
+- CMake và compiler C++: chỉ cần khi phải tự biên dịch Syslog collector trên Linux;
+- quyền truy cập cùng credential của thiết bị: chỉ cần ở các chương thực hành kết nối và cấu hình thiết bị.
 
-Mở Terminal (Command Prompt) và chạy các lệnh sau để tải xuống mã nguồn và cài đặt các dependency cần thiết:
+#report-note[*Mẹo:* Nếu mục tiêu trước mắt chỉ là mở ứng dụng và tạo Workspace, hãy chuẩn bị Python và `uv` trước. Các thành phần tùy chọn có thể bổ sung sau.]
+
+== Lấy mã nguồn NetworkTools
+
+Kho Git đang được sử dụng bởi project là `viet15t12/NetworkTools`. Từ Terminal, PowerShell hoặc Command Prompt, chạy:
 
 ```sh
-$ git clone https://github.com/viet15t12/NetworkTools.git
+git clone https://github.com/viet15t12/NetworkTools.git
+cd NetworkTools/app
 ```
 
-Sau khi quá trình tải xuống hoàn tất, người dùng chuyển tới thư mục chứa mã nguồn và cài đặt các dependency bằng lệnh:
+Thư mục `app/` là thư mục làm việc của ứng dụng desktop. Các lệnh trong phần còn lại của chương được thực hiện tại thư mục này.
 
-```sh
-$ cd NetworkTools/app
-```
+Nếu nhận mã nguồn dưới dạng file nén thay vì Git, hãy giải nén toàn bộ repository, mở Terminal tại thư mục `NetworkTools/app`, rồi tiếp tục với bước kiểm tra môi trường. Bản mã nguồn phải giữ nguyên các thư mục `UI/`, `core/`, `features/`, `infrastructure/` và file khóa dependency.
 
-Thư mục `app/` chứa ứng dụng desktop chính và là thư mục làm việc được sử dụng trong các bước tiếp theo.
-
-== Chuẩn bị tài nguyên cần thiết
+== Chuẩn bị Python và uv
 
 === Kiểm tra Python
-Người dùng có thể truy cập trang `https://www.python.org/` để cài đặt Python từ trang chủ chính thức.
 
-Sử dụng lệnh bên dưới để kiểm tra phiên bản. Nếu Python đã được cài đặt đúng, hệ thống sẽ hiển thị phiên bản hiện tại.
+Chạy một trong các lệnh sau, tùy cách Python được đăng ký trên hệ điều hành:
 
 ```sh
-$ python --version # Hoặc python3 --version
+python --version
 ```
 
-Kết quả hiển thị ví dụ trên màn hình:
+Trên một số hệ thống Linux, lệnh tương ứng là:
 
+```sh
+python3 --version
 ```
-Python 3.12.x
-```
-NetworkTools yêu cầu `Python 3.11` hoặc mới hơn. 
+
+Kết quả phải là Python `3.11` hoặc mới hơn, ví dụ `Python 3.12.x`.
 
 === Kiểm tra uv
-Nhập `uv --version`
 
-Nếu hệ thống nhận diện được lệnh `uv`, có thể tiếp tục quá trình khởi chạy NetworkTools. Nếu lệnh không được nhận diện, cần cài đặt `uv` trước khi tiếp tục.
+```sh
+uv --version
+```
+
+Nếu Terminal hiển thị số phiên bản của `uv`, có thể tiếp tục. Nếu hệ thống báo không nhận diện lệnh, hãy cài `uv`, mở lại Terminal và kiểm tra lại trước khi chạy NetworkTools.
 
 == Khởi chạy NetworkTools
-NetworkTools cung cấp trình khởi chạy để chuẩn bị môi trường và khởi động ứng dụng. Trình khởi chạy thực hiện các bước chuẩn bị cần thiết trước khi mở ứng dụng. 
 
-=== Khởi chạy trên Windows
-Từ thư mục `NetworkTools/app`, chạy:
+NetworkTools có launcher dành cho từng nền tảng và một lệnh chạy trực tiếp. Launcher phù hợp khi cần đồng bộ dependency, kiểm tra thành phần native hoặc chuẩn bị môi trường. Lệnh trực tiếp phù hợp khi môi trường đã sẵn sàng.
+
+=== Windows
+
+Từ `NetworkTools/app`, chạy:
 
 ```cmd
-> .\networktools.bat
+networktools.bat
 ```
 
-=== Khởi chạy trên Linux
-Từ thư mục `NetworkTools/app`, chạy:
+Launcher hiển thị menu. Ở lần chuẩn bị đầu tiên, chọn tác vụ setup hoặc *Full setup and run*. Khi môi trường đã sẵn sàng, có thể chạy trực tiếp chế độ run:
+
+```cmd
+networktools.bat run
+```
+
+=== Linux
 
 ```sh
-$ ./networktools.sh
+./networktools.sh
 ```
 
-Trường hợp file chưa có quyền thực thi, có thể cần cấp quyền thực thi trước khi chạy:
+Nếu file chưa có quyền thực thi:
 
 ```sh
-chmod +x ./networktools/sh
+chmod +x ./networktools.sh
 ```
 
-=== Khởi chạy trực tiếp
-Nếu môi trường đã được chuẩn bị sẵn, NetworkTools có thể được chạy trực tiếp bằng:
+Launcher Linux cũng hiển thị menu. Có thể yêu cầu chuẩn bị đầy đủ và chạy bằng:
 
 ```sh
-$ uv run main.py
+./networktools.sh all
 ```
 
-`uv` sử dụng thông tin dependency của project để chuẩn bị môi trường Python cần thiết cho ứng dụng.
+Khi các binary native đã được chuẩn bị, dùng:
 
-== Lần khởi chạy đầu tiên
-Khi NetworkTools được khởi động thành công, ứng dụng hiển thị Welcome Windows.
-Đây là điểm bắt đầu của mỗi phiên làm việc. Từ màn hình Welcome, người dùng có thể: 
-- tạo một project mới;
-- mở một project đã có;
-- tự động mở lại một project gần đây;
-- truy cập các project NetworkTools đã được lưu trước đó.
+```sh
+./networktools.sh run
+```
 
-Không gian làm việc chính của NetworkTools chỉ được mở sau khi một project hợp lệ được tạo hoặc mở.
+=== Chạy trực tiếp
 
-#figure(
-  image("../figures/gui/welcome.png", width: 95%),
-  caption: [Màn hình Welcome của NetworkTools],
-)
+Khi chỉ cần chạy ứng dụng Python trong môi trường dependency đã được `uv` chuẩn bị, dùng:
+
+```sh
+uv run main.py
+```
+
+Lệnh này bỏ qua bước kiểm tra/build terminal companion và Syslog collector của launcher. Các chức năng native tương ứng có thể chưa sử dụng được, nhưng cửa sổ Welcome và workflow project vẫn có thể hoạt động.
+
+== Màn hình Welcome
+
+NetworkTools luôn nạp cửa sổ Welcome trước Workspace. Ở trạng thái sạch, cửa sổ hiển thị ba lựa chọn chính:
+
+- *Create New*: tạo project `.ntp` mới;
+- *Open*: chọn một project `.ntp` đã có;
+- *Settings*: thay đổi thiết lập toàn cục của ứng dụng.
+
+Khi đã có lịch sử làm việc, khu vực giữa cửa sổ hiển thị *Recent Projects*. Trạng thái khởi động sạch được minh họa tại @fig:ch02-welcome.
+
+#insert-image(
+  "figures/gui/chapter-02/01-welcome-window.png",
+  caption: [Màn hình Welcome của NetworkTools khi chưa có project gần đây.],
+  width: 100%,
+) <fig:ch02-welcome>
+
+Workspace chỉ mở sau khi controller tạo hoặc giải nén thành công một project hợp lệ. Ứng dụng không tự mở project gần đây ngay khi khởi động.
 
 == Project trong NetworkTools
-NetworkTools tổ chức dữ liệu làm việc theo Project.
 
-Mỗi project đại diện cho một không gian làm việc độc lập, trong đó có thể chứ thông tin thiết bị, cấu hình, dữ liệu sao lưu và các thông tinn liên quan đến môi trường mạng đang được quản lý.
+Project NetworkTools là một package có phần mở rộng `.ntp`. Package chứa dữ liệu Workspace cần thiết, gồm các database, dữ liệu backup và lịch sử snapshot. Mỗi project là một không gian làm việc độc lập; vì vậy nên dùng project riêng cho từng bài lab hoặc hệ thống.
 
-Project NetworkTools sử dụng phần mềm mở rộng `.ntp`, ví dụ:
+Ví dụ tên project:
 
-```
-Core-Lab.ntp
-```
-
-Việc sử dụng project cho phép tách dữ liệu của nhiều hệ thống hoặc bài thực hành khác nhau thay vì lưu tất cả thông tin vào cùng một cơ sở dữ liệu.
-
-=== Tạo project mới
-Từ màn hình Welcome:
-1. Chọn *Create New*.
-```
-TODO: Tạo lại Welcome Screen trên ứng dụng, sau đó viết lại hướng dẫn này do có một số thao tác chưa hợp lý.
+```text
+Network-Lab.ntp
+Branch-Office-Lab.ntp
 ```
 
-==== Nguyên tắc đặt tên cho project
-Nên sử dụng tên giúp xác định rõ mục đích của project, ví dụ: `CCNA_Lab.ntp`, `Router_Test.ntp`, `DoAn_Mang.ntp`
+Nên chọn tên mô tả đúng mục đích. Tránh các tên khó phân biệt như `new.ntp` hoặc `project1.ntp` khi quản lý nhiều môi trường.
 
-Hạn chế sử dụng những tên chung chung, gây nhiễu khi quản lý nhiều project, ví dụ: `new.ntp`, `project1.ntp`
+== Tạo project mới
 
-==== Bảo vệ project bằng mật khẩu
-Khi tạo project, người dùng có thể lựa chọn bảo vệ project bằng mật khẩu. Project được bảo vệ sẽ yêu cầu người dùng nhập mật khẩu khi mở.
+Thực hiện theo thứ tự sau:
 
-NetworkTools Project không lưu mật khẩu của project trong danh sách Recent Project. Do đó, người dùng cần tự ghi nhớ và quản lý mật khẩu đã sử dụng, không thể khôi phục mật khẩu khi đã quên.
+1. Khởi chạy NetworkTools.
+2. Trong cửa sổ Welcome, chọn *Create New*.
+3. Trong hộp thoại *Create New Project*, nhập *Project name*.
+4. Kiểm tra *Project location*. Có thể nhập đường dẫn thư mục hoặc chọn *Browse…* để dùng native folder picker.
+5. Nếu muốn dùng thư mục này cho các project sau, bật tùy chọn đặt làm vị trí mặc định.
+6. Tùy chọn, bật *Protect project with a password* và nhập mật khẩu hai lần.
+7. Chọn *Create Project*.
+8. Chờ hộp thoại đóng và Workspace xuất hiện.
 
-| *Quan trọng:* Không nên sử dụng cùng mật khẩu của project với mật khẩu đăng nhập của thiết bị mạng.
+Hộp thoại ban đầu được minh họa tại @fig:ch02-create-dialog. Trường vị trí trỏ tới một thư mục có thật; NetworkTools tự tạo tên file `.ntp` an toàn từ tên project.
 
-| *Quan trọng:* Cần lưu mật khẩu project ở vị trí an toàn. Không nên đưa mật khẩu vào ảnh chụp màn hình, log, tài liệu công khai hoặc repository Git.
+#insert-image(
+  "figures/gui/chapter-02/02-create-project.png",
+  caption: [Hộp thoại tạo một project NetworkTools mới.],
+  width: 100%,
+) <fig:ch02-create-dialog>
 
-=== Mở project đã có
-Để mở một project NetworkTools
-1. Khởi chạy NetworkTools
-2. Tại Welcome Windows, chọn Open Project.
-3. Chọn file có phần mở rộng `.ntp`.
-4. Chọn Open.
-5. Nhập mật khẩu nếu project được bảo vệ.
+Trong ví dụ tại @fig:ch02-project-details, project có tên `Network-Lab`, được lưu thành `Network-Lab.ntp` trong thư mục fixture dành riêng cho tài liệu. Nút *Create Project* chỉ được bật khi tên và vị trí hợp lệ; nếu bật bảo vệ bằng mật khẩu, hai lần nhập phải khớp nhau.
 
-Nếu project hợp lệ, NetworkTools sẽ tải dữ liệu và mở workspace.
+#insert-image(
+  "figures/gui/chapter-02/03-project-details.png",
+  caption: [Thông tin project mới đã sẵn sàng để xác nhận.],
+  width: 100%,
+) <fig:ch02-project-details>
 
-=== Recent Projects
-NetworkTools lưu danh sách các project được mở gần đây. Người dùng có thể chọn một project tại *Recent Projects* để mở nhanh mà không cần duyệt lại tới vị trí của file.
+Sau khi package đầu tiên được tạo thành công, NetworkTools chuyển sang Workspace. Tên project xuất hiện trên thanh tiêu đề như trong @fig:ch02-created-workspace. Project mới chưa có thiết bị; đây là trạng thái đúng ở cuối workflow tạo project.
 
-Đối với prroject được bảo vệ, mật khẩu vẫn phải được nhập lại khi mở.
+#insert-image(
+  "figures/gui/chapter-02/04-workspace-opened.png",
+  caption: [Workspace trống sau khi project Network-Lab được tạo thành công.],
+  width: 100%,
+) <fig:ch02-created-workspace>
 
-=== Lưu project
-Trong quá trình làm việc, người dùng có thể sử dụng:
-- *Save* để lưu project hiện tại;
-- *Save As* để lưu project thành một file khác.
+== Bảo vệ project bằng mật khẩu
 
-Quá trình lưu có thể bao gồm dữ liệu của cơ sở dữ liệu dữ liệu backup và các thành phần cần thiết của workspace.
+Tùy chọn *Protect project with a password* bảo vệ toàn bộ package `.ntp`. Khi mở lại project được bảo vệ, ứng dụng yêu cầu mật khẩu trước khi giải nén Workspace.
 
-Nên lưu project trước và sau những thay đổi cấu hình quan trọng.
+#report-note[*Quan trọng:* NetworkTools không lưu mật khẩu project trong Recent Projects và không có cơ chế khôi phục mật khẩu đã quên. Hãy lưu mật khẩu ở trình quản lý mật khẩu an toàn; không dùng lại credential của thiết bị mạng.]
 
-| *Khuyến nghị:* Ngoài file project đang sử dụng, nên duy trì ít nhất một bản sao lưu ở vị trí độc lập trước khi thực hiện những thay đổi lớn đối với thiết bị hoặc workspace.
+#report-note[*Cảnh báo:* Khi project đang mở, dữ liệu phải được giải nén để ứng dụng làm việc. Mật khẩu bảo vệ file `.ntp` không thay thế việc bảo vệ tài khoản hệ điều hành, thư mục tạm và bản backup bên ngoài.]
 
-=== Snapshot và khôi phục trạng thái project
-NetworkTools hỗ trợ snapshot cho các project.
+Các ảnh của chương này dùng project không có mật khẩu. Không có password thật hoặc fixture password nào xuất hiện trong PNG.
 
-Snapshot có thể được sử dụng để ghi lại trạng thái project tại một thời điểm nhất định trước khi thực hiện những thay đổi lớn. Người dùng có thể truy cập *Snapshot History* để:
-- tạo snapshot;
-- xem các snapshot đã lưu;
-- lựa chọn trạng thái trước đó;
-- thực hiện rollback khi cần thiết.
+== Mở project đã có
 
-Trước khi rollback, NetworkTools tạo safety snapshot để giảm nguy cơ mất trạng thái hiện tại. Tuy nhiên, snapshot trong ứng dụng không nên được xem là phương án sao lưu duy nhất.
+Để mở một package `.ntp`:
+
+1. Trở về cửa sổ Welcome. Nếu đang ở Workspace, chọn *File* → *Close Workspace* và chờ thao tác lưu/đóng hoàn tất.
+2. Chọn *Open* ở phần đầu cửa sổ như vị trí minh họa tại @fig:ch02-open-choice.
+3. Trong native file picker của hệ điều hành, chọn file `.ntp`.
+4. Nếu project được bảo vệ, nhập mật khẩu và xác nhận.
+5. Chờ NetworkTools kiểm tra package, giải nén dữ liệu và mở Workspace.
+
+#insert-image(
+  "figures/gui/chapter-02/05-open-project-choice.png",
+  caption: [Vị trí lệnh Open để chọn một project đã có.],
+  width: 100%,
+) <fig:ch02-open-choice>
+
+Nếu package hợp lệ, thanh tiêu đề hiển thị tên project đã mở. @fig:ch02-existing-opened cho thấy fixture `Branch-Office-Lab.ntp` đã được mở thật qua service project của ứng dụng; Workspace vẫn sạch và chưa có thiết bị.
+
+#insert-image(
+  "figures/gui/chapter-02/06-open-existing-project.png",
+  caption: [Workspace sau khi mở project Branch-Office-Lab có sẵn.],
+  width: 100%,
+) <fig:ch02-existing-opened>
+
+== Recent Projects
+
+Mỗi lần tạo hoặc mở project thành công, NetworkTools ghi project vào *Recent Projects*. Danh sách lưu tên, URL file và thời điểm mở gần nhất; mật khẩu không được lưu. Chọn trực tiếp một dòng để mở lại project bằng cùng cơ chế kiểm tra package như lệnh *Open*.
+
+@fig:ch02-recents sử dụng hai package fixture hợp lệ và đường dẫn tạm an toàn. Nếu một file đã bị di chuyển hoặc xóa, mục không còn tồn tại sẽ được loại khỏi danh sách khi ứng dụng nạp lịch sử.
+
+#insert-image(
+  "figures/gui/chapter-02/07-recent-projects.png",
+  caption: [Danh sách Recent Projects với hai project fixture hợp lệ.],
+  width: 100%,
+) <fig:ch02-recents>
+
+== Lưu project
+
+Trong Workspace, mở menu *File* và chọn *Save Workspace*, hoặc nhấn `Ctrl+S`. Lệnh này đóng gói trạng thái hiện tại và thay file `.ntp` theo cơ chế ghi an toàn. Vị trí lệnh được minh họa tại @fig:ch02-save.
+
+#insert-image(
+  "figures/gui/chapter-02/08-save-project.png",
+  caption: [Lệnh Save Workspace và các lệnh snapshot trong menu File.],
+  width: 100%,
+) <fig:ch02-save>
+
+Phiên bản giao diện hiện tại không cung cấp action *Save As*. Vì vậy, không nên tìm một lệnh *Save As* trong menu hoặc dựa vào mô tả cũ. Nếu cần một bản sao độc lập, hãy lưu và đóng Workspace trước, rồi sao chép file `.ntp` bằng công cụ của hệ điều hành; bản sao ngoài ứng dụng là backup, không phải một thao tác Save As trong NetworkTools.
+
+#report-note[*Mẹo:* NetworkTools có cơ chế auto-save theo chu kỳ, nhưng nên chủ động dùng `Ctrl+S` trước khi đóng ứng dụng hoặc trước một thay đổi quan trọng.]
+
+== Snapshot và khôi phục
+
+Snapshot là điểm lưu trạng thái toàn project. Từ menu *File*:
+
+1. Chọn *Create Snapshot…* để mở Snapshot History và đặt nhãn tùy chọn.
+2. Chọn *Create Snapshot*.
+3. Kiểm tra snapshot mới xuất hiện trong danh sách.
+4. Chỉ dùng *Roll Back* khi đã xác định đúng mốc cần phục hồi.
+
+@fig:ch02-snapshot hiển thị một snapshot thủ công `Before chapter 3` và một mốc automatic được tạo trong workflow lưu an toàn. Snapshot gồm ảnh nhất quán của database và backup files. Lịch sử automatic được giới hạn để tránh tăng dung lượng không kiểm soát.
+
+#insert-image(
+  "figures/gui/chapter-02/09-snapshot-history.png",
+  caption: [Khu vực Snapshot History với các điểm khôi phục của project.],
+  width: 100%,
+) <fig:ch02-snapshot>
+
+Khi rollback, implementation hiện tại tạo một safety snapshot được ghim trước khi phục hồi trạng thái cũ, rồi lưu lại package. Cơ chế này giảm rủi ro mất trạng thái ngay trước rollback, nhưng snapshot nằm trong project và không thay thế backup ở thiết bị hoặc vị trí lưu trữ khác.
+
+#report-note[*Cảnh báo:* Không thử rollback trên project đang dùng cho công việc thật chỉ để làm quen giao diện. Hãy thực hành trên một bản sao hoặc project lab.]
+
+== Vị trí dữ liệu runtime
+
+Khi chạy từ mã nguồn, dữ liệu runtime toàn cục mặc định nằm trong:
+
+```text
+NetworkTools/app/data/
+```
+
+Thư mục này chứa database mặc định và trạng thái ứng dụng như Recent Projects. File project `.ntp` nằm tại vị trí người dùng chọn trong Create/Open workflow. Khi project được mở, NetworkTools làm việc trên một Workspace tạm được giải nén và đóng gói lại khi lưu.
+
+Người dùng thông thường không cần đổi thư mục runtime. Trường hợp nâng cao có thể đặt biến môi trường `NETWORKTOOLS_DATA_DIR` trước khi khởi chạy để dùng một vị trí khác. Hãy bảo đảm thư mục đích tồn tại trên ổ đĩa tin cậy và tài khoản hiện tại có quyền đọc/ghi.
+
+== Kiểm tra ứng dụng sau khi khởi chạy
+
+Sau khi project được tạo hoặc mở, kiểm tra nhanh:
+
+- cửa sổ Welcome đã đóng hoặc được ẩn;
+- tên project đúng trên thanh tiêu đề;
+- thanh menu, Activity Bar, Devices sidebar và vùng nội dung đã hiển thị;
+- thanh trạng thái không có thông báo lỗi;
+- không có hộp thoại loading hoặc password còn mở;
+- Workspace có thể ở trạng thái trống nếu chưa thêm thiết bị.
+
+Trạng thái sẵn sàng được minh họa tại @fig:ch02-ready. Không cần tạo thiết bị hoặc kết nối mạng để hoàn thành bước kiểm tra này.
+
+#insert-image(
+  "figures/gui/chapter-02/10-ready-workspace.png",
+  caption: [Workspace sạch và sẵn sàng cho chương tiếp theo.],
+  width: 100%,
+) <fig:ch02-ready>
+
+Sau khi project được tạo hoặc mở thành công, NetworkTools chuyển sang Workspace. Người dùng có thể tiếp tục làm quen với giao diện và các khu vực chức năng ở chương tiếp theo.
+
+== Một số lỗi khởi chạy thường gặp
+
+=== Python không được nhận diện
+
+Kiểm tra lại `python --version` hoặc `python3 --version`. Bảo đảm phiên bản từ `3.11` trở lên và executable đã có trong `PATH`.
+
+=== uv không được nhận diện
+
+Chạy lại `uv --version` trong một Terminal mới. Nếu lệnh vẫn không tồn tại, cài `uv` và kiểm tra cấu hình `PATH` của tài khoản hiện tại.
+
+=== QML hoặc Qt không tải trên Linux
+
+Kiểm tra thư viện hệ thống đồ họa, font, plugin platform và QML libraries tương ứng với wheel PyQt6. Chạy ứng dụng từ Terminal để đọc thông báo thiếu thư viện đầu tiên; không sao chép ngẫu nhiên plugin Qt giữa các phiên bản.
+
+=== Không tạo được database hoặc thư mục runtime
+
+Kiểm tra quyền ghi đối với `app/data/` hoặc thư mục do `NETWORKTOOLS_DATA_DIR` chỉ định. Không chạy nhiều instance cùng ghi một Workspace. Không xóa file `-wal`, `-shm` hoặc journal khi ứng dụng còn chạy.
+
+=== Terminal companion hoặc Syslog collector còn thiếu
+
+Launcher đầy đủ có thể yêu cầu Rust/Cargo, CMake hoặc compiler để build thành phần native. Nếu chỉ cần hoàn thành chương này, có thể thử `uv run main.py`; Terminal và Syslog native có thể chưa hoạt động. Chuẩn bị các binary đó trước khi dùng chức năng tương ứng.
+
+== Lưu ý về an toàn dữ liệu
+
+#report-note[*Quan trọng:* Không commit hoặc chia sẻ công khai project `.ntp`, database, file `-wal`/`-shm`/journal, running-config, backup, Syslog, pcap, credential, password hoặc private key. Các file này có thể chứa topology, địa chỉ, cấu hình và thông tin xác thực của hệ thống thật.]
+
+Ngoài snapshot trong project, hãy duy trì ít nhất một bản sao `.ntp` ở vị trí độc lập trước khi thực hiện thay đổi lớn. Chỉ đóng, sao chép hoặc di chuyển project sau khi thao tác lưu đã hoàn tất. Không chỉnh trực tiếp database hoặc nội dung package `.ntp` bằng công cụ ngoài khi Workspace đang mở.
+
+== Tóm tắt chương
+
+Chương này đã hoàn thành workflow từ môi trường chưa chạy ứng dụng đến một Workspace hợp lệ:
+
+#flow-diagram(
+  [Chuẩn bị môi trường],
+  [Lấy NetworkTools],
+  [Kiểm tra Python và uv],
+  [Khởi chạy ứng dụng],
+  [Welcome],
+  [Create/Open project],
+  [Workspace sẵn sàng],
+  max-per-row: 4,
+  node-width: 36mm,
+  node-height: 18mm,
+  max-node-width: 38mm,
+  max-node-height: 20mm,
+)
+
+Ở thời điểm này, người dùng đã có thể tạo, mở, lưu và nhận biết snapshot của project. Việc thêm thiết bị và cấu hình router/switch được chuyển sang các chương sau.
