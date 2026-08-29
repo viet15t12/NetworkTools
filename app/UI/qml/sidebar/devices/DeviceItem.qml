@@ -24,25 +24,22 @@ Rectangle {
     readonly property bool blockedByStatus: status === "waiting"
 
     // ── Logic hiển thị text ───────────────────────────────────────────────────
-    function isDomainLike(value) {
-        const text = String(value || "").trim()
-        return /^(?=.{1,253}$)(?!-)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i.test(text)
-    }
-
     function preferredHostLabel() {
         const name = String(deviceName || "").trim()
         const ip = String(deviceIp || "").trim()
 
-        if (isDomainLike(name))
-            return name
-        if (isDomainLike(ip))
-            return ip
-        return ip !== "" ? ip : name
+        if (name !== "" && ip !== "" && name !== ip)
+            return name + " - " + ip
+        return name !== "" ? name : ip
     }
 
     property string displayText: {
         if (displayFormat === "ip")
-            return deviceIp
+            return String(deviceIp || "").trim()
+        if (displayFormat === "name") {
+            const name = String(deviceName || "").trim()
+            return name !== "" ? name : String(deviceIp || "").trim()
+        }
         return preferredHostLabel()
     }
 
@@ -63,19 +60,27 @@ Rectangle {
         return Theme.statusDisconnected
     }
 
+    readonly property string statusLabel: {
+        if (status === "connected") return "Connected"
+        if (status === "waiting") return "Waiting"
+        return "Disconnected"
+    }
+
     // ── Màu dot riêng cho unknown ─────────────────────────────────────────────
     // Unknown device dùng màu muted hơn để phân biệt với disconnected
     property color dotColor: statusColor
 
     ToolTip.visible: itemHover.hovered
-    ToolTip.text:    deviceIp + (deviceType !== "" && deviceType !== "unknown"
+    ToolTip.text:    preferredHostLabel()
+                       + (deviceType !== "" && deviceType !== "unknown"
                                      ? "  ·  " + deviceType
                                      : "  ·  unknown")
+                       + "\nConnection: " + statusLabel
     ToolTip.delay:   400
 
     width:   parent.width
     height:  Theme.listItemHeight
-    opacity: blockedByStatus ? 0.45 : 1.0
+    opacity: 1.0
 
     color: isActive          ? Theme.panelSideBarItemSelected :
            isBatchSelected   ? Qt.rgba(Theme.panelSideBarAccentColor.r,
@@ -135,7 +140,9 @@ Rectangle {
         anchors.rightMargin: 6
 
         text:           deviceItem.displayText
-        color:          isActive ? Theme.panelSideBarTextPrimary : Theme.panelSideBarTextSecondary
+        color:          isActive ? Theme.panelSideBarTextPrimary
+                                 : (blockedByStatus ? Theme.panelSideBarTextDisabled
+                                                    : Theme.panelSideBarTextSecondary)
         font.pixelSize: Theme.fontSizeNormal
         font.family:    Theme.fontFamily
         elide:          Text.ElideRight

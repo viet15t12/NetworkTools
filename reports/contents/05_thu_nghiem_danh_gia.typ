@@ -68,7 +68,7 @@ Nhằm tăng băng thông và đảm bảo tính dự phòng cho đường truy�
 
 *Bước 4: Thiết lập cơ chế phòng vệ DHCP Snooping và Dynamic ARP Inspection (DAI)*
 
-Để ngăn chặn các cuộc tấn công mạng Lớp 2 (DHCP Rogue Server, Man-in-the-Middle và ARP Spoofing), người dùng chuyển sang phân hệ *Security* $arrow$ thẻ *L2 Security*. 
+Để ngăn chặn các cuộc tấn công mạng Lớp 2 (DHCP Rogue Server, Man-in-the-Middle và ARP Spoofing), người dùng chuyển sang phân hệ *Security* $arrow$ thẻ *L2 Security*.
 
 #figure(
   image("diagrams/Anh_chuong_5/1_21.png", width: 85%),
@@ -137,7 +137,12 @@ Mô hình kịch bản được chia làm 3 phân vùng định tuyến chính v
     ([Chi nhánh A], [VPC11 (A1_VLAN)], [192.168.10.10/24], [Gateway: 192.168.10.1 (R2 Gi0/4)]),
     ([Chi nhánh A], [VPC12 (A2_VLAN)], [192.168.20.10/24], [Gateway: 192.168.20.1 (R3 Gi0/4)]),
     ([Chi nhánh A], [R1, R2, R3], [10.1.12.0/24, 10.1.13.0/24, 10.1.23.0/24], [Miền định tuyến OSPF Area 1]),
-    ([Đường trục ISP], [R1, ISP1, ISP2, R6], [10.0.0.0/24, 10.0.1.0/24, 10.0.2.0/24, 10.0.3.0/24], [Miền đường trục OSPF Backbone Area 0]),
+    (
+      [Đường trục ISP],
+      [R1, ISP1, ISP2, R6],
+      [10.0.0.0/24, 10.0.1.0/24, 10.0.2.0/24, 10.0.3.0/24],
+      [Miền đường trục OSPF Backbone Area 0],
+    ),
     ([Chi nhánh B], [VPC14 (B1_VLAN)], [192.168.30.10/24], [Gateway: 192.168.30.1 (R6 Gi0/1)]),
     ([Chi nhánh B], [VPC15 (B2_VLAN)], [192.168.40.10/24], [Gateway: 192.168.40.1 (R6 Gi0/1)]),
     ([Mạng Quản trị], [Toàn bộ Router/SW], [192.168.122.101 -- 109/24], [Kênh Out-of-Band kết nối NetworkTools]),
@@ -268,10 +273,187 @@ VPCS> ping 192.168.20.10
 
 
 
-=== Kịch bản 3: 
+=== Kịch bản 3: Tích hợp Cổng dự phòng GLBP, Cấp phát DHCP và Chuyển đổi địa chỉ NAT/PAT
+
+*Mục tiêu kịch bản:* Xây dựng mô hình mạng LAN có khả năng cấp phát địa chỉ IP tự động, sử dụng cổng mặc định dự phòng và cân bằng tải bằng giao thức GLBP, đồng thời cho phép các máy trạm trong mạng nội bộ truy cập ra mạng ngoài thông qua cơ chế NAT/PAT. Kịch bản tập trung kiểm thử khả năng phối hợp nhiều chức năng Lớp 3 trên NetworkTools theo cùng một quy trình *Thiết lập trên GUI $arrow$ View & Push $arrow$ Xác minh trực tiếp trên thiết bị*.
+
+#figure(
+  image("diagrams/fhrp_nat_dhcp_lap/fhrp&nat&dhcp.svg", width: 95%),
+  caption: [Sơ đồ Topo Kịch bản 3: Tích hợp GLBP, DHCP và NAT/PAT cho mạng LAN],
+) <fig-topo-scenario-3>
+
+*Quy hoạch địa chỉ và vai trò thiết bị:*
+
+#report-table(
+  columns: (20%, 24%, 24%, 32%),
+  header: ([Thiết bị], [Giao diện / Địa chỉ], [Vai trò], [Ghi chú]),
+  rows: (
+    ([R1], [`Gi0/0 - 192.168.4.2/24`], [Gateway member], [Tham gia GLBP Group 113, Priority 101]),
+    ([R2], [`Gi0/0 - 192.168.4.3/24`], [Gateway member], [Tham gia GLBP Group 113, Priority 100]),
+    ([GLBP Virtual IP], [`192.168.4.1`], [Default Gateway], [Địa chỉ gateway cấp cho các máy trạm qua DHCP]),
+    ([NAT], [`Gi0/1 - 192.168.1.2/24`], [NAT Inside], [Kết nối hướng về R1]),
+    ([NAT], [`Gi0/3 - 192.168.2.2/24`], [NAT Inside], [Kết nối hướng về R2]),
+    ([NAT], [`Gi0/2 - 10.0.10.2/24`], [NAT Outside], [Kết nối tới mạng ISP / upstream]),
+    ([PC1], [DHCP], [Máy trạm kiểm thử], [Nhận IP động và sử dụng gateway `192.168.4.1`]),
+  ),
+  caption: [Bảng quy hoạch địa chỉ và vai trò thiết bị trong Kịch bản 3],
+) <tab-ip-planning-lab3>
+
+*Quy trình thực hiện trên phần mềm NetworkTools:*
+
+*Bước 1: Khai báo vai trò NAT Inside/Outside cho các giao diện trên Router NAT*
+
+Trên thiết bị `NAT` có địa chỉ quản trị `192.168.122.103`, quản trị viên truy cập phân hệ *NAT* $arrow$ thẻ *Interfaces* để xác định hướng lưu lượng cho từng cổng. Hai giao diện `GigabitEthernet0/1` và `GigabitEthernet0/3` được đánh dấu là *Inside*, trong khi `GigabitEthernet0/2` được đánh dấu là *Outside*.
+
+#figure(
+  image("diagrams/fhrp_nat_dhcp_lap/01-nat-interfaces.png", width: 90%),
+  caption: [Giao diện khai báo vai trò NAT Inside/Outside trên Router NAT],
+) <fig-k3-nat-interfaces>
+
+*Giải thích Hình @fig-k3-nat-interfaces:* Bảng *NAT Interfaces* bên phải thể hiện rõ ba giao diện đã được lưu ở trạng thái mong muốn: `Gi0/1` và `Gi0/3` mang vai trò `Inside`, còn `Gi0/2` mang vai trò `Outside`. Cách biểu diễn này giúp người dùng kiểm tra nhanh hướng NAT trước khi sinh lệnh cấu hình.
+
+*Bước 2: Tạo Access Control List xác định dải địa chỉ nội bộ được phép NAT*
+
+Tại thẻ *ACL* của phân hệ NAT, quản trị viên tạo ACL chuẩn có tên `NAT_demo`, hành động `permit`, áp dụng cho mạng nguồn `192.168.0.0` với wildcard mask `0.0.7.255`. Dải này bao phủ các mạng nội bộ được sử dụng trong mô hình thử nghiệm.
+
+#figure(
+  image("diagrams/fhrp_nat_dhcp_lap/02-nat-acl.png", width: 90%),
+  caption: [Khai báo ACL NAT_demo xác định các mạng nội bộ được phép chuyển đổi địa chỉ],
+) <fig-k3-nat-acl>
+
+Sau khi lưu các tham số giao diện và ACL, người dùng mở cửa sổ *View & Push* để kiểm duyệt tập lệnh trước khi gửi xuống thiết bị.
+
+#figure(
+  image("diagrams/fhrp_nat_dhcp_lap/03-nat-config-preview.png", width: 78%),
+  caption: [Cửa sổ View & Push sinh cấu hình NAT Interface và ACL cho Router NAT],
+) <fig-k3-nat-preview>
+
+*Giải thích Hình @fig-k3-nat-preview:* NetworkTools tự động sinh đúng các lệnh `ip nat inside`, `ip nat outside` trên từng giao diện và khối ACL:
+```text
+ip access-list standard NAT_demo
+ 10 permit 192.168.0.0 0.0.7.255
+```
+Người dùng có thể đối soát toàn bộ lệnh trước khi nhấn *Push*, giữ nguyên nguyên tắc Staged Save đã sử dụng ở các kịch bản trước.
+
+*Bước 3: Cấu hình PAT Overload sử dụng địa chỉ của giao diện Outside*
+
+Sau khi xác định vùng Inside/Outside và ACL, quản trị viên chuyển sang thẻ *PAT*. Tại đây, ACL `NAT_demo` được chọn làm nguồn cần chuyển đổi, `Source Type` được đặt là *Outside Interface* và giao diện `GigabitEthernet0/2` được sử dụng làm địa chỉ đại diện phía ngoài.
+
+#figure(
+  image("diagrams/fhrp_nat_dhcp_lap/04-nat-pat.png", width: 90%),
+  caption: [Giao diện cấu hình PAT Overload sử dụng cổng Outside GigabitEthernet0/2],
+) <fig-k3-pat-gui>
+
+Cửa sổ *View & Push* cho thấy lệnh PAT được sinh tự động:
+
+#figure(
+  image("diagrams/fhrp_nat_dhcp_lap/05-nat-pat-preview.png", width: 78%),
+  caption: [Cửa sổ View & Push kiểm duyệt lệnh PAT Overload trước khi đẩy xuống Router NAT],
+) <fig-k3-pat-preview>
+
+```text
+ip nat inside source list NAT_demo interface GigabitEthernet0/2 overload
+```
+
+Lệnh trên cho phép nhiều địa chỉ IPv4 trong mạng nội bộ dùng chung địa chỉ IP của giao diện `Gi0/2`, phân biệt các phiên kết nối thông qua số hiệu cổng lớp vận chuyển.
+
+*Bước 4: Xác minh cấu hình NAT/PAT trực tiếp trên thiết bị*
+
+Sau khi Push, quản trị viên mở Terminal tích hợp và kiểm tra cấu hình thực tế trên Router NAT. Kết quả xác nhận `Gi0/1` và `Gi0/3` đã nhận `ip nat inside`, trong khi `Gi0/2` đã nhận `ip nat outside`.
+
+#figure(
+  image("diagrams/fhrp_nat_dhcp_lap/06-nat-interface-verify.png", width: 72%),
+  caption: [Xác minh vai trò NAT trên ba giao diện của Router NAT bằng lệnh show running-config],
+) <fig-k3-nat-interface-verify>
+
+Tiếp tục kiểm tra cấu hình tổng thể cho thấy lệnh PAT, ACL `NAT_demo` và tuyến mặc định tới `10.0.10.1` đã tồn tại trong running-config.
+
+#figure(
+  image("diagrams/fhrp_nat_dhcp_lap/07-nat-config-verify.png", width: 82%),
+  caption: [Xác minh ACL, PAT Overload và Default Route trên Router NAT],
+) <fig-k3-nat-config-verify>
+
+*Bước 5: Thiết lập GLBP làm Default Gateway dự phòng cho mạng LAN*
+
+Để tránh phụ thuộc vào một router gateway duy nhất, quản trị viên sử dụng phân hệ *FHRP* $arrow$ *GLBP*. Hai router `R1` (`192.168.122.101`) và `R2` (`192.168.122.102`) được chọn làm thành viên của nhóm `113`, sử dụng địa chỉ gateway ảo `192.168.4.1` trên mạng LAN `192.168.4.0/24`.
+
+#figure(
+  image("diagrams/fhrp_nat_dhcp_lap/08-glbp-setup.png", width: 86%),
+  caption: [Giao diện tạo GLBP Group 113 với Virtual IP 192.168.4.1 trên R1 và R2],
+) <fig-k3-glbp-setup>
+
+Tại phần *Member policy*, NetworkTools tự động ghép các giao diện cùng subnet với địa chỉ Virtual IP. `R1 Gi0/0 - 192.168.4.2/24` được đặt Priority `101`, `R2 Gi0/0 - 192.168.4.3/24` có Priority `100`; cả hai cho phép `Preempt`, sử dụng `Maximum Weighting 100` và cấu hình `Forwarder Preempt Delay` là `30` giây.
+
+#figure(
+  image("diagrams/fhrp_nat_dhcp_lap/09-glbp-member-policy.png", width: 86%),
+  caption: [Thiết lập chính sách thành viên GLBP cho R1 và R2],
+) <fig-k3-glbp-member-policy>
+
+Trước khi áp dụng, cửa sổ *View & Push FHRP* tổng hợp lệnh cho cả hai thiết bị trong cùng một phiên kiểm duyệt.
+
+#figure(
+  image("diagrams/fhrp_nat_dhcp_lap/10-glbp-config-preview.png", width: 80%),
+  caption: [Cửa sổ View & Push FHRP sinh đồng thời cấu hình GLBP cho R1 và R2],
+) <fig-k3-glbp-preview>
+
+*Giải thích Hình @fig-k3-glbp-preview:* Trên cả hai router, hệ thống sinh các lệnh `glbp 113 ip 192.168.4.1`, `glbp 113 preempt`, `glbp 113 load-balancing round-robin`, `glbp 113 weighting 100` và `glbp 113 forwarder preempt delay minimum 30`. Riêng R1 được đặt `priority 101`, cao hơn R2 là `100`, phù hợp với chính sách ưu tiên đã khai báo trên GUI.
+
+*Bước 6: Tạo DHCP Pool và cấp GLBP Virtual IP làm Default Gateway cho máy trạm*
+
+Sau khi gateway ảo đã được thiết lập, quản trị viên chuyển sang thiết bị `R1`, mở phân hệ *DHCP* và tạo pool `LAN_R1` cho mạng `192.168.4.0/24`. Trường *Default Router* được đặt là `192.168.4.1`, chính là Virtual IP của GLBP thay vì địa chỉ vật lý của riêng R1 hoặc R2.
+
+#figure(
+  image("diagrams/fhrp_nat_dhcp_lap/11-dhcp-pool.png", width: 88%),
+  caption: [Giao diện tạo DHCP Pool LAN_R1 với Default Gateway là GLBP Virtual IP 192.168.4.1],
+) <fig-k3-dhcp-pool>
+
+Cửa sổ kiểm duyệt cho thấy cấu hình DHCP được sinh tương ứng:
+
+#figure(
+  image("diagrams/fhrp_nat_dhcp_lap/13-dhcp-config-preview.png", width: 78%),
+  caption: [Cửa sổ View & Push DHCP sinh cấu hình pool LAN_R1 trên R1],
+) <fig-k3-dhcp-preview>
+
+```text
+ip dhcp pool LAN_R1
+ network 192.168.4.0 255.255.255.0
+ default-router 192.168.4.1
+ exit
+```
+
+Cách cấu hình này giúp máy trạm không phụ thuộc trực tiếp vào địa chỉ vật lý `192.168.4.2` hoặc `192.168.4.3`, mà luôn sử dụng gateway logic `192.168.4.1` do GLBP quản lý.
+
+*Bước 7: Xác minh DHCP và GLBP trên R1, R2*
+
+Trên `R1`, lệnh `show ip dhcp pool` xác nhận pool `LAN_R1` đã được tạo cho mạng `192.168.4.0/24`. Đồng thời, `show running-config interface g0/0` xác nhận giao diện LAN `192.168.4.2/24` đang tham gia GLBP Group `113`, có Virtual IP `192.168.4.1`, Priority `101` và bật `preempt`.
+
+#figure(
+  image("diagrams/fhrp_nat_dhcp_lap/14-dhcp&glbp-r1-verify.png", width: 88%),
+  caption: [Xác minh DHCP Pool và cấu hình GLBP trên Router R1],
+) <fig-k3-r1-verify>
+
+Trên `R2`, giao diện `Gi0/0` mang địa chỉ `192.168.4.3/24` và tham gia cùng GLBP Group `113` với Virtual IP `192.168.4.1`, đảm bảo hai router cùng cung cấp dịch vụ gateway cho một mạng LAN.
+
+#figure(
+  image("diagrams/fhrp_nat_dhcp_lap/15-glbp-r2-verify.png", width: 82%),
+  caption: [Xác minh cấu hình GLBP Group 113 trên Router R2],
+) <fig-k3-r2-verify>
+
+*Bước 8: Kiểm tra cấp phát DHCP và đường đi lưu lượng từ máy trạm*
+
+Cuối cùng, trên máy trạm `PC1`, lệnh `ip dhcp` được sử dụng để yêu cầu cấp phát địa chỉ. Máy trạm nhận thành công địa chỉ `192.168.4.4/24` cùng default gateway `192.168.4.1`.
+
+#figure(
+  image("diagrams/fhrp_nat_dhcp_lap/16-client-connectivity-test.png", width: 82%),
+  caption: [Kiểm tra PC1 nhận DHCP và truy vết đường đi qua GLBP Gateway tới Router NAT và mạng upstream],
+) <fig-k3-client-test>
+
+*Giải thích Hình @fig-k3-client-test:* Kết quả `trace 1.1.1.1` ghi nhận hop đầu tiên là `192.168.4.2` (R1), tiếp theo là `192.168.1.2` (Router NAT) và sau đó tới `10.0.10.1` ở phía upstream. Kết quả này chứng minh máy trạm đã nhận đúng cấu hình DHCP, sử dụng được GLBP Virtual Gateway và lưu lượng đã đi qua đúng chuỗi thiết bị theo thiết kế. Tại hop `10.0.10.1`, thiết bị upstream trả về ICMP `Destination port unreachable`; vì vậy phép thử này được sử dụng để xác minh đường đi tới mạng ngoài của mô hình lab, không được xem là bằng chứng kết nối Internet hoàn chỉnh tới địa chỉ `1.1.1.1`.
+
+*Đánh giá kết quả Kịch bản 3:* NetworkTools đã cấu hình thành công chuỗi chức năng liên hoàn *DHCP $arrow$ GLBP $arrow$ NAT/PAT*. Máy trạm nhận địa chỉ động `192.168.4.4/24`, sử dụng gateway ảo `192.168.4.1`; hai router R1/R2 cùng tham gia GLBP Group 113; Router NAT nhận đúng vai trò Inside/Outside, ACL và PAT Overload. Kết quả truy vết xác nhận lưu lượng từ LAN đi đúng qua R1 tới Router NAT và tới gateway upstream `10.0.10.1`. Qua đó, kịch bản chứng minh phần mềm có khả năng phối hợp nhiều nghiệp vụ Lớp 3 trên nhiều thiết bị trong cùng một quy trình cấu hình và kiểm chứng thống nhất.
 
 
-=== Kịch bản 4: 
+=== Kịch bản 4:
 
 
 

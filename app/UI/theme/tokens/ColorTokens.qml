@@ -133,7 +133,7 @@ QtObject {
     property color splitHandleHoverColor: statusBarBackground
 
     readonly property color statusConnected: pick("#1A7F37", "#3FB950", "#116329", "#56D364")
-    readonly property color statusWaiting: pick("#6E7781", "#8B949E", "#57606A", "#B1BAC4")
+    readonly property color statusWaiting: pick("#9A6700", "#F2CC60", "#7D4E00", "#F8E3A1")
     readonly property color statusDisconnected: pick("#CF222E", "#DA3633", "#A40E26", "#DA3633")
 
     property color alertError: statusDisconnected

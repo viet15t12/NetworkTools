@@ -432,6 +432,9 @@ Item {
                 "No selected host is eligible for " + operation + ".", "warning")
             return
         }
+        // Operation badges are transient and belong only to the active batch.
+        // Never carry green/red results into the next operation.
+        hostOperations = ({})
         if (targets.length < requested.length) {
             showDeviceShortcutMessage(
                 "Starting " + operation + " for " + targets.length + " eligible host(s); "
@@ -774,6 +777,7 @@ Item {
             devicesPanel.activeBatchId = ""
             devicesPanel.activeBatchOperation = ""
             devicesPanel.activeBatchExitsMultipleSelection = false
+            devicesPanel.hostOperations = ({})
             if (exitMultipleSelection)
                 devicesPanel.clearSelection()
             devicesPanel.reloadDevices()

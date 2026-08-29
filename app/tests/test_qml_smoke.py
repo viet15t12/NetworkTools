@@ -2720,6 +2720,51 @@ class QmlSmokeTests(unittest.TestCase):
         self.assertFalse(status_bar.property("notificationShouldBlink"))
         self.assertEqual(self.warnings, [])
 
+    def test_status_bar_task_progress_supports_indeterminate_and_measured_work(self) -> None:
+        status_bar = self._create("UI/qml/layout/StatusBar.qml")
+        progress = status_bar.findChild(QObject, "statusBarTaskProgress")
+        self.assertIsNotNone(progress)
+
+        status_bar.setProperty("taskVisible", True)
+        status_bar.setProperty("taskBusy", True)
+        status_bar.setProperty("taskProgress", -1.0)
+        self.app.processEvents()
+        self.assertTrue(progress.property("indeterminate"))
+
+        status_bar.setProperty("taskProgress", 0.5)
+        self.app.processEvents()
+        self.assertFalse(progress.property("indeterminate"))
+        self.assertAlmostEqual(progress.property("value"), 0.5)
+
+        status_bar.setProperty("taskBusy", False)
+        status_bar.setProperty("taskProgress", 1.0)
+        self.app.processEvents()
+        self.assertFalse(progress.property("indeterminate"))
+        self.assertAlmostEqual(progress.property("value"), 1.0)
+        self.assertEqual(self.warnings, [])
+
+    def test_device_operation_badge_only_shows_known_transient_states(self) -> None:
+        badge = self._create("UI/qml/sidebar/devices/DeviceOperationBadge.qml")
+
+        self.assertFalse(badge.property("knownState"))
+        for state, symbol in (
+            ("queued", "…"),
+            ("running", "↻"),
+            ("success", "✓"),
+            ("warning", "!"),
+            ("error", "×"),
+            ("cancelled", "–"),
+        ):
+            badge.setProperty("state", state)
+            self.app.processEvents()
+            self.assertTrue(badge.property("knownState"), state)
+            self.assertEqual(badge.property("symbol"), symbol)
+
+        badge.setProperty("state", "unexpected")
+        self.app.processEvents()
+        self.assertFalse(badge.property("knownState"))
+        self.assertEqual(self.warnings, [])
+
     def test_action_icon_dialogs_and_menu_load(self) -> None:
         for relative_path in (
             "UI/qml/sidebar/new_device/NewDevice.qml",

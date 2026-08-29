@@ -11,6 +11,9 @@ class DeviceSelectionContractTests(unittest.TestCase):
         cls.panel = (root / "UI/qml/panels/DevicesPanel.qml").read_text(encoding="utf-8")
         cls.section = (root / "UI/qml/sidebar/devices/DeviceSection.qml").read_text(encoding="utf-8")
         cls.item = (root / "UI/qml/sidebar/devices/DeviceItem.qml").read_text(encoding="utf-8")
+        cls.operation_badge = (
+            root / "UI/qml/sidebar/devices/DeviceOperationBadge.qml"
+        ).read_text(encoding="utf-8")
         cls.menu = (root / "UI/qml/sidebar/devices/DeviceContextMenu.qml").read_text(encoding="utf-8")
         cls.syslog_panel = (root / "UI/qml/panels/SyslogDevicesPanel.qml").read_text(encoding="utf-8")
         cls.syslog_item = (root / "UI/qml/sidebar/syslog/SyslogDeviceItem.qml").read_text(encoding="utf-8")
@@ -56,6 +59,26 @@ class DeviceSelectionContractTests(unittest.TestCase):
             Path(__file__).resolve().parents[1]
             / "UI/qml/sidebar/devices/DeviceBatchActionBar.qml"
         ).read_text(encoding="utf-8"))
+
+    def test_device_list_displays_name_and_ip_when_name_exists(self) -> None:
+        self.assertIn('return name + " - " + ip', self.item)
+        self.assertIn('return name !== "" ? name : ip', self.item)
+        self.assertIn('if (displayFormat === "ip")', self.item)
+        self.assertIn('if (displayFormat === "name")', self.item)
+        self.assertIn('property string displayFormat: "both"', self.panel)
+
+    def test_device_status_and_batch_operation_colors_have_distinct_rules(self) -> None:
+        self.assertIn('if (status === "connected")', self.item)
+        self.assertIn('if (status === "waiting")', self.item)
+        self.assertIn("opacity: 1.0", self.item)
+        self.assertIn("visible: knownState", self.operation_badge)
+        self.assertIn('normalizedState === "running"', self.operation_badge)
+        self.assertIn('normalizedState === "success"', self.operation_badge)
+        self.assertIn('normalizedState === "warning"', self.operation_badge)
+        self.assertIn('normalizedState === "error"', self.operation_badge)
+        self.assertIn('if (normalizedState === "success") return "✓"', self.operation_badge)
+        self.assertIn('if (normalizedState === "running") return "↻"', self.operation_badge)
+        self.assertIn("devicesPanel.hostOperations = ({})", self.panel)
 
     def test_context_target_is_snapshotted_and_tabs_do_not_close_sessions(self) -> None:
         self.assertIn("function openForHost(host, status, selectedHosts, statuses, x, y)", self.menu)

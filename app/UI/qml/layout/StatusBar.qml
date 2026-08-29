@@ -24,6 +24,7 @@ Rectangle {
     property bool taskBusy: false
     property bool taskOk: true
     property string taskMessage: ""
+    property real taskProgress: -1
     property date currentDateTime: new Date()
     readonly property bool notificationShouldBlink: root.isDND
                                                     && root.unreadCount > 0
@@ -271,19 +272,95 @@ Rectangle {
 
         RowLayout {
             Layout.alignment: Qt.AlignVCenter
-            Layout.maximumWidth: 460
+            Layout.maximumWidth: 520
             spacing: Theme.spacing8
             visible: root.taskVisible
 
             ProgressBar {
                 id: taskProgressBar
                 objectName: "statusBarTaskProgress"
-                Layout.preferredWidth: 88
-                Layout.preferredHeight: 4
-                indeterminate: root.taskBusy
+                Layout.preferredWidth: 112
+                Layout.preferredHeight: 8
+                readonly property bool hasMeasuredProgress:
+                    root.taskProgress >= 0 && root.taskProgress <= 1
+                readonly property color progressColor:
+                    root.taskBusy ? Theme.buttonTextSolid
+                                  : (root.taskOk ? Theme.alertSuccess
+                                                 : Theme.alertError)
+                indeterminate: root.taskBusy && !hasMeasuredProgress
                 from: 0
                 to: 1
-                value: root.taskBusy ? 0 : 1
+                value: hasMeasuredProgress ? root.taskProgress
+                                           : (root.taskBusy ? 0 : 1)
+
+                background: Rectangle {
+                    implicitWidth: 112
+                    implicitHeight: 6
+                    radius: height / 2
+                    color: Qt.rgba(1, 1, 1, 0.20)
+                    border.width: 1
+                    border.color: Qt.rgba(1, 1, 1, 0.16)
+                }
+
+                contentItem: Item {
+                    implicitWidth: 112
+                    implicitHeight: 6
+                    clip: true
+
+                    Rectangle {
+                        id: measuredProgress
+                        visible: !taskProgressBar.indeterminate
+                        width: taskProgressBar.visualPosition * parent.width
+                        height: parent.height
+                        radius: height / 2
+                        color: taskProgressBar.progressColor
+
+                        Behavior on width {
+                            NumberAnimation {
+                                duration: Theme.animationDurationSlow
+                                easing.type: Easing.OutCubic
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        id: progressRunner
+                        visible: taskProgressBar.indeterminate
+                        x: -width
+                        width: Math.max(34, parent.width * 0.38)
+                        height: parent.height
+                        radius: height / 2
+                        gradient: Gradient {
+                            orientation: Gradient.Horizontal
+                            GradientStop { position: 0.0; color: Qt.rgba(1, 1, 1, 0.05) }
+                            GradientStop { position: 0.5; color: Theme.buttonTextSolid }
+                            GradientStop { position: 1.0; color: Qt.rgba(1, 1, 1, 0.05) }
+                        }
+
+                        SequentialAnimation on x {
+                            running: taskProgressBar.indeterminate
+                                     && taskProgressBar.visible
+                            loops: Animation.Infinite
+                            NumberAnimation {
+                                from: -progressRunner.width
+                                to: taskProgressBar.width
+                                duration: 1150
+                                easing.type: Easing.InOutCubic
+                            }
+                        }
+                    }
+                }
+            }
+
+            Text {
+                visible: root.taskBusy && taskProgressBar.hasMeasuredProgress
+                Layout.preferredWidth: visible ? 34 : 0
+                text: Math.round(root.taskProgress * 100) + "%"
+                color: Theme.buttonTextSolid
+                font.pixelSize: Theme.fontSizeSmall
+                font.family: Theme.monoFontFamily
+                font.weight: Font.DemiBold
+                horizontalAlignment: Text.AlignRight
             }
 
             Text {

@@ -28,6 +28,7 @@ StatefulWindow {
     property bool statusTaskBusy: false
     property bool statusTaskOk: true
     property string statusTaskMessage: ""
+    property real statusTaskProgress: -1
     property string activeDatabaseTable: ""
     // Populated only after a real .ntp project has been opened or created.
     property string workspaceDisplayName: ""
@@ -356,6 +357,7 @@ StatefulWindow {
         root.statusTaskBusy = true
         root.statusTaskOk = true
         root.statusTaskMessage = String(message || "")
+        root.statusTaskProgress = -1
     }
 
     function handleTaskProgress(source, message) {
@@ -371,6 +373,7 @@ StatefulWindow {
         root.statusTaskBusy = false
         root.statusTaskOk = ok
         root.statusTaskMessage = String(message || "")
+        root.statusTaskProgress = 1
         taskStatusClearTimer.restart()
     }
 
@@ -438,6 +441,7 @@ StatefulWindow {
         onTriggered: {
             root.statusTaskVisible = false
             root.statusTaskMessage = ""
+            root.statusTaskProgress = -1
         }
     }
 
@@ -587,6 +591,16 @@ StatefulWindow {
                 "error",
                 false
             )
+        }
+        function onBatchProgress(batchId, completed, success, failed, total) {
+            const count = Math.max(0, Number(total || 0))
+            if (count <= 0)
+                return
+            const done = Math.max(0, Math.min(count, Number(completed || 0)))
+            root.statusTaskVisible = true
+            root.statusTaskBusy = true
+            root.statusTaskProgress = done / count
+            root.statusTaskMessage = "Processing devices · " + done + " of " + count
         }
     }
 
@@ -970,6 +984,7 @@ StatefulWindow {
             taskBusy: root.statusTaskBusy
             taskOk: root.statusTaskOk
             taskMessage: root.statusTaskMessage
+            taskProgress: root.statusTaskProgress
 
             onBellClicked: {
                 if (notificationPanel.visible)
