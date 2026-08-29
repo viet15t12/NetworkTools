@@ -94,6 +94,48 @@ class WorkspacePackageTests(unittest.TestCase):
         session.close()
         self.assertFalse(working_directory.exists())
 
+    def test_project_cannot_be_opened_by_overlapping_sessions(self) -> None:
+        package = self.root / "Exclusive.ntp"
+        self.codec.pack(self.workspace, package, project_name="Exclusive")
+
+        first = self.codec.open(package)
+        try:
+            with self.assertRaisesRegex(
+                WorkspaceConflictError, "already open in another NetworkTools session"
+            ):
+                self.codec.open(package)
+        finally:
+            first.close()
+
+        reopened = self.codec.open(package)
+        reopened.close()
+
+    def test_failed_open_releases_project_lease(self) -> None:
+        package = self.root / "BrokenLease.ntp"
+        package.write_bytes(b"not a workspace")
+
+        with self.assertRaises(InvalidWorkspacePackage):
+            self.codec.open(package)
+        with self.assertRaises(InvalidWorkspacePackage):
+            self.codec.open(package)
+
+    @unittest.skipUnless(hasattr(os, "symlink"), "symbolic links unavailable")
+    def test_project_lock_sidecar_cannot_redirect_metadata_through_symlink(self) -> None:
+        package = self.root / "SafeLock.ntp"
+        self.codec.pack(self.workspace, package)
+        protected = self.root / "protected.txt"
+        protected.write_text("keep me", encoding="utf-8")
+        sidecar = package.with_name(f".{package.name}.workspace.lock")
+        try:
+            sidecar.symlink_to(protected)
+        except OSError as exc:
+            self.skipTest(f"symbolic links unavailable: {exc}")
+
+        with self.assertRaises(WorkspaceConflictError):
+            self.codec.open(package)
+
+        self.assertEqual(protected.read_text(encoding="utf-8"), "keep me")
+
     def test_manifest_uses_compact_json_for_large_content_inventories(self) -> None:
         entries = tuple(
             package_module.ContentEntry(
@@ -187,6 +229,8 @@ class WorkspacePackageTests(unittest.TestCase):
         with self.codec.open(package, "correct horse battery staple") as session:
             self.assertTrue(session.encrypted)
             self.assertEqual(session.manifest.name, "Protected Lab")
+            with self.assertRaises(WorkspaceConflictError):
+                self.codec.open(package)
             with closing(sqlite3.connect(session.device_network_db)) as database:
                 self.assertEqual(
                     database.execute("SELECT value FROM marker").fetchone(),
@@ -493,6 +537,26 @@ class WorkspaceServiceTests(unittest.TestCase):
                 self.assertTrue(service.is_encrypted(target))
             finally:
                 session.close()
+
+    def test_save_as_transfers_ownership_to_the_new_project(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            source = Path(temp) / "Source.ntp"
+            destination = Path(temp) / "Destination.ntp"
+            service = WorkspaceService()
+            session = service.create_project("Source", source)
+            try:
+                service.pack_project(session, package_path=destination)
+                self.assertEqual(session.project_path, destination)
+
+                source_session = service.open_project(source)
+                source_session.close()
+                with self.assertRaises(WorkspaceConflictError):
+                    service.open_project(destination)
+            finally:
+                session.close()
+
+            destination_session = service.open_project(destination)
+            destination_session.close()
 
 
 if __name__ == "__main__":

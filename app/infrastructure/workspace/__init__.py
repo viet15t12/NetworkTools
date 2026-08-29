@@ -23,6 +23,7 @@ from .package import (
     WorkspaceSession,
     package_fingerprint,
 )
+from .locking import ProjectFileLock
 from .service import RollbackResult, SaveResult, WorkspaceService
 from .snapshot import SnapshotRecord, SnapshotService
 
@@ -36,6 +37,7 @@ __all__ = [
     "PACKAGE_VERSION",
     "PackageLimits",
     "PackageFingerprint",
+    "ProjectFileLock",
     "SNAPSHOT_INDEX_NAME",
     "SaveResult",
     "SnapshotRecord",

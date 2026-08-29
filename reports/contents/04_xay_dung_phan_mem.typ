@@ -1,5 +1,5 @@
 #pagebreak(weak: true)
-#import "../config/tables.typ": report-table
+#import "../config/tables.typ": report-table, table-code
 #import "../config/commands.typ": report-note
 
 = Xây dựng phần mềm
@@ -79,18 +79,20 @@ Tệp `app/main.py` đóng vai trò là Composition Root duy nhất của toàn 
 Để duy trì kiến trúc tách biệt giữa giao diện đồ họa và logic xử lý Python, NetworkTools áp dụng cơ chế nạp thuộc tính ngữ cảnh (`setContextProperty`). Thông qua cơ chế này, QML có thể gọi trực tiếp các phương thức Python (thông qua `@pyqtSlot`) và lắng nghe các thay đổi dữ liệu từ backend thông qua tín hiệu (`pyqtSignal`):
 
 #report-table(
-  columns: (26%, 26%, 48%),
+  columns: (23%, 25%, 52%),
+  text-size: 9.5pt,
+  cell-inset: (x: 4pt, y: 4.5pt),
   header: ([Context Property], [Lớp Python sở hữu], [Trách nhiệm phục vụ trên giao diện]),
   rows: (
-    ([`dbManager`], [`DatabaseManager`], [Cung cấp các API CRUD dữ liệu cấu hình, kích hoạt View & Push]),
-    ([`cli`], [`TerminalHelper`], [Điều khiển kết nối CLI, gửi lệnh đồng bộ, lưu cấu hình running-config]),
-    ([`welcomeController`], [`WelcomeController`], [Quản lý tạo mới, mở, đóng và danh sách dự án gần đây]),
-    ([`workspaceSaveController`], [`WorkspaceSaveController`], [Thực hiện lưu, đóng gói .ntp, tạo snapshot và phục hồi dự án]),
-    ([`networkMonitor`], [`NetworkMonitor`], [Cung cấp thông số IP, card mạng, mức sử dụng CPU/RAM của máy trạm]),
-    ([`syslogManager`], [`SyslogManager`], [Điều khiển máy chủ Syslog, lọc bản tin và cấu hình logging thiết bị]),
-    ([`sftpController`], [`SftpController`], [Quản lý phiên kết nối, duyệt cây thư mục và hàng đợi tải tệp]),
-    ([`externalTools`], [`ExternalToolsManager`], [Quản lý danh mục và kích hoạt các công cụ bên ngoài (PuTTY, Wireshark...)]),
-    ([`themeSettings`], [`ThemeSettings`], [Quản lý chế độ sáng/tối (Dark/Light) và màu sắc chủ đạo (Accent Color)]),
+    ([#table-code("dbManager")], [#table-code("DatabaseManager")], [Cung cấp các API CRUD dữ liệu cấu hình, kích hoạt View & Push]),
+    ([#table-code("cli")], [#table-code("TerminalHelper")], [Điều khiển kết nối CLI, gửi lệnh đồng bộ, lưu cấu hình running-config]),
+    ([#table-code("welcomeController")], [#table-code("WelcomeController")], [Quản lý tạo mới, mở, đóng và danh sách dự án gần đây]),
+    ([#table-code("workspaceSaveController")], [#table-code("WorkspaceSaveController")], [Thực hiện lưu, đóng gói .ntp, tạo snapshot và phục hồi dự án]),
+    ([#table-code("networkMonitor")], [#table-code("NetworkMonitor")], [Cung cấp thông số IP, card mạng, mức sử dụng CPU/RAM của máy trạm]),
+    ([#table-code("syslogManager")], [#table-code("SyslogManager")], [Điều khiển máy chủ Syslog, lọc bản tin và cấu hình logging thiết bị]),
+    ([#table-code("sftpController")], [#table-code("SftpController")], [Quản lý phiên kết nối, duyệt cây thư mục và hàng đợi tải tệp]),
+    ([#table-code("externalTools")], [#table-code("ExternalToolsManager")], [Quản lý danh mục và kích hoạt các công cụ bên ngoài (PuTTY, Wireshark...)]),
+    ([#table-code("themeSettings")], [#table-code("ThemeSettings")], [Quản lý chế độ sáng/tối (Dark/Light) và màu sắc chủ đạo (Accent Color)]),
   ),
   caption: [Các đối tượng Context Property cốt lõi được nạp vào QML Engine],
 ) <tab-context-properties>

@@ -35,6 +35,7 @@ from .errors import (
     WorkspacePasswordRequired,
     WorkspaceConflictError,
 )
+from .locking import ProjectFileLock
 
 
 PACKAGE_FORMAT = "networktools-project"
@@ -299,6 +300,7 @@ class WorkspaceSession:
     manifest: WorkspaceManifest
     encrypted: bool
     _temporary_directory: tempfile.TemporaryDirectory[str] = field(repr=False)
+    _project_lock: ProjectFileLock | None = field(default=None, repr=False)
     package_fingerprint: PackageFingerprint | None = None
     saved_content_signature: tuple[tuple[str, int, int], ...] = ()
     io_lock: threading.RLock = field(
@@ -392,6 +394,9 @@ class WorkspaceSession:
             with self._state_lock:
                 self._cleaned = True
                 self._cleanup_in_progress = False
+            if self._project_lock is not None:
+                self._project_lock.release()
+                self._project_lock = None
 
     def _clear_password(self) -> None:
         if self._protection_password is None:
@@ -429,7 +434,15 @@ class WorkspacePackageCodec:
         """Create an empty managed workspace ready for database initialization."""
 
         path = self._validate_project_path(package_path=project_path, must_exist=False)
-        temporary, working = self._make_temporary_workspace()
+        project_lock = ProjectFileLock.acquire(path)
+        if path.exists():
+            project_lock.release()
+            raise FileExistsError(f"A project already exists at {path}.")
+        try:
+            temporary, working = self._make_temporary_workspace()
+        except Exception:
+            project_lock.release()
+            raise
         now = _utc_now()
         manifest = WorkspaceManifest(
             project_id=str(uuid.uuid4()),
@@ -446,7 +459,9 @@ class WorkspacePackageCodec:
                 "automaticLimit": 20,
             },
         )
-        return WorkspaceSession(path, working, manifest, False, temporary)
+        return WorkspaceSession(
+            path, working, manifest, False, temporary, _project_lock=project_lock
+        )
 
     def open(self, package_path: str | Path, password: str | None = None) -> WorkspaceSession:
         """Open a project into a random, user-private temporary workspace."""
@@ -458,10 +473,16 @@ class WorkspacePackageCodec:
         ):
             raise WorkspaceLimitExceeded("The project package exceeds the size limit.")
         encrypted = is_encrypted_package(path)
+        project_lock = ProjectFileLock.acquire(path)
         if encrypted and not password:
+            project_lock.release()
             raise WorkspacePasswordRequired("This project is password protected.")
 
-        temporary, working = self._make_temporary_workspace()
+        try:
+            temporary, working = self._make_temporary_workspace()
+        except Exception:
+            project_lock.release()
+            raise
         payload_path = Path(temporary.name) / "payload.zip"
         try:
             if encrypted:
@@ -484,16 +505,26 @@ class WorkspacePackageCodec:
                 manifest,
                 encrypted,
                 temporary,
+                _project_lock=project_lock,
                 package_fingerprint=package_fingerprint(path),
             )
         except WorkspacePackageError:
-            temporary.cleanup()
+            try:
+                temporary.cleanup()
+            finally:
+                project_lock.release()
             raise
         except (zipfile.BadZipFile, zipfile.LargeZipFile, EOFError, RuntimeError) as exc:
-            temporary.cleanup()
+            try:
+                temporary.cleanup()
+            finally:
+                project_lock.release()
             raise InvalidWorkspacePackage("The project ZIP payload is invalid.") from exc
         except Exception:
-            temporary.cleanup()
+            try:
+                temporary.cleanup()
+            finally:
+                project_lock.release()
             raise
 
     def pack(

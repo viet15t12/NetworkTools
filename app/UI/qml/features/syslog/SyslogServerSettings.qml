@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Dialogs
 import QtQuick.Layouts
 import UI
 
@@ -17,6 +18,9 @@ Rectangle {
                                    ? syslogManager : null
     readonly property bool listenerActive: manager !== null
                                            && manager.listenerState === "listening"
+    property var resetOptions: []
+    property string resetHost: ""
+    property int resetCount: 0
 
     color: Theme.contentBackground
 
@@ -45,6 +49,45 @@ Rectangle {
         validationOk = Boolean(started && started.ok)
         validationMessage = String(started && started.message
                                    ? started.message : "Listener restart finished.")
+    }
+
+    function loadResetOptions() {
+        if (manager === null)
+            return
+        const result = manager.getLogResetOptions()
+        if (!result || !result.ok) {
+            validationOk = false
+            validationMessage = String(result && result.message
+                                       ? result.message : "Could not load Syslog data summary.")
+            return
+        }
+        resetOptions = result.options || []
+        if (resetOptions.length > 0) {
+            resetScope.currentIndex = 0
+            resetHost = String(resetOptions[0].host || "")
+            resetCount = Number(resetOptions[0].count || 0)
+        }
+    }
+
+    function openResetConfirmation() {
+        if (resetCount <= 0)
+            return
+        confirmationField.text = ""
+        irreversibleCheck.checked = false
+        resetDialog.open()
+    }
+
+    function performReset() {
+        if (manager === null)
+            return
+        const result = manager.resetLogData(resetHost, confirmationField.text)
+        validationOk = Boolean(result && result.ok)
+        validationMessage = String(result && result.message
+                                   ? result.message : "Syslog data reset failed.")
+        if (result && result.ok) {
+            resetDialog.close()
+            loadResetOptions()
+        }
     }
 
     ScrollView {
@@ -281,6 +324,59 @@ Rectangle {
                 }
             }
 
+            FormSection {
+                Layout.fillWidth: true
+                Layout.leftMargin: Theme.spacing24
+                Layout.rightMargin: Theme.spacing24
+                title: "Reset log data"
+                helpText: "Permanently delete received Syslog messages for one host or every host. Device Syslog configuration is not affected. Export an Excel backup first if the records may be needed later. Deletion requires both an acknowledgement and the exact confirmation phrase."
+
+                InlineMessage {
+                    Layout.fillWidth: true
+                    severity: "warning"
+                    message: "Deleted log data cannot be recovered. The listener is paused during deletion and restarted automatically."
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Theme.spacing8
+
+                    StandardComboBox {
+                        id: resetScope
+                        objectName: "syslogResetScope"
+                        Layout.fillWidth: true
+                        labelText: "Data scope"
+                        enabled: root.manager !== null && root.resetOptions.length > 0
+                        model: root.resetOptions.map(function(row) { return String(row.label || "") })
+                        valueModel: root.resetOptions.map(function(row) { return String(row.host || "") })
+                        emptyText: "No Syslog messages"
+                        onActivated: function(index) {
+                            const option = root.resetOptions[index]
+                            root.resetHost = option ? String(option.host || "") : ""
+                            root.resetCount = option ? Number(option.count || 0) : 0
+                        }
+                    }
+
+                    StandardButton {
+                        objectName: "syslogResetExportButton"
+                        Layout.alignment: Qt.AlignBottom
+                        text: "Export Excel"
+                        type: "Secondary"
+                        enabled: root.manager !== null && root.resetCount > 0
+                        onClicked: resetExportDialog.open()
+                    }
+
+                    StandardButton {
+                        objectName: "syslogResetDataButton"
+                        Layout.alignment: Qt.AlignBottom
+                        text: "Reset Data"
+                        type: "Danger"
+                        enabled: root.manager !== null && root.resetCount > 0
+                        onClicked: root.openResetConfirmation()
+                    }
+                }
+            }
+
             RowLayout {
                 Layout.fillWidth: true
                 Layout.leftMargin: Theme.spacing24
@@ -326,8 +422,100 @@ Rectangle {
         }
     }
 
+    FileDialog {
+        id: resetExportDialog
+        title: root.resetHost === "" ? "Export All Syslog Logs Before Reset"
+                                     : "Export Syslog Logs for " + root.resetHost
+        fileMode: FileDialog.SaveFile
+        defaultSuffix: "xlsx"
+        nameFilters: ["Excel workbook (*.xlsx)"]
+        onAccepted: {
+            if (root.manager === null)
+                return
+            const result = root.manager.exportLogResetScope(selectedFile, root.resetHost)
+            root.validationOk = Boolean(result && result.ok)
+            root.validationMessage = String(result && result.message
+                                            ? result.message : "Syslog export failed.")
+        }
+    }
+
+    StandardDialog {
+        id: resetDialog
+        objectName: "syslogResetConfirmationDialog"
+        preferredWidth: 520
+        title: root.resetHost === "" ? "Delete all Syslog data?"
+                                     : "Delete Syslog data for " + root.resetHost + "?"
+        closeTooltip: "Cancel log data reset"
+
+        readonly property string confirmationPhrase: root.resetHost === ""
+                                                     ? "DELETE ALL SYSLOG DATA"
+                                                     : "DELETE " + root.resetHost
+        readonly property bool confirmed: irreversibleCheck.checked
+                                          && confirmationField.text === confirmationPhrase
+
+        contentItem: ColumnLayout {
+            spacing: Theme.spacing12
+
+            InlineMessage {
+                Layout.fillWidth: true
+                severity: "error"
+                message: "This permanently deletes %1 messages. This action cannot be undone."
+                         .arg(root.resetCount)
+            }
+
+            StandardCheckBox {
+                id: irreversibleCheck
+                objectName: "syslogResetAcknowledgement"
+                Layout.fillWidth: true
+                text: "I understand that the selected log data will be permanently deleted."
+            }
+
+            Text {
+                Layout.fillWidth: true
+                text: "Type “" + resetDialog.confirmationPhrase + "” to confirm:"
+                color: Theme.textSecondary
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeSmall
+                wrapMode: Text.WordWrap
+            }
+
+            StandardTextField {
+                id: confirmationField
+                objectName: "syslogResetConfirmationField"
+                Layout.fillWidth: true
+                placeholderText: resetDialog.confirmationPhrase
+            }
+        }
+
+        footer: Rectangle {
+            implicitHeight: 58
+            color: "transparent"
+            RowLayout {
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.spacing16
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Theme.spacing8
+
+                StandardButton {
+                    text: "Cancel"
+                    type: "Text"
+                    onClicked: resetDialog.close()
+                }
+                StandardButton {
+                    objectName: "syslogResetConfirmButton"
+                    text: "Permanently Delete"
+                    type: "Danger"
+                    enabled: resetDialog.confirmed
+                    onClicked: root.performReset()
+                }
+            }
+        }
+    }
+
     onVisibleChanged: {
-        if (visible && backend !== null)
+        if (visible && backend !== null) {
             backend.refreshLocalIps()
+            loadResetOptions()
+        }
     }
 }

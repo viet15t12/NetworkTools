@@ -10,6 +10,7 @@ from PyQt6.QtCore import QObject, pyqtProperty, pyqtSignal, pyqtSlot
 
 from infrastructure.database.paths import DEVICE_NETWORK_DB, INFO_COLLECTED_DB
 
+from ..application.log_data import SyslogLogDataService
 from ..application.retention import run_retention
 from ..application.server_service import SyslogServerService
 from ..export import export_logs_xlsx, file_url_to_path
@@ -338,6 +339,69 @@ class SyslogManager(QObject):
             self._error(str(exc))
             return []
 
+    @pyqtSlot(result="QVariant")
+    def getLogResetOptions(self) -> dict[str, Any]:
+        """Return reset scopes and counts for the Settings safety UI."""
+        try:
+            return SyslogLogDataService(self.repository).options()
+        except Exception as exc:
+            return {"ok": False, "total": 0, "options": [], "message": str(exc)}
+
+    @pyqtSlot(str, str, result="QVariant")
+    def exportLogResetScope(self, file_url: str, host: str) -> dict[str, Any]:
+        """Export every message in a prospective reset scope."""
+        try:
+            return SyslogLogDataService(self.repository).export_scope(
+                file_url_to_path(file_url), host
+            )
+        except Exception as exc:
+            return {"ok": False, "message": f"Could not export Syslog Excel file: {exc}"}
+
+    @pyqtSlot(str, str, result="QVariant")
+    def resetLogData(self, host: str, confirmation: str) -> dict[str, Any]:
+        """Reset a host/all logs only after an exact typed confirmation."""
+        selected_host = str(host or "").strip()
+        log_data = SyslogLogDataService(self.repository)
+        if not log_data.is_authorized(selected_host, confirmation):
+            return log_data.reset(selected_host, confirmation)
+
+        was_running = self.listenerState in {"starting", "listening"}
+        if was_running:
+            stopped = self.stopServer()
+            if not stopped.get("ok"):
+                return {
+                    "ok": False,
+                    "deleted": 0,
+                    "message": str(
+                        stopped.get("message") or "Could not stop the listener."
+                    ),
+                }
+        try:
+            result = log_data.reset(selected_host, confirmation)
+        except Exception as exc:
+            restart = self.startServer() if was_running else {"ok": True}
+            suffix = (
+                ""
+                if restart.get("ok")
+                else f" Listener restart also failed: {restart.get('message')}"
+            )
+            return {
+                "ok": False,
+                "deleted": 0,
+                "message": f"Could not reset Syslog data: {exc}{suffix}",
+            }
+
+        restart = self.startServer() if was_running else {"ok": True}
+        message = str(result["message"])
+        if not restart.get("ok"):
+            message += f" Listener restart failed: {restart.get('message')}"
+        return {
+            "ok": True,
+            "deleted": int(result["deleted"]),
+            "listenerRestarted": bool(restart.get("ok")),
+            "message": message,
+        }
+
     @pyqtSlot(str, "QVariant", "QVariant", result="QVariant")
     def exportCurrentMessages(
         self, file_url: str, rows: Any, filters: Any,
@@ -366,4 +430,8 @@ class SyslogManager(QObject):
         self.executor.shutdown(wait=True, cancel_futures=True)
 
 
-__all__ = ["SyslogManager", "_variant_dict", "_variant_list"]
+__all__ = [
+    "SyslogManager",
+    "_variant_dict",
+    "_variant_list",
+]

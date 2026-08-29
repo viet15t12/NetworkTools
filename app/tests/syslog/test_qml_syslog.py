@@ -174,7 +174,7 @@ class SyslogQmlTests(unittest.TestCase):
         )
         try:
             self.assertEqual(
-                len(instance.findChildren(QObject, "parameterHelpIconButton")), 4
+                len(instance.findChildren(QObject, "parameterHelpIconButton")), 5
             )
             self.assertFalse(
                 any("Binding loop" in warning for warning in warnings),

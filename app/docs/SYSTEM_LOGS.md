@@ -68,7 +68,11 @@ bị: màn này bật/tắt một listener logic nhận đồng thời UDP+TCP, 
 theo nội dung, khoảng thời gian, severity hoặc transport trước khi xem log. Có
 thể giới hạn N log gần nhất cho từng host, dùng Smart filter với cú pháp
 `key:value`, xem hướng dẫn ngay trên thanh lọc và xuất chính xác tập row đang
-hiển thị sang Excel. Listener/writer dùng
+hiển thị sang Excel. Trong **Settings > System Logs**, mục **Reset log data** cho
+phép xuất toàn bộ log thuộc một host hoặc tất cả host sang Excel trước khi xóa.
+Thao tác xóa yêu cầu tích xác nhận và nhập đúng cụm từ xác thực; collector đang
+chạy được dừng tạm thời rồi khởi động lại sau khi hoàn tất. Cấu hình Syslog trên
+thiết bị không bị xóa. Listener/writer dùng
 tiến trình C++ riêng và `info_collected.db`, không giữ session CLI của View & Push.
 
 ## Build và cấu hình native

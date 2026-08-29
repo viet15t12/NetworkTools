@@ -84,6 +84,7 @@ class WorkspaceSaveServiceTests(unittest.TestCase):
             self.assertIn(f"snapshots/{snapshot_id}/device_network.db", names)
             self.assertNotIn("device_network.db-wal", names)
 
+        self.session.close()
         with self.service.open_project(self.project) as reopened:
             with closing(sqlite3.connect(reopened.device_network_db)) as database:
                 self.assertEqual(
@@ -124,6 +125,7 @@ class WorkspaceSaveServiceTests(unittest.TestCase):
         self.assertFalse(any(".git" in Path(name).parts for name in names))
         self.assertTrue(any(".networktools-git" in Path(name).parts for name in names))
 
+        self.session.close()
         with self.service.open_project(self.project) as reopened:
             reopened_repository = ConfigBackupRepository(reopened.backup_directory)
             self.assertEqual(
@@ -212,6 +214,7 @@ class WorkspaceSaveServiceTests(unittest.TestCase):
                 database.execute("SELECT value FROM state").fetchone(),
                 ("initial",),
             )
+        self.session.close()
         with self.service.open_project(self.project) as reopened:
             with closing(sqlite3.connect(reopened.device_network_db)) as database:
                 self.assertEqual(

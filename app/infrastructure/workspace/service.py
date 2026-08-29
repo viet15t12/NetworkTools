@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Callable
 
 from .errors import WorkspacePasswordRequired
+from .locking import ProjectFileLock
 from .package import WorkspaceManifest, WorkspacePackageCodec, WorkspaceSession
 from .snapshot import SnapshotRecord, SnapshotService
 from .staging import (
@@ -67,8 +68,6 @@ class WorkspaceService:
         """Create canonical databases, pack the first project, and keep it active."""
 
         target = Path(package_path).expanduser().absolute()
-        if target.exists():
-            raise FileExistsError(f"A project already exists at {target}.")
         session = self.codec.new_session(target, project_name)
         try:
             self._database_initializer(
@@ -171,32 +170,43 @@ class WorkspaceService:
             else session.project_path
         )
         save_as = destination != session.project_path
-        if save_as and destination.exists():
-            raise FileExistsError(f"A project already exists at {destination}.")
-        with tempfile.TemporaryDirectory(prefix="networktools-save-") as temporary:
-            staged = Path(temporary) / "workspace"
-            self._stage_workspace(session, staged)
-            snapshot = None
-            if create_snapshot:
-                snapshot = self.snapshot_service.create_from_staged_workspace(
-                    session,
+        destination_lock = ProjectFileLock.acquire(destination) if save_as else None
+        try:
+            if save_as and destination.exists():
+                raise FileExistsError(f"A project already exists at {destination}.")
+            with tempfile.TemporaryDirectory(prefix="networktools-save-") as temporary:
+                staged = Path(temporary) / "workspace"
+                self._stage_workspace(session, staged)
+                snapshot = None
+                if create_snapshot:
+                    snapshot = self.snapshot_service.create_from_staged_workspace(
+                        session,
+                        staged,
+                        label=snapshot_label,
+                        reason=snapshot_reason,
+                        source_generation=source_generation,
+                        pinned=snapshot_pinned,
+                    )
+                manifest = self.codec.pack(
                     staged,
-                    label=snapshot_label,
-                    reason=snapshot_reason,
-                    source_generation=source_generation,
-                    pinned=snapshot_pinned,
+                    destination,
+                    password=effective_password,
+                    base_manifest=session.manifest,
+                    expected_fingerprint=(
+                        None if save_as else session.package_fingerprint
+                    ),
                 )
-            manifest = self.codec.pack(
-                staged,
-                destination,
-                password=effective_password,
-                base_manifest=session.manifest,
-                expected_fingerprint=(
-                    None if save_as else session.package_fingerprint
-                ),
-            )
+        except Exception:
+            if destination_lock is not None:
+                destination_lock.release()
+            raise
 
+        previous_lock = session._project_lock
         session.project_path = destination
+        if destination_lock is not None:
+            session._project_lock = destination_lock
+            if previous_lock is not None:
+                previous_lock.release()
         self.codec.update_session_after_pack(
             session, manifest, encrypted=bool(effective_password)
         )

@@ -2209,6 +2209,17 @@ class QmlSmokeTests(unittest.TestCase):
         self.assertIsNotNone(workspace.findChild(QObject, "syslogControlBar"))
         self.assertIsNotNone(workspace.findChild(QObject, "syslogFilterBar"))
         self.assertIsNotNone(workspace.findChild(QObject, "syslogLogTable"))
+
+    def test_syslog_settings_exposes_safe_log_reset_controls(self) -> None:
+        self.engine.rootContext().setContextProperty("syslogManager", None)
+        self.engine.rootContext().setContextProperty("syslogSettings", None)
+        settings = self._create("UI/qml/features/syslog/SyslogServerSettings.qml")
+        self.assertIsNotNone(settings.findChild(QObject, "syslogResetScope"))
+        self.assertIsNotNone(settings.findChild(QObject, "syslogResetExportButton"))
+        self.assertIsNotNone(settings.findChild(QObject, "syslogResetDataButton"))
+        self.assertIsNotNone(
+            settings.findChild(QObject, "syslogResetConfirmationDialog")
+        )
         self.assertEqual(self.warnings, [])
 
     def test_sftp_workspace_loads_with_serialized_backend(self) -> None:

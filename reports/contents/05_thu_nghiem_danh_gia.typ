@@ -1,4 +1,4 @@
-#import "../config/tables.typ": report-table
+#import "../config/tables.typ": report-table, table-code
 #import "../config/commands.typ": report-note
 
 #pagebreak(weak: true)
@@ -122,8 +122,8 @@ Security Violation Count   : 0
 *Mục tiêu kịch bản:* Thiết lập hạ tầng định tuyến động OSPFv2 liên kết hai chi nhánh doanh nghiệp (Chi nhánh A và Chi nhánh B) thông qua mạng đường trục ISP (Backbone Area 0). Ứng dụng tính năng *Routing Group - OSPF* của NetworkTools để tự động hóa quá trình cấu hình đồng loạt trên 6 bộ định tuyến (`R1`, `R2`, `R3`, `ISP1`, `ISP2`, `R6`), đồng thời kích hoạt cơ chế *Tái phân phối tuyến (Route Redistribution)* nhằm quảng bá các dải mạng LAN cục bộ vào miền OSPF, đảm bảo lưu lượng giữa các phòng ban thuộc hai chi nhánh được thông suốt 100%.
 
 #figure(
-  image("diagrams/LAB_2.svg", width: 95%),
-  caption: [Sơ đồ Topo Kịch bản 2: Định tuyến OSPF đa vùng liên kết hai chi nhánh qua mạng Backbone],
+  image("diagrams/LAB_2-report.png", width: 95%),
+  caption: [Sơ đồ Topo Kịch bản 2: Định tuyến OSPF đa vùng giữa hai chi nhánh],
 ) <fig-topo-scenario-2>
 
 *Quy hoạch địa chỉ IP và Phân vùng Định tuyến:*
@@ -278,22 +278,24 @@ VPCS> ping 192.168.20.10
 *Mục tiêu kịch bản:* Xây dựng mô hình mạng LAN có khả năng cấp phát địa chỉ IP tự động, sử dụng cổng mặc định dự phòng và cân bằng tải bằng giao thức GLBP, đồng thời cho phép các máy trạm trong mạng nội bộ truy cập ra mạng ngoài thông qua cơ chế NAT/PAT. Kịch bản tập trung kiểm thử khả năng phối hợp nhiều chức năng Lớp 3 trên NetworkTools theo cùng một quy trình *Thiết lập trên GUI $arrow$ View & Push $arrow$ Xác minh trực tiếp trên thiết bị*.
 
 #figure(
-  image("diagrams/fhrp_nat_dhcp_lap/fhrp&nat&dhcp.svg", width: 95%),
+  image("diagrams/fhrp_nat_dhcp_lap/fhrp-nat-dhcp-report.png", width: 95%),
   caption: [Sơ đồ Topo Kịch bản 3: Tích hợp GLBP, DHCP và NAT/PAT cho mạng LAN],
 ) <fig-topo-scenario-3>
 
 *Quy hoạch địa chỉ và vai trò thiết bị:*
 
 #report-table(
-  columns: (20%, 24%, 24%, 32%),
+  columns: (14%, 28%, 18%, 40%),
+  text-size: 9.5pt,
+  cell-inset: (x: 4pt, y: 4.5pt),
   header: ([Thiết bị], [Giao diện / Địa chỉ], [Vai trò], [Ghi chú]),
   rows: (
-    ([R1], [`Gi0/0 - 192.168.4.2/24`], [Gateway member], [Tham gia GLBP Group 113, Priority 101]),
-    ([R2], [`Gi0/0 - 192.168.4.3/24`], [Gateway member], [Tham gia GLBP Group 113, Priority 100]),
-    ([GLBP Virtual IP], [`192.168.4.1`], [Default Gateway], [Địa chỉ gateway cấp cho các máy trạm qua DHCP]),
-    ([NAT], [`Gi0/1 - 192.168.1.2/24`], [NAT Inside], [Kết nối hướng về R1]),
-    ([NAT], [`Gi0/3 - 192.168.2.2/24`], [NAT Inside], [Kết nối hướng về R2]),
-    ([NAT], [`Gi0/2 - 10.0.10.2/24`], [NAT Outside], [Kết nối tới mạng ISP / upstream]),
+    ([R1], [#table-code("Gi0/0 - 192.168.4.2/24")], [Gateway member], [Tham gia GLBP Group 113, Priority 101]),
+    ([R2], [#table-code("Gi0/0 - 192.168.4.3/24")], [Gateway member], [Tham gia GLBP Group 113, Priority 100]),
+    ([GLBP Virtual IP], [#table-code("192.168.4.1")], [Default Gateway], [Địa chỉ gateway cấp cho các máy trạm qua DHCP]),
+    ([NAT], [#table-code("Gi0/1 - 192.168.1.2/24")], [NAT Inside], [Kết nối hướng về R1]),
+    ([NAT], [#table-code("Gi0/3 - 192.168.2.2/24")], [NAT Inside], [Kết nối hướng về R2]),
+    ([NAT], [#table-code("Gi0/2 - 10.0.10.2/24")], [NAT Outside], [Kết nối tới mạng ISP / upstream]),
     ([PC1], [DHCP], [Máy trạm kiểm thử], [Nhận IP động và sử dụng gateway `192.168.4.1`]),
   ),
   caption: [Bảng quy hoạch địa chỉ và vai trò thiết bị trong Kịch bản 3],
@@ -453,11 +455,185 @@ Cuối cùng, trên máy trạm `PC1`, lệnh `ip dhcp` được sử dụng đ�
 *Đánh giá kết quả Kịch bản 3:* NetworkTools đã cấu hình thành công chuỗi chức năng liên hoàn *DHCP $arrow$ GLBP $arrow$ NAT/PAT*. Máy trạm nhận địa chỉ động `192.168.4.4/24`, sử dụng gateway ảo `192.168.4.1`; hai router R1/R2 cùng tham gia GLBP Group 113; Router NAT nhận đúng vai trò Inside/Outside, ACL và PAT Overload. Kết quả truy vết xác nhận lưu lượng từ LAN đi đúng qua R1 tới Router NAT và tới gateway upstream `10.0.10.1`. Qua đó, kịch bản chứng minh phần mềm có khả năng phối hợp nhiều nghiệp vụ Lớp 3 trên nhiều thiết bị trong cùng một quy trình cấu hình và kiểm chứng thống nhất.
 
 
-=== Kịch bản 4:
+=== Kịch bản 4: Thu thập, giám sát và phân tích nhật ký tập trung bằng Syslog Server
 
+*Mục tiêu kịch bản:* Kiểm thử khả năng cấu hình đồng loạt dịch vụ Syslog trên nhiều thiết bị Cisco và khả năng tiếp nhận, phân tích, hiển thị nhật ký thời gian thực ngay trong NetworkTools. Kịch bản sử dụng 4 thiết bị gồm ba router `R1`, `R2`, `R3` và switch `SW1`; tất cả gửi log về Syslog Server tại địa chỉ `192.168.122.1`, sử dụng cổng `5514/UDP`. Ngoài việc kiểm tra cấu hình trên từng thiết bị, kịch bản còn xác minh khả năng phân loại thông điệp theo Host, Source IP, Facility/Severity, Mnemonic và nội dung Raw Message.
 
+#figure(
+  image("diagrams/syslog lab/syslog-lab-topology-report.png", width: 92%),
+  caption: [Sơ đồ Topo Kịch bản 4: Thu thập Syslog tập trung],
+) <fig-topo-scenario-4>
 
+*Quy hoạch thiết bị và chính sách Syslog:*
 
+#report-table(
+  columns: (11%, 24%, 27%, 38%),
+  text-size: 9.5pt,
+  cell-inset: (x: 4pt, y: 4.5pt),
+  header: ([Thiết bị], [IP quản trị], [Source Interface], [Chính sách gửi Syslog]),
+  rows: (
+    ([R1], [#table-code("192.168.122.101")], [#table-code("GigabitEthernet0/0")], [#table-code("192.168.122.1:5514/UDP"), mức #table-code("notifications")]),
+    ([R2], [#table-code("192.168.122.102")], [#table-code("GigabitEthernet0/0")], [#table-code("192.168.122.1:5514/UDP"), mức #table-code("notifications")]),
+    ([R3], [#table-code("192.168.122.103")], [#table-code("GigabitEthernet0/0")], [#table-code("192.168.122.1:5514/UDP"), mức #table-code("notifications")]),
+    ([SW1], [#table-code("192.168.122.104")], [#table-code("Vlan1")], [#table-code("192.168.122.1:5514/UDP"), mức #table-code("notifications")]),
+  ),
+  caption: [Bảng quy hoạch nguồn gửi Syslog trong Kịch bản 4],
+) <tab-syslog-planning-lab4>
+
+*Quy trình thực hiện trên phần mềm NetworkTools:*
+
+*Bước 1: Mở phân hệ Syslog Server và chuẩn bị cấu hình đích nhận log*
+
+Từ thiết bị đang được quản lý, quản trị viên mở thẻ *Syslog Server*. Tại thời điểm ban đầu chưa có đích Syslog nào được cấu hình, các chỉ số `Destinations`, `Applied`, `Pending apply` và `Pending removal` đều bằng `0`. Người dùng sử dụng chức năng *Syslog Group* để tạo một chính sách chung và áp dụng đồng thời cho nhiều thiết bị thay vì khai báo lặp lại từng router/switch.
+
+#figure(
+  image("diagrams/syslog lab/01-syslog-configuration.png", width: 92%),
+  caption: [Giao diện quản lý Syslog Server trước khi tạo chính sách gửi log],
+) <fig-k4-syslog-config>
+
+*Giải thích Hình @fig-k4-syslog-config:* Giao diện thể hiện mô hình quản lý trạng thái tương tự các phân hệ cấu hình khác của NetworkTools. Người dùng có thể tạo mới đích Syslog, kiểm duyệt lệnh bằng *View & Push* hoặc cấu hình theo nhóm bằng *Syslog Group*.
+
+*Bước 2: Chọn đồng thời các thiết bị tham gia Syslog Group*
+
+Tại bước *Hosts*, quản trị viên chọn cả bốn thiết bị đang kết nối gồm `R1`, `R2`, `R3` và `SW1`. Hệ thống hiển thị số lượng giao diện phát hiện được trên từng thiết bị để làm dữ liệu đầu vào cho bước lựa chọn Source Interface.
+
+#figure(
+  image("diagrams/syslog lab/02-syslog-select-hosts.png", width: 78%),
+  caption: [Bước Hosts của Syslog Group: chọn 4 thiết bị cùng tham gia chính sách gửi log],
+) <fig-k4-syslog-hosts>
+
+*Giải thích Hình @fig-k4-syslog-hosts:* Việc nhóm nhiều host vào cùng một workflow giúp giảm thao tác lặp lại và đảm bảo các thiết bị sử dụng thống nhất địa chỉ máy chủ, giao thức vận chuyển và mức severity.
+
+*Bước 3: Chọn Source Interface cho từng thiết bị*
+
+Tại bước *Interfaces*, NetworkTools cho phép chọn riêng giao diện nguồn trên từng host. Ba router sử dụng `GigabitEthernet0/0`, tương ứng với mạng quản trị `192.168.122.0/24`; switch `SW1` sử dụng giao diện logic `Vlan1`.
+
+#figure(
+  image("diagrams/syslog lab/03-syslog-source-interfaces.png", width: 78%),
+  caption: [Lựa chọn Source Interface cho từng Router và Switch trong Syslog Group],
+) <fig-k4-syslog-source>
+
+Cấu hình `logging source-interface` giúp các bản tin Syslog phát ra với địa chỉ nguồn ổn định, nhờ đó NetworkTools có thể ánh xạ chính xác bản tin về đúng thiết bị trong danh sách quản lý.
+
+*Bước 4: Khai báo chính sách Syslog dùng chung cho toàn nhóm*
+
+Tại bước *Policy*, quản trị viên nhập địa chỉ máy chủ `192.168.122.1`, chọn giao thức `UDP`, cổng `5514` và mức *Trap severity* là `5 - Notifications`. Hai tùy chọn bổ sung *Include millisecond log timestamps* và *Include sequence numbers* được bật để tăng độ chính xác khi sắp xếp, đối chiếu sự kiện.
+
+#figure(
+  image("diagrams/syslog lab/04-syslog-policy.png", width: 78%),
+  caption: [Thiết lập đích Syslog 192.168.122.1:5514/UDP và mức severity Notifications],
+) <fig-k4-syslog-policy>
+
+Với mức `notifications`, thiết bị gửi các thông điệp từ severity 0 đến severity 5 tới máy chủ Syslog. Đây là mức phù hợp cho bài thử vì có thể thu nhận các sự kiện thay đổi trạng thái interface, thông báo cấu hình và các bản tin kiểm thử do người quản trị chủ động tạo ra.
+
+*Bước 5: Kiểm duyệt tập lệnh Syslog trước khi Push hàng loạt*
+
+Sau khi hoàn tất ba bước của wizard, NetworkTools mở cửa sổ *View & Push Syslog Group* để tổng hợp cấu hình cho cả bốn thiết bị. Quản trị viên có thể xem toàn bộ lệnh trước khi nhấn *Push*.
+
+#figure(
+  image("diagrams/syslog lab/05-syslog-config-preview.png", width: 82%),
+  caption: [Cửa sổ View & Push Syslog Group tổng hợp lệnh cho 4 thiết bị trước khi thực thi],
+) <fig-k4-syslog-preview>
+
+*Giải thích Hình @fig-k4-syslog-preview:* Với router, hệ thống sinh các lệnh tiêu biểu:
+```text
+logging host 192.168.122.1 transport udp port 5514
+logging trap notifications
+service timestamps log datetime msec
+service sequence-numbers
+logging source-interface GigabitEthernet0/0
+```
+Riêng `SW1`, lệnh cuối được thay bằng `logging source-interface Vlan1`. Cách sinh lệnh theo từng host cho phép dùng chung một Policy nhưng vẫn giữ đúng đặc điểm giao diện của từng thiết bị.
+
+*Bước 6: Xác minh cấu hình Syslog trên R1, R2, R3 và SW1*
+
+Sau khi Push thành công, quản trị viên mở Terminal tích hợp và thực hiện lệnh `show running-config | section logging` trên từng thiết bị. Kết quả trên `R1`, `R2` và `R3` đều ghi nhận máy chủ `192.168.122.1`, giao thức UDP cổng `5514`, mức `notifications` và Source Interface `GigabitEthernet0/0`.
+
+#figure(
+  image("diagrams/syslog lab/06-syslog-r1-verify.png", width: 88%),
+  caption: [Xác minh cấu hình Syslog trên Router R1],
+) <fig-k4-r1-verify>
+
+#figure(
+  image("diagrams/syslog lab/07-syslog-r2-verify.png", width: 88%),
+  caption: [Xác minh cấu hình Syslog trên Router R2],
+) <fig-k4-r2-verify>
+
+#figure(
+  image("diagrams/syslog lab/08-syslog-r3-verify.png", width: 88%),
+  caption: [Xác minh cấu hình Syslog trên Router R3],
+) <fig-k4-r3-verify>
+
+Trên switch `SW1`, cấu hình tương tự nhưng sử dụng `Vlan1` làm Source Interface.
+
+#figure(
+  image("diagrams/syslog lab/09-syslog-sw1-verify.png", width: 88%),
+  caption: [Xác minh cấu hình Syslog trên Switch SW1 với Source Interface Vlan1],
+) <fig-k4-sw1-verify>
+
+Các kết quả xác minh cho thấy cấu hình thực tế trên thiết bị khớp với nội dung đã xem trước trên GUI, qua đó xác nhận quy trình *Syslog Group $arrow$ View & Push $arrow$ Verify* hoạt động đúng trên cả Router và Switch.
+
+*Bước 7: Khởi động Syslog Listener tích hợp trong NetworkTools*
+
+Tiếp theo, quản trị viên chuyển sang màn hình *System Logs*. Trước khi khởi động, trạng thái hiển thị *Listener stopped*, số bản tin nhận được bằng `0` và bảng log chưa có dữ liệu.
+
+#figure(
+  image("diagrams/syslog lab/10-syslog-listener-before-start.png", width: 94%),
+  caption: [Màn hình System Logs trước khi khởi động Syslog Listener],
+) <fig-k4-listener-before>
+
+Sau khi nhấn *Start Listener*, dịch vụ chuyển sang trạng thái *Listener active* và lắng nghe trên `0.0.0.0:5514/UDP+TCP`. Khi các thiết bị phát sinh sự kiện, các bản tin được đưa trực tiếp vào bảng System Logs theo thời gian thực.
+
+#figure(
+  image("diagrams/syslog lab/11-syslog-listener-receiving.png", width: 94%),
+  caption: [Syslog Listener đang hoạt động và tiếp nhận bản tin từ các thiết bị mạng],
+) <fig-k4-listener-active>
+
+*Giải thích Hình @fig-k4-listener-active:* Tại thời điểm chụp, hệ thống đã tiếp nhận `245` bản tin. Mỗi dòng được phân tách thành các trường `Time`, `Host`, `Source IP`, `Facility/Severity`, `Mnemonic` và `Message`. Các sự kiện như `LINK`, `LINEPROTO`, `SYS` được hiển thị rõ ràng, cho phép quản trị viên nhanh chóng xác định thiết bị và loại sự kiện phát sinh.
+
+*Bước 8: Kiểm tra khả năng phân tích chi tiết một bản tin Syslog*
+
+Khi chọn một dòng log, NetworkTools mở cửa sổ *System Log Message* để hiển thị cả dữ liệu đã phân tích và bản tin nguyên gốc. Trong mẫu thử từ `192.168.122.101`, hệ thống nhận dạng thành công giao thức `UDP`, Cisco facility `LINEPROTO`, severity `5`, mnemonic `UPDOWN`, sequence number `104` và trạng thái parser là `parsed`.
+
+#figure(
+  image("diagrams/syslog lab/12-syslog-message-detail.png", width: 68%),
+  caption: [Cửa sổ chi tiết một bản tin Syslog sau khi được parser phân tích],
+) <fig-k4-message-detail>
+
+Phần *Raw message* vẫn được giữ nguyên để phục vụ đối chiếu khi cần:
+```text
+<189>104: *Aug 29 20:25:44.323: %LINEPROTO-5-UPDOWN:
+Line protocol on Interface Loopback99, changed state to down
+```
+Việc đồng thời lưu trường đã chuẩn hóa và Raw Message giúp giao diện thuận tiện cho giám sát thông thường nhưng vẫn bảo toàn dữ liệu gốc để kiểm tra chuyên sâu.
+
+*Bước 9: Tạo sự kiện kiểm thử trên từng thiết bị và đối chiếu với Syslog Server*
+
+Để tạo lượng log đủ lớn và có tính lặp lại, trên các router NetworkTools thực hiện chu kỳ thay đổi trạng thái `Loopback99`; trên switch, giao diện `GigabitEthernet1/3` được chuyển trạng thái Up/Down. Các thiết bị đồng thời phát sinh các bản tin `USERLOG_WARNING`, `USERLOG_NOTICE`, `LINK`, `LINEPROTO` và `CONFIG_I`.
+
+#figure(
+  image("diagrams/syslog lab/13-syslog-r1-device-logs.png", width: 94%),
+  caption: [Nhật ký sự kiện kiểm thử phát sinh trực tiếp trên Router R1],
+) <fig-k4-r1-device-logs>
+
+#figure(
+  image("diagrams/syslog lab/14-syslog-r2-device-logs.png", width: 94%),
+  caption: [Nhật ký sự kiện kiểm thử phát sinh trực tiếp trên Router R2],
+) <fig-k4-r2-device-logs>
+
+#figure(
+  image("diagrams/syslog lab/15-syslog-r3-device-logs.png", width: 94%),
+  caption: [Nhật ký sự kiện kiểm thử phát sinh trực tiếp trên Router R3],
+) <fig-k4-r3-device-logs>
+
+#figure(
+  image("diagrams/syslog lab/16-syslog-sw1-device-logs.png", width: 94%),
+  caption: [Nhật ký sự kiện kiểm thử phát sinh trực tiếp trên Switch SW1],
+) <fig-k4-sw1-device-logs>
+
+*Giải thích các Hình @fig-k4-r1-device-logs -- @fig-k4-sw1-device-logs:* Các terminal cho thấy chuỗi sự kiện được tạo liên tục trên cả bốn thiết bị. Khi giao diện bị `shutdown` hoặc `no shutdown`, IOS phát sinh các thông điệp trạng thái liên kết và line protocol; đồng thời các bản tin `USERLOG_*` được dùng để đánh dấu từng chu kỳ thử nghiệm. Những sự kiện tương ứng xuất hiện trên màn hình System Logs, chứng minh luồng truyền bản tin từ thiết bị tới NetworkTools hoạt động liên tục và đúng nguồn.
+
+*Đánh giá kết quả Kịch bản 4:* NetworkTools đã cấu hình thành công Syslog theo nhóm cho 4 thiết bị, trong đó ba router sử dụng `GigabitEthernet0/0` và switch sử dụng `Vlan1` làm Source Interface. Syslog Listener tích hợp nhận được đồng thời bản tin từ các nguồn `192.168.122.101` đến `192.168.122.104`, phân tích được các trường Cisco Facility/Severity/Mnemonic và vẫn bảo toàn Raw Message. Các sự kiện thực nghiệm về thay đổi trạng thái interface và thông báo cấu hình xuất hiện nhất quán giữa Terminal thiết bị và bảng System Logs. Kịch bản vì vậy xác nhận chức năng Syslog của NetworkTools hoạt động đúng từ khâu cấu hình nguồn gửi, tiếp nhận tập trung đến phân tích và quan sát nhật ký thời gian thực.
 
 
 == Đánh giá tổng hợp

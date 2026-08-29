@@ -135,6 +135,66 @@ class MessageRepository:
             ).fetchall()
         return [str(row[0]) for row in rows]
 
+    def reset_options(self) -> dict[str, Any]:
+        """Return message counts used by the destructive reset workflow."""
+        with closing(info_connection(self.info_db)) as conn:
+            rows = conn.execute(
+                "SELECT device_host, COUNT(*) AS message_count "
+                "FROM t12_syslog_messages "
+                "GROUP BY device_host ORDER BY device_host COLLATE NOCASE"
+            ).fetchall()
+        hosts = [
+            {
+                "host": str(row["device_host"] or ""),
+                "count": int(row["message_count"]),
+            }
+            for row in rows
+            if str(row["device_host"] or "").strip()
+        ]
+        return {
+            "total": sum(int(row["message_count"]) for row in rows),
+            "hosts": hosts,
+        }
+
+    def messages_for_export(self, host: str = "") -> list[dict[str, Any]]:
+        """Load a complete reset scope for a pre-delete Excel backup."""
+        selected_host = str(host or "").strip()
+        sql = "SELECT * FROM t12_syslog_messages"
+        params: tuple[Any, ...] = ()
+        if selected_host:
+            sql += " WHERE device_host = ?"
+            params = (selected_host,)
+        sql += " ORDER BY id DESC"
+        with closing(info_connection(self.info_db)) as conn:
+            rows = conn.execute(sql, params).fetchall()
+        return [self._public_row(dict(row)) for row in rows]
+
+    def reset_messages(self, host: str = "") -> int:
+        """Delete one host's messages, or every message when host is empty."""
+        selected_host = str(host or "").strip()
+        with closing(info_connection(self.info_db)) as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            if selected_host:
+                cursor = conn.execute(
+                    "DELETE FROM t12_syslog_messages WHERE device_host = ?",
+                    (selected_host,),
+                )
+            else:
+                cursor = conn.execute("DELETE FROM t12_syslog_messages")
+                # A full reset should also restart the local message sequence.
+                has_sequence = conn.execute(
+                    "SELECT 1 FROM sqlite_master "
+                    "WHERE type = 'table' AND name = 'sqlite_sequence'"
+                ).fetchone()
+                if has_sequence:
+                    conn.execute(
+                        "DELETE FROM sqlite_sequence "
+                        "WHERE name = 't12_syslog_messages'"
+                    )
+            deleted = max(0, int(cursor.rowcount))
+            conn.commit()
+        return deleted
+
     @staticmethod
     def _public_row(row: dict[str, Any]) -> dict[str, Any]:
         row.pop("host_rank", None)
