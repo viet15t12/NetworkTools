@@ -3,6 +3,7 @@ module UI
 singleton Theme 1.0 theme/Theme.qml
 singleton ThemeState 1.0 theme/state/ThemeState.qml
 singleton StatusBarState 1.0 theme/state/StatusBarState.qml
+singleton LanguageState 1.0 theme/state/LanguageState.qml
 singleton UiState 1.0 theme/state/UiState.qml
 singleton SizeTokens 1.0 theme/tokens/SizeTokens.qml
 singleton TypographyTokens 1.0 theme/tokens/TypographyTokens.qml

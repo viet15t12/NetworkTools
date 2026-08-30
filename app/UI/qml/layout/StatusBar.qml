@@ -661,9 +661,11 @@ Rectangle {
                 }
                 tooltip: root.isNotificationOpen ? "" :
                          (root.isDND ? (root.unreadCount > 0
-                                        ? "Do Not Disturb - ON (%1 unread)".arg(root.unreadCount)
-                                        : "Do Not Disturb - ON") :
-                          (root.unreadCount > 0 ? "%1 Unread Notifications".arg(root.unreadCount) : "No New Notifications"))
+                                        ? LanguageState.text("Do Not Disturb - ON (%1 unread)".arg(root.unreadCount))
+                                        : LanguageState.text("Do Not Disturb - ON")) :
+                          (root.unreadCount > 0
+                           ? LanguageState.text("%1 Unread Notifications".arg(root.unreadCount))
+                           : LanguageState.text("No New Notifications")))
                 onClicked: root.bellClicked()
 
                 SequentialAnimation on opacity {

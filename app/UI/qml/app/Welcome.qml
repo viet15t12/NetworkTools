@@ -76,6 +76,7 @@ ApplicationWindow {
 
     Component.onCompleted: {
         ThemeState.backend = typeof themeSettings !== "undefined" ? themeSettings : null
+        LanguageState.backend = typeof languageSettings !== "undefined" ? languageSettings : null
         const available = Screen.desktopAvailableWidth > 0
                           && Screen.desktopAvailableHeight > 0
         if (available) {
@@ -150,11 +151,11 @@ ApplicationWindow {
 
         function onOperationFailed(title, message) {
             if (workspacePasswordDialog.opened && title === "Open Project") {
-                workspacePasswordDialog.errorMessage = message
+                workspacePasswordDialog.errorMessage = LanguageState.text(message)
                 return
             }
-            workspaceErrorDialog.title = title
-            workspaceErrorDialog.text = message
+            workspaceErrorDialog.title = LanguageState.text(title)
+            workspaceErrorDialog.text = LanguageState.text(message)
             workspaceErrorDialog.open()
         }
 
@@ -288,7 +289,7 @@ ApplicationWindow {
                     spacing: Theme.spacing4
 
                     Text {
-                        text: "Welcome"
+                        text: LanguageState.text("Welcome")
                         color: Theme.textPrimary
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSizeDisplay
@@ -296,7 +297,7 @@ ApplicationWindow {
                     }
 
                     Text {
-                        text: "Choose a project to continue"
+                        text: LanguageState.text("Choose a project to continue")
                         color: Theme.textSecondary
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSizeLarge
@@ -311,8 +312,8 @@ ApplicationWindow {
                         objectName: "welcomeCreateProjectButton"
                         Layout.fillWidth: true
                         actionIcon: AppAssets.actionAdd
-                        titleText: "Create New"
-                        descriptionText: "Start a new .ntp workspace"
+                        titleText: LanguageState.text("Create New")
+                        descriptionText: LanguageState.text("Start a new .ntp workspace")
                         onClicked: createProjectDialog.open()
                     }
 
@@ -320,8 +321,8 @@ ApplicationWindow {
                         objectName: "welcomeOpenProjectButton"
                         Layout.fillWidth: true
                         actionIcon: AppAssets.fileFolder
-                        titleText: "Open"
-                        descriptionText: "Open a NetworkTools project"
+                        titleText: LanguageState.text("Open")
+                        descriptionText: LanguageState.text("Open a NetworkTools project")
                         onClicked: openProjectDialog.open()
                     }
 
@@ -329,8 +330,8 @@ ApplicationWindow {
                         objectName: "welcomeSettingsButton"
                         Layout.fillWidth: true
                         actionIcon: AppAssets.navigationSettings
-                        titleText: "Settings"
-                        descriptionText: "Configure global appearance"
+                        titleText: LanguageState.text("Settings")
+                        descriptionText: LanguageState.text("Configure global appearance")
                         onClicked: settingsDialog.open()
                     }
                 }

@@ -34,6 +34,7 @@ from app_facade import (
     AppPaths,
     DatabaseManager,
     ExternalToolsManager,
+    LanguageSettings,
     MenuPresentationController,
     NetworkMonitor,
     StatusBarSettings,
@@ -73,6 +74,7 @@ class QmlSmokeTests(unittest.TestCase):
             "networkMonitor": NetworkMonitor(),
             "statusBarSettings": StatusBarSettings(),
             "themeSettings": ThemeSettings(),
+            "languageSettings": LanguageSettings(),
             "windowSettings": WindowSettings(),
             "workspaceSaveController": workspace_save_controller,
             "welcomeController": welcome_controller,
@@ -813,9 +815,9 @@ class QmlSmokeTests(unittest.TestCase):
             panel,
             "filteredItems.length",
         ).evaluate()[0]
-        self.assertEqual(filtered_count, 4)
+        self.assertEqual(filtered_count, 5)
         self.assertTrue(
-            self._wait_until(lambda: panel.property("renderedCardCount") == 4)
+            self._wait_until(lambda: panel.property("renderedCardCount") == 5)
         )
 
         cards = [
@@ -824,7 +826,7 @@ class QmlSmokeTests(unittest.TestCase):
                 panel,
                 f"cardAt({index})",
             ).evaluate()[0]
-            for index in range(4)
+            for index in range(5)
         ]
         self.assertTrue(all(card is not None for card in cards))
 
@@ -838,6 +840,25 @@ class QmlSmokeTests(unittest.TestCase):
                     ),
                 )
         self.assertTrue(any(float(card.property("height")) > 72 for card in cards))
+        self.assertEqual(self.warnings, [])
+
+    def test_language_selector_updates_and_persists_vietnamese(self) -> None:
+        backend = self.context_objects["languageSettings"]
+        backend.setLanguage("en")
+        view = self._create("UI/qml/content/SettingsView.qml")
+        view.setProperty("activeSettingKey", "language")
+        combo = view.findChild(QObject, "applicationLanguageCombo")
+        self.assertIsNotNone(combo)
+        self.assertEqual(combo.property("currentIndex"), 0)
+
+        QMetaObject.invokeMethod(combo, "activated", Q_ARG(int, 1))
+        self.app.processEvents()
+
+        self.assertEqual(backend.language, "vi")
+        self.assertEqual(combo.property("currentIndex"), 1)
+        restored = LanguageSettings()
+        self.assertEqual(restored.language, "vi")
+        backend.setLanguage("en")
         self.assertEqual(self.warnings, [])
 
     def test_appearance_menu_style_override_updates_backend(self) -> None:
@@ -3578,6 +3599,31 @@ class QmlSmokeTests(unittest.TestCase):
             root.property("notificationHistoryCount"),
         )
         self.assertEqual(root.property("unreadNotifications"), 0)
+        self.assertEqual(self.warnings, [])
+
+    def test_main_translates_notifications_at_the_shared_boundary(self) -> None:
+        language = self.context_objects["languageSettings"]
+        language.setLanguage("vi")
+        self.engine.loadFromModule("UI", "Main")
+        self.app.processEvents()
+        root = self.engine.rootObjects()[0]
+
+        QMetaObject.invokeMethod(
+            root,
+            "recordNotification",
+            Q_ARG("QVariant", "Connecting to router-01..."),
+            Q_ARG("QVariant", "info"),
+            Q_ARG("QVariant", False),
+        )
+        translated, is_undefined = QQmlExpression(
+            QQmlEngine.contextForObject(root),
+            root,
+            "notificationHistoryModel.get(0).msgText",
+        ).evaluate()
+
+        self.assertFalse(is_undefined)
+        self.assertEqual(translated, "Đang kết nối tới router-01...")
+        language.setLanguage("en")
         self.assertEqual(self.warnings, [])
 
     def test_main_notification_toggle_clears_and_deduplicates_toasts(self) -> None:

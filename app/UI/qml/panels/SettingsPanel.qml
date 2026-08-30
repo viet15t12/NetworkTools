@@ -15,10 +15,11 @@ Item {
                                  ? filteredItems[selectedIndex].key
                                  : ""
     property var allItems: [
-        { "key": "theme", "title": "Theme", "desc": "Theme, accent, and Status Bar settings" },
-        { "key": "external_tools", "title": "External Tools", "desc": "Choose default, suggested, or custom applications" },
-        { "key": "sftp", "title": "SFTP", "desc": "Default local and remote connection directories" },
-        { "key": "syslog_server", "title": "System Logs", "desc": "Listener, device destination, and message retention" }
+        { "key": "theme", "title": LanguageState.text("Theme"), "desc": LanguageState.text("Theme, accent, and Status Bar settings") },
+        { "key": "language", "title": LanguageState.text("Language"), "desc": LanguageState.text("Language and notification translation") },
+        { "key": "external_tools", "title": LanguageState.text("External Tools"), "desc": LanguageState.text("Choose default, suggested, or custom applications") },
+        { "key": "sftp", "title": "SFTP", "desc": LanguageState.text("Default local and remote connection directories") },
+        { "key": "syslog_server", "title": LanguageState.text("System Logs"), "desc": LanguageState.text("Listener, device destination, and message retention") }
     ]
 
     property var filteredItems: []
@@ -82,7 +83,7 @@ Item {
                 anchors.fill: parent
                 anchors.leftMargin: 16
                 verticalAlignment: Text.AlignVCenter
-                text: "SETTINGS"
+                text: LanguageState.text("SETTINGS")
                 color: Theme.panelSideBarTextSecondary
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeSmall
@@ -103,7 +104,7 @@ Item {
             id: searchBar
             Layout.fillWidth: true
             Layout.margins: 8
-            placeholderText: "Search settings..."
+            placeholderText: LanguageState.text("Search settings...")
             onTextChanged: searchDebounceTimer.restart()
         }
 
@@ -177,7 +178,7 @@ Item {
 
                 Text {
                     visible: settingsPanel.filteredItems.length === 0
-                    text: "No matching settings group."
+                    text: LanguageState.text("No matching settings group.")
                     color: Theme.panelSideBarTextSecondary
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeSmall
@@ -201,6 +202,7 @@ Item {
     }
 
     onSelectedKeyChanged: settingSelected(selectedKey)
+    onAllItemsChanged: settingsPanel.applyFilter()
 
     Component.onCompleted: settingsPanel.applyFilter()
 }

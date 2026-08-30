@@ -202,6 +202,7 @@ StatefulWindow {
     function attachPersistentSettingsBackends() {
         ThemeState.backend = typeof themeSettings !== "undefined" ? themeSettings : null
         StatusBarState.backend = typeof statusBarSettings !== "undefined" ? statusBarSettings : null
+        LanguageState.backend = typeof languageSettings !== "undefined" ? languageSettings : null
     }
 
     function clampSidebarWidth(width) {
@@ -282,11 +283,11 @@ StatefulWindow {
     }
 
     function recordNotificationEntry(msg, type, showToast, actionLabel, actionId, actionData, source) {
-        const message = String(msg || "")
+        const message = LanguageState.text(String(msg || ""))
         if (message === "")
             return
         const normalizedType = String(type !== undefined ? type : "info").toLowerCase()
-        const normalizedActionLabel = String(actionLabel || "")
+        const normalizedActionLabel = LanguageState.text(String(actionLabel || ""))
         const normalizedActionId = String(actionId || "")
         const normalizedActionData = String(actionData || "")
         const normalizedSource = String(source || "")
@@ -391,14 +392,14 @@ StatefulWindow {
         root.statusTaskVisible = true
         root.statusTaskBusy = true
         root.statusTaskOk = true
-        root.statusTaskMessage = String(message || "")
+        root.statusTaskMessage = LanguageState.text(String(message || ""))
         root.statusTaskProgress = -1
     }
 
     function handleTaskProgress(source, message) {
         root.statusTaskVisible = true
         root.statusTaskBusy = true
-        root.statusTaskMessage = String(message || "")
+        root.statusTaskMessage = LanguageState.text(String(message || ""))
     }
 
     function handleTaskFinished(source, ok, message) {
@@ -407,7 +408,7 @@ StatefulWindow {
         root.statusTaskVisible = true
         root.statusTaskBusy = false
         root.statusTaskOk = ok
-        root.statusTaskMessage = String(message || "")
+        root.statusTaskMessage = LanguageState.text(String(message || ""))
         root.statusTaskProgress = 1
         taskStatusClearTimer.restart()
     }

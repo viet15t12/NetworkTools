@@ -13,7 +13,7 @@ StandardDialog {
 
     signal unlockRequested(string password)
 
-    title: "Unlock Project"
+    title: LanguageState.text("Unlock Project")
     subtitle: projectPath
     preferredWidth: 520
     implicitHeight: errorMessage === "" ? 330 : 390
@@ -32,8 +32,8 @@ StandardDialog {
             id: passwordField
             objectName: "welcomeUnlockProjectPasswordField"
             Layout.fillWidth: true
-            labelText: "Project password"
-            placeholderText: "Enter the project password"
+            labelText: LanguageState.text("Project password")
+            placeholderText: LanguageState.text("Enter the project password")
             onAccepted: if (unlockButton.enabled) unlockButton.clicked()
         }
 
@@ -47,7 +47,7 @@ StandardDialog {
         InlineMessage {
             Layout.fillWidth: true
             visible: root.errorMessage === ""
-            message: "NetworkTools does not store project passwords."
+            message: LanguageState.text("NetworkTools does not store project passwords.")
             severity: "info"
         }
 
@@ -60,7 +60,7 @@ StandardDialog {
             Item { Layout.fillWidth: true }
 
             StandardButton {
-                text: "Cancel"
+                text: LanguageState.text("Cancel")
                 type: "Text"
                 onClicked: root.reject()
             }
@@ -68,7 +68,7 @@ StandardDialog {
             StandardButton {
                 id: unlockButton
                 objectName: "welcomeUnlockProjectButton"
-                text: "Unlock"
+                text: LanguageState.text("Unlock")
                 type: "Primary"
                 enabled: passwordField.text.length > 0
                 onClicked: {

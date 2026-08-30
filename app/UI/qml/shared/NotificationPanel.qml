@@ -90,8 +90,8 @@ Popup {
                 Text {
                     objectName: "notificationHeaderText"
                     text: root.notificationCount === 0
-                          ? "No New Notifications"
-                          : "Notifications"
+                          ? LanguageState.text("No New Notifications")
+                          : LanguageState.text("Notifications")
                     color: Theme.textPrimary
                     font.pixelSize: Theme.fontSizeNormal
                     font.weight: Font.DemiBold
@@ -106,8 +106,8 @@ Popup {
                                  ? AppAssets.statusNotification
                                  : AppAssets.statusDoNotDisturb
                     tooltip: root.doNotDisturb
-                             ? "Do Not Disturb - ON (click to turn OFF)"
-                             : "Do Not Disturb - OFF (click to turn ON)"
+                             ? LanguageState.text("Do Not Disturb - ON (click to turn OFF)")
+                             : LanguageState.text("Do Not Disturb - OFF (click to turn ON)")
                     Layout.preferredWidth: 28
                     Layout.preferredHeight: 28
                     Layout.alignment: Qt.AlignVCenter
@@ -120,7 +120,7 @@ Popup {
                     text: ""
                     type: "Icon"
                     icon.source: AppAssets.actionClear
-                    tooltip: "Clear All Notifications"
+                    tooltip: LanguageState.text("Clear All Notifications")
                     Layout.preferredWidth: 28
                     Layout.preferredHeight: 28
                     Layout.alignment: Qt.AlignVCenter

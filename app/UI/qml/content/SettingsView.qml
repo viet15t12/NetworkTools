@@ -9,11 +9,18 @@ Rectangle {
     id: settingsView
     color: Theme.contentBackground
 
+    Component.onCompleted: {
+        if (LanguageState.backend === null
+                && typeof languageSettings !== "undefined")
+            LanguageState.backend = languageSettings
+    }
+
     property string activeSettingKey: "theme"
     property date statusBarPreviewDateTime: new Date()
     readonly property var menuBackend:
         typeof menuPresentation !== "undefined" ? menuPresentation : null
     readonly property bool isAppearanceSetting: activeSettingKey === "theme"
+    readonly property bool isLanguageSetting: activeSettingKey === "language"
     readonly property bool isExternalToolsSetting: activeSettingKey === "external_tools"
                                                    || activeSettingKey === "tool_catalog"
     readonly property bool isSyslogSetting: activeSettingKey === "syslog_server"
@@ -1018,8 +1025,107 @@ Rectangle {
 
     Item {
         anchors.fill: parent
+        visible: settingsView.isLanguageSetting
+
+        ScrollView {
+            anchors.fill: parent
+            clip: true
+            contentWidth: availableWidth
+            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+            ScrollBar.vertical.policy: ScrollBar.AsNeeded
+
+            ColumnLayout {
+                width: parent.width
+                spacing: 16
+
+                Item {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 8
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 24
+                    Layout.rightMargin: 24
+                    spacing: 4
+
+                    Text {
+                        text: LanguageState.text("Language")
+                        color: Theme.textPrimary
+                        font.pixelSize: Theme.fontSizeLarge
+                        font.family: Theme.fontFamily
+                        font.weight: Font.Bold
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: LanguageState.text("Choose the language used by NetworkTools.")
+                        color: Theme.textSecondary
+                        font.pixelSize: Theme.fontSizeSmall
+                        font.family: Theme.fontFamily
+                        wrapMode: Text.WordWrap
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 24
+                    Layout.rightMargin: 24
+                    Layout.preferredHeight: languageLayout.implicitHeight + 24
+                    color: Theme.searchBackground2
+                    radius: Theme.borderRadius
+                    border.width: Theme.borderWidth
+                    border.color: Theme.borderColor
+
+                    ColumnLayout {
+                        id: languageLayout
+                        anchors.fill: parent
+                        anchors.margins: 12
+                        spacing: 12
+
+                        StandardComboBox {
+                            id: languageCombo
+                            objectName: "applicationLanguageCombo"
+                            Layout.fillWidth: true
+                            labelText: LanguageState.text("Interface language")
+                            model: ["English", "Tiếng Việt"]
+                            valueModel: ["en", "vi"]
+                            currentIndex: LanguageState.isVietnamese ? 1 : 0
+                            onActivated: function(index) {
+                                LanguageState.setLanguage(index === 1 ? "vi" : "en")
+                            }
+                        }
+
+                        InlineMessage {
+                            Layout.fillWidth: true
+                            message: LanguageState.text("The language choice is saved automatically and notification messages are translated first.")
+                            severity: "info"
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: LanguageState.text("Technical terms such as host, SSH, Telnet, VLAN, OSPF, workspace, database, and CLI remain unchanged.")
+                            color: Theme.textSecondary
+                            font.pixelSize: Theme.fontSizeSmall
+                            font.family: Theme.fontFamily
+                            wrapMode: Text.WordWrap
+                        }
+                    }
+                }
+
+                Item {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 8
+                }
+            }
+        }
+    }
+
+    Item {
+        anchors.fill: parent
         visible: settingsView.activeSettingKey !== ""
                  && !settingsView.isAppearanceSetting
+                 && !settingsView.isLanguageSetting
                  && !settingsView.isExternalToolsSetting
                  && !settingsView.isSyslogSetting
                  && !settingsView.isSftpSetting

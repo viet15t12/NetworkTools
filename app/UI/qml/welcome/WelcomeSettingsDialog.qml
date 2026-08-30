@@ -8,16 +8,16 @@ import UI
 StandardDialog {
     id: root
 
-    title: "Global Settings"
-    subtitle: "Appearance is available before a project is opened"
+    title: LanguageState.text("Global Settings")
+    subtitle: LanguageState.text("Appearance is available before a project is opened")
     preferredWidth: 560
-    implicitHeight: 390
+    implicitHeight: 490
 
     contentItem: ColumnLayout {
         spacing: Theme.spacing16
 
         Text {
-            text: "Color theme"
+            text: LanguageState.text("Color theme")
             color: Theme.textPrimary
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeNormal
@@ -30,9 +30,9 @@ StandardDialog {
 
             Repeater {
                 model: [
-                    { "label": "System", "value": ThemeState.system },
-                    { "label": "Light", "value": ThemeState.light },
-                    { "label": "Dark", "value": ThemeState.dark }
+                    { "label": LanguageState.text("System"), "value": ThemeState.system },
+                    { "label": LanguageState.text("Light"), "value": ThemeState.light },
+                    { "label": LanguageState.text("Dark"), "value": ThemeState.dark }
                 ]
 
                 delegate: StandardButton {
@@ -48,14 +48,26 @@ StandardDialog {
         }
 
         StandardCheckBox {
-            text: "High contrast"
+            text: LanguageState.text("High contrast")
             checked: ThemeState.highContrast
             onToggled: ThemeState.highContrast = checked
         }
 
+        StandardComboBox {
+            objectName: "welcomeLanguageCombo"
+            Layout.fillWidth: true
+            labelText: LanguageState.text("Interface language")
+            model: ["English", "Tiếng Việt"]
+            valueModel: ["en", "vi"]
+            currentIndex: LanguageState.isVietnamese ? 1 : 0
+            onActivated: function(index) {
+                LanguageState.setLanguage(index === 1 ? "vi" : "en")
+            }
+        }
+
         InlineMessage {
             Layout.fillWidth: true
-            message: "Additional global settings remain available from the workspace Settings view."
+            message: LanguageState.text("Additional global settings remain available from the workspace Settings view.")
             severity: "info"
         }
 
@@ -65,7 +77,7 @@ StandardDialog {
             Layout.fillWidth: true
             Item { Layout.fillWidth: true }
             StandardButton {
-                text: "Done"
+                text: LanguageState.text("Done")
                 type: "Primary"
                 onClicked: root.accept()
             }

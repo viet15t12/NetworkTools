@@ -2,6 +2,7 @@ from core.database import DatabaseManager
 from core.app_paths import APP_DIR, FEATURES_DIR, QML_MODULE_DIR, AppPaths
 from core.monitoring import NetworkMonitor
 from core.menu_presentation import MenuPresentationController
+from core.localization import LanguageSettings
 from core.settings import (
     StatusBarSettings,
     SystemAppearance,
@@ -19,6 +20,7 @@ __all__ = [
     "FEATURES_DIR",
     "DB_PATH",
     "ExternalToolsManager",
+    "LanguageSettings",
     "QML_MODULE_DIR",
     "SQL_PATH",
     "AppPaths",

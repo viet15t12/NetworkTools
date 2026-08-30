@@ -142,6 +142,7 @@ from app_facade import (
     AppPaths,
     DatabaseManager,
     ExternalToolsManager,
+    LanguageSettings,
     MenuPresentationController,
     NetworkMonitor,
     QML_MODULE_DIR,
@@ -226,6 +227,7 @@ def main() -> int:
     network_monitor = NetworkMonitor(settings=status_bar_settings)
     theme_settings = ThemeSettings()
     menu_presentation = MenuPresentationController()
+    language_settings = LanguageSettings()
     system_appearance = SystemAppearance()
     window_settings = WindowSettings()
     welcome_controller = WelcomeController()
@@ -329,6 +331,7 @@ def main() -> int:
     context.setContextProperty("networkMonitor", network_monitor)
     context.setContextProperty("statusBarSettings", status_bar_settings)
     context.setContextProperty("themeSettings", theme_settings)
+    context.setContextProperty("languageSettings", language_settings)
     context.setContextProperty("menuPresentation", menu_presentation)
     context.setContextProperty("systemAppearance", system_appearance)
     context.setContextProperty("windowSettings", window_settings)
