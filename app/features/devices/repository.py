@@ -26,6 +26,15 @@ class DeviceRepository:
         connection.execute("PRAGMA busy_timeout = 10000;")
         return connection
 
+    def activate_database(self, db_path: str | Path) -> int:
+        """Bind a runtime database and discard connection state from an older run.
+
+        ``connected`` is process-local state: a freshly opened workspace cannot
+        own a live session yet, even when that value was persisted in its package.
+        """
+        self.db_path = Path(db_path)
+        return self.reset_connected_to_waiting()
+
     def get_login(self, host: str) -> dict[str, Any] | None:
         """Read the credential-bearing row used only by connection services."""
         with closing(self._connect()) as connection:

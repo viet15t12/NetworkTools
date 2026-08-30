@@ -88,3 +88,37 @@ class DeviceClassificationTests(unittest.TestCase):
                     ("waiting", "waiting", 1),
                 ],
             )
+
+    def test_activating_workspace_resets_stale_connected_status(self):
+        with tempfile.TemporaryDirectory() as temp:
+            old_path = Path(temp) / "old-device.db"
+            workspace_path = Path(temp) / "workspace-device.db"
+            schema_dir = (
+                Path(__file__).resolve().parents[2]
+                / "infrastructure/database/schemas/device_network"
+            )
+            for path in (old_path, workspace_path):
+                with closing(sqlite3.connect(path)) as connection:
+                    connection.executescript(combine_sql(schema_dir))
+                    connection.execute(
+                        "INSERT INTO t01_devices(host, connection_status) VALUES (?, ?)",
+                        ("r1", "connected"),
+                    )
+                    connection.commit()
+
+            repository = DeviceRepository(old_path)
+
+            changed = repository.activate_database(workspace_path)
+
+            self.assertEqual(changed, 1)
+            self.assertEqual(repository.db_path, workspace_path)
+            with closing(sqlite3.connect(workspace_path)) as connection:
+                workspace_status = connection.execute(
+                    "SELECT connection_status FROM t01_devices WHERE host = 'r1'"
+                ).fetchone()[0]
+            with closing(sqlite3.connect(old_path)) as connection:
+                old_status = connection.execute(
+                    "SELECT connection_status FROM t01_devices WHERE host = 'r1'"
+                ).fetchone()[0]
+            self.assertEqual(workspace_status, "waiting")
+            self.assertEqual(old_status, "connected")

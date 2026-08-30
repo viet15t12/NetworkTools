@@ -203,6 +203,8 @@ def main() -> int:
     default_backup_root = Path(__file__).resolve().parent / "backup"
     config_backup_service = ConfigBackupService(default_backup_root)
     device_repository = DeviceRepository()
+    # A previous unclean exit may leave process-local connection state behind.
+    device_repository.activate_database(DEVICE_NETWORK_DB)
     config_sync_service = ConfigSyncService(DEVICE_NETWORK_DB, device_repository.get_role)
     device_login_service = DeviceLoginService(device_repository)
     device_service = DeviceService(device_repository)
@@ -262,7 +264,7 @@ def main() -> int:
             ):
                 print("Failed to restore the default application databases.", file=sys.stderr)
                 return
-            device_repository.db_path = DEVICE_NETWORK_DB
+            device_repository.activate_database(DEVICE_NETWORK_DB)
             config_sync_service.db_path = str(DEVICE_NETWORK_DB)
             config_backup_service.repository.backup_root = default_backup_root
             external_tools.device_db_path = DEVICE_NETWORK_DB
@@ -275,7 +277,9 @@ def main() -> int:
         ):
             print("Failed to activate the workspace databases.", file=sys.stderr)
             return
-        device_repository.db_path = session.device_network_db
+        # The package may contain a stale `connected` value from an earlier app
+        # run. No session exists in this process until the user connects again.
+        device_repository.activate_database(session.device_network_db)
         config_sync_service.db_path = str(session.device_network_db)
         config_backup_service.repository.backup_root = session.backup_directory
         external_tools.device_db_path = session.device_network_db
