@@ -35,6 +35,8 @@ StatefulWindow {
     property string workspacePath: ""
     property string pendingRollbackSnapshotId: ""
     property string pendingWelcomeMode: ""
+    property bool pendingQuit: false
+    property bool allowWindowClose: false
     property bool nativePresenterFailed: false
     property var terminalStates: ({})
 
@@ -61,10 +63,32 @@ StatefulWindow {
     }
 
     function transitionToWelcome(mode) {
+        if (root.pendingQuit)
+            return false
         root.pendingWelcomeMode = mode || ""
-        if (root.workspaceBackend !== null && root.workspaceBackend.hasWorkspace)
-            return root.workspaceBackend.requestCloseWorkspace()
+        if (root.workspaceBackend !== null && root.workspaceBackend.hasWorkspace) {
+            const accepted = root.workspaceBackend.requestCloseWorkspace()
+            if (!accepted)
+                root.pendingWelcomeMode = ""
+            return accepted
+        }
         return root.requestWelcome(root.pendingWelcomeMode)
+    }
+
+    function requestQuit() {
+        if (root.pendingQuit)
+            return true
+        if (root.workspaceBackend !== null && root.workspaceBackend.hasWorkspace) {
+            root.pendingQuit = true
+            root.pendingWelcomeMode = ""
+            const accepted = root.workspaceBackend.requestCloseWorkspace()
+            if (!accepted)
+                root.pendingQuit = false
+            return accepted
+        }
+        root.allowWindowClose = true
+        Qt.quit()
+        return true
     }
 
     function prepareForWindowHide() {
@@ -120,9 +144,20 @@ StatefulWindow {
         }
 
         function onWorkspaceCloseCompleted() {
+            if (root.pendingQuit) {
+                root.pendingQuit = false
+                root.allowWindowClose = true
+                Qt.quit()
+                return
+            }
             const mode = root.pendingWelcomeMode
             root.pendingWelcomeMode = ""
             root.requestWelcome(mode)
+        }
+
+        function onSaveFailed(_message) {
+            root.pendingQuit = false
+            root.pendingWelcomeMode = ""
         }
     }
 
@@ -454,6 +489,8 @@ StatefulWindow {
         inputFocusActive: root.textInputHasFocus
         workspaceAvailable: root.workspaceBackend !== null
                             && root.workspaceBackend.hasWorkspace
+        workspaceBusy: root.workspaceBackend !== null
+                       && root.workspaceBackend.busy
         saveAvailable: workspaceAvailable
         snapshotAvailable: workspaceAvailable
         reloadAvailable: root.isSftpMode || contentArea.reloadCommandEnabled
@@ -476,6 +513,7 @@ StatefulWindow {
         closeWorkspaceHandler: function() {
             return root.transitionToWelcome("")
         }
+        quitHandler: function() { return root.requestQuit() }
         reloadHandler: function() {
             if (root.isSftpMode && sftpWorkspaceLoader.item)
                 return sftpWorkspaceLoader.item.refreshActive()
@@ -498,6 +536,14 @@ StatefulWindow {
             aboutWindow.open()
             return true
         }
+    }
+
+    onClosing: close => {
+        root.saveWindowState()
+        if (root.allowWindowClose)
+            return
+        close.accepted = false
+        root.requestQuit()
     }
 
     Shortcut {

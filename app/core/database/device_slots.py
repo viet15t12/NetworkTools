@@ -339,15 +339,90 @@ class DeviceSlotsMixin:
 
     @pyqtSlot(str, result="QVariant")
     def deleteDevice(self, host: str) -> dict[str, Any]:
-        """Delete one inventory device and return a QML-friendly status payload."""
+        """Permanently delete a host and all host-owned workspace data."""
         target_host = (host or "").strip()
         if not target_host:
             return {"ok": False, "severity": "warning", "message": "Delete device failed: host is empty."}
-        return {
-            "ok": False,
-            "severity": "warning",
-            "message": "Host deletion is disabled.",
-        }
+        try:
+            info_path = require_database(self.info_db_path)
+            with self._connect() as conn:
+                conn.execute("ATTACH DATABASE ? AS info_db;", (str(info_path),))
+                conn.execute("BEGIN IMMEDIATE;")
+
+                exists = conn.execute(
+                    "SELECT 1 FROM t01_devices WHERE host = ? LIMIT 1;",
+                    (target_host,),
+                ).fetchone()
+                if exists is None:
+                    conn.rollback()
+                    return {
+                        "ok": False,
+                        "severity": "warning",
+                        "message": f"Device {target_host} was not found.",
+                    }
+
+                info_rows = self._delete_info_rows_for_host(conn, target_host)
+                cursor = conn.execute(
+                    "DELETE FROM t01_devices WHERE host = ?;", (target_host,)
+                )
+                conn.commit()
+
+            backup_deleted = False
+            backup_service = getattr(self, "_config_backup_service", None)
+            if backup_service is not None:
+                backup_deleted = bool(backup_service.delete_host_data(target_host))
+            return {
+                "ok": cursor.rowcount == 1,
+                "severity": "success",
+                "message": (
+                    f"Permanently deleted {target_host} and all related data "
+                    f"({info_rows} collected-data row(s) removed"
+                    + (", configuration backups removed)." if backup_deleted else ").")
+                ),
+                "deletedInfoRows": info_rows,
+                "deletedBackups": backup_deleted,
+            }
+        except (OSError, sqlite3.Error, ValueError, RuntimeError) as exc:
+            print(f"[db] deleteDevice failed: {exc}", file=sys.stderr)
+            return {
+                "ok": False,
+                "severity": "error",
+                "message": f"Could not permanently delete {target_host}: {exc}",
+            }
+
+    @staticmethod
+    def _delete_info_rows_for_host(
+        conn: sqlite3.Connection, host: str
+    ) -> int:
+        """Delete direct host rows; declared foreign keys remove child rows."""
+        rows = conn.execute(
+            """
+            SELECT name FROM info_db.sqlite_master
+            WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+            ORDER BY name;
+            """
+        ).fetchall()
+        deleted = 0
+        for row in rows:
+            table = str(row[0])
+            quoted_table = table.replace('"', '""')
+            columns = {
+                str(column[1])
+                for column in conn.execute(
+                    f'PRAGMA info_db.table_info("{quoted_table}");'
+                )
+            }
+            host_column = "device_host" if "device_host" in columns else (
+                "host" if "host" in columns else ""
+            )
+            if not host_column:
+                continue
+            cursor = conn.execute(
+                f'DELETE FROM info_db."{quoted_table}" WHERE "{host_column}" = ?;',
+                (host,),
+            )
+            deleted += max(0, cursor.rowcount)
+        return deleted
 
     @pyqtSlot(str, str, result=bool)
     def updateDeviceConnectionStatus(self, host: str, status: str) -> bool:

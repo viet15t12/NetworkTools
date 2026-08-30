@@ -36,7 +36,7 @@ Item {
     property string pythonDepsStatusText: "STARTING..."
     property string pythonDepsStatusDetail: "Checking Python runtime and database schemas."
     readonly property bool deviceShortcutEnabled: devicesPanel.visible && !UiState.windowLock && !searchBar.inputActiveFocus
-    readonly property bool hostDeletionEnabled: false
+    readonly property bool hostDeletionEnabled: true
     readonly property bool allDeviceGroupsCollapsed: !connectedSection.expanded
                                                     && !waitingSection.expanded
                                                     && !disconnectedSection.expanded
@@ -105,13 +105,11 @@ Item {
     }
 
     function handleDeleteDevice(ip) {
-        if (!hostDeletionEnabled) {
-            showDeviceShortcutMessage("Host deletion is disabled.", "warning")
-            return
-        }
-        deleteConfirmLoader.active = true
-        deleteConfirmLoader.item.targetIp = ip
-        deleteConfirmLoader.item.openAlert()
+        if (!hostDeletionEnabled || String(ip || "") === "") return
+        deleteConfirmationDialog.targetIp = String(ip)
+        deleteAcknowledgement.checked = false
+        deleteConfirmationField.text = ""
+        deleteConfirmationDialog.open()
     }
 
     function devicesForSection(section) {
@@ -516,12 +514,6 @@ Item {
             devicesPanel.handleConnectDevice(dev.ip)
     }
 
-    function handleShortcutDelete() {
-        const dev = requireShortcutDevice("Delete")
-        if (dev)
-            devicesPanel.handleDeleteDevice(dev.ip)
-    }
-
     function activateDevice(host) {
         const dev = deviceByHost(host)
         if (!dev) return
@@ -886,37 +878,98 @@ Item {
     Shortcut { sequence: "Ctrl+Alt+Up"; enabled: devicesPanel.deviceShortcutEnabled; onActivated: devicesPanel.handleShortcutUpDev() }
     Shortcut { sequence: "Ctrl+Alt+C"; enabled: devicesPanel.deviceShortcutEnabled; onActivated: devicesPanel.handleShortcutConnect() }
     Shortcut { sequence: "Ctrl+Alt+R"; enabled: devicesPanel.deviceShortcutEnabled; onActivated: devicesPanel.handleShortcutReconnect() }
-    Shortcut { sequence: "Del"; enabled: devicesPanel.deviceShortcutEnabled && devicesPanel.hostDeletionEnabled; onActivated: devicesPanel.handleShortcutDelete() }
     Shortcut { sequence: "Ctrl+Shift+C"; enabled: devicesPanel.deviceShortcutEnabled; onActivated: devicesPanel.handleBatchOperation("connect", devicesPanel.selectedHostList) }
     Shortcut { sequence: "Ctrl+Shift+R"; enabled: devicesPanel.deviceShortcutEnabled; onActivated: devicesPanel.handleBatchOperation("running-config", devicesPanel.selectedHostList) }
     Shortcut { sequence: "Ctrl+Shift+D"; enabled: devicesPanel.deviceShortcutEnabled; onActivated: devicesPanel.handleBatchOperation("disconnect", devicesPanel.selectedHostList) }
     Shortcut { sequence: StandardKey.SelectAll; enabled: devicesPanel.deviceShortcutEnabled && devicesPanel.multiSelectMode; onActivated: devicesPanel.selectAllVisibleHosts() }
     Shortcut { sequence: "Escape"; enabled: devicesPanel.deviceShortcutEnabled; onActivated: devicesPanel.clearSelection() }
 
-    Loader {
-        id: deleteConfirmLoader
-        active: false
-        sourceComponent: Component {
-            CustomAlert {
-                property string targetIp: ""
-                titleText: "Confirm Delete"
-                messageText: "Are you sure you want to delete\n" + targetIp + "?"
-                isError: true
+    StandardDialog {
+        id: deleteConfirmationDialog
+        objectName: "devicePermanentDeleteDialog"
+        preferredWidth: 520
+        title: "Permanently delete host?"
+        closeTooltip: "Cancel host deletion"
+        property string targetIp: ""
+        readonly property string confirmationPhrase: "DELETE " + targetIp
+        readonly property bool confirmed: deleteAcknowledgement.checked
+                                                  && deleteConfirmationField.text
+                                                     === confirmationPhrase
 
-                onAccepted: {
-                    if (targetIp !== "") {
+        contentItem: ColumnLayout {
+            spacing: Theme.spacing12
+
+            InlineMessage {
+                Layout.fillWidth: true
+                severity: "error"
+                message: "This permanently deletes " + deleteConfirmationDialog.targetIp
+                         + ", its configuration, collected data, Syslog data, and backup history. This cannot be undone."
+            }
+
+            StandardCheckBox {
+                id: deleteAcknowledgement
+                objectName: "deviceDeleteAcknowledgement"
+                Layout.fillWidth: true
+                text: "I understand that all data related to this host will be permanently deleted."
+            }
+
+            Text {
+                Layout.fillWidth: true
+                text: "Type “" + deleteConfirmationDialog.confirmationPhrase + "” to confirm:"
+                color: Theme.textSecondary
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeSmall
+                wrapMode: Text.WordWrap
+            }
+
+            StandardTextField {
+                id: deleteConfirmationField
+                objectName: "deviceDeleteConfirmationField"
+                Layout.fillWidth: true
+                placeholderText: deleteConfirmationDialog.confirmationPhrase
+            }
+        }
+
+        footer: Rectangle {
+            implicitHeight: 58
+            color: "transparent"
+            RowLayout {
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.spacing16
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Theme.spacing8
+
+                StandardButton {
+                    text: "Cancel"
+                    type: "Text"
+                    onClicked: deleteConfirmationDialog.close()
+                }
+                StandardButton {
+                    objectName: "devicePermanentDeleteButton"
+                    text: "Permanently Delete"
+                    type: "Danger"
+                    enabled: deleteConfirmationDialog.confirmed
+                    onClicked: {
+                        const targetIp = deleteConfirmationDialog.targetIp
+                        deleteConfirmationDialog.close()
                         if (typeof cli !== "undefined" && cli.closeDeviceSession)
                             cli.closeDeviceSession(targetIp)
                         const result = dbManager.deleteDevice(targetIp)
-                        notifyOperationResult(result, "Delete finished for " + targetIp + ".")
+                        devicesPanel.notifyOperationResult(
+                            result, "Delete finished for " + targetIp + ".")
                         if (result && result.ok) {
                             devicesPanel.reloadDevices()
                             devicesPanel.deviceDeleted(targetIp)
                         }
-                        targetIp = ""
+                        deleteConfirmationDialog.targetIp = ""
                     }
                 }
             }
+        }
+
+        onClosed: {
+            deleteAcknowledgement.checked = false
+            deleteConfirmationField.text = ""
         }
     }
     StandardDialog {

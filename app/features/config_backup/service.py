@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import shutil
 from datetime import datetime
 from pathlib import Path
 
-from .paths import legacy_backup_paths, validate_host
+from .paths import host_directory_name, legacy_backup_paths, validate_host
 from .repository import ConfigBackupRepository
 
 
@@ -52,6 +53,23 @@ class ConfigBackupService:
         normalized_host = validate_host(host)
         self.migrate_legacy_backup(normalized_host)
         return self.repository.commit_snapshot(normalized_host, content)
+
+    def delete_host_data(self, host: str) -> bool:
+        """Permanently remove every configuration backup owned by one host."""
+        normalized_host = validate_host(host)
+        backup_root = self.repository.backup_root.resolve()
+        host_directory = (
+            backup_root / host_directory_name(normalized_host)
+        ).resolve()
+        if backup_root not in host_directory.parents:
+            raise ValueError("Resolved backup path is outside the backup root.")
+        with self.repository.locked(normalized_host):
+            if not host_directory.exists():
+                return False
+            if host_directory.is_symlink() or not host_directory.is_dir():
+                raise RuntimeError("Host backup path is not a safe directory.")
+            shutil.rmtree(host_directory)
+        return True
 
     def list_history(self, host: str, limit: int = 100) -> dict[str, object]:
         """Return newest-first commit history for QML with structured failures."""

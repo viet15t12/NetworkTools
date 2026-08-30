@@ -37,7 +37,6 @@ StandardDialog {
         ListElement { sectionName: "Devices"; shortcutText: "Ctrl+N"; description: "Add a device" }
         ListElement { sectionName: "Devices"; shortcutText: "Ctrl+Alt+N"; description: "Add multiple devices" }
         ListElement { sectionName: "Devices"; shortcutText: "F2"; description: "Edit the selected device" }
-        ListElement { sectionName: "Devices"; shortcutText: "Del"; description: "Delete the selected device" }
         ListElement { sectionName: "Devices"; shortcutText: "Ctrl+Alt+P"; description: "Ping the selected device" }
         ListElement { sectionName: "Devices"; shortcutText: "Ctrl+Alt+C"; description: "Connect to the selected device" }
         ListElement { sectionName: "Devices"; shortcutText: "Ctrl+Alt+R"; description: "Reconnect the selected device" }

@@ -402,8 +402,8 @@ Rectangle {
         ContextMenuItem {
             visible: !contextMenu.selectionMode
             enabled: contextMenu.allowHostDeletion
-            text: "Delete"
-            shortcutText: contextMenu.allowHostDeletion ? "Del" : "Disabled"
+            text: "Delete Host…"
+            shortcutText: "Right-click only"
             iconSource: AppAssets.actionDelete
             danger: true
             onTriggered: {

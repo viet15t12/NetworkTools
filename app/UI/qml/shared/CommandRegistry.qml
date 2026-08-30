@@ -17,6 +17,7 @@ Item {
     property bool workspaceCommandsVisible: true
     property bool navigationCommandsVisible: true
     property bool workspaceAvailable: false
+    property bool workspaceBusy: false
     property bool saveAvailable: false
     property bool snapshotAvailable: saveAvailable
     property bool reloadAvailable: false
@@ -140,7 +141,7 @@ Item {
         commandId: "workspace.close"
         text: qsTr("Close Workspace")
         iconSource: AppAssets.actionClose
-        enabled: root.commandsEnabled && root.workspaceAvailable
+        enabled: root.commandsEnabled && root.workspaceAvailable && !root.workspaceBusy
         visible: root.workspaceCommandsVisible
         handler: root.closeWorkspaceHandler
     }
