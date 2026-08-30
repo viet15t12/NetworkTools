@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .environment import configure_qt_environment
-from .shots import VLAN_WORKFLOW_FILENAMES, ShotSpec
+from .shots import DIALOG_REGRESSION_FILENAMES, VLAN_WORKFLOW_FILENAMES, ShotSpec
 
 configure_qt_environment()
 
@@ -34,7 +34,7 @@ from PyQt6.QtCore import (
     pyqtSlot,
 )
 from PyQt6.QtGui import QColor, QImage, QImageReader, QPainter
-from PyQt6.QtQml import QJSValue, QQmlApplicationEngine
+from PyQt6.QtQml import QJSValue, QQmlApplicationEngine, QQmlProperty
 from PyQt6.QtQuick import QQuickItem, QQuickWindow
 from PyQt6.QtTest import QTest
 from PyQt6.QtWidgets import QApplication
@@ -403,7 +403,22 @@ class DocumentationWorkspaceController(QObject):
 
     @pyqtProperty("QVariantList", constant=True)
     def snapshots(self) -> list[object]:
-        return []
+        return [
+            {
+                "id": "doc-snapshot-2",
+                "label": "Before chapter 3",
+                "createdAt": "30/08/2026 10:15",
+                "reason": "manual",
+                "pinned": True,
+            },
+            {
+                "id": "doc-snapshot-1",
+                "label": "Automatic save",
+                "createdAt": "30/08/2026 09:45",
+                "reason": "automatic",
+                "pinned": False,
+            },
+        ]
 
     @pyqtSlot(result=bool)
     def requestManualSave(self) -> bool:
@@ -644,8 +659,12 @@ def capture_item(item: QQuickItem, pixel_size: QSize, timeout_ms: int = 10_000) 
     return image
 
 
-def capture_window(window: QQuickWindow, scale: float, timeout_ms: int = 10_000) -> QImage:
-    """Capture a full QML window, supersampling through the scene graph when needed."""
+def _capture_window_framebuffer(
+    window: QQuickWindow,
+    scale: float,
+    timeout_ms: int,
+) -> QImage:
+    """Capture the raw window before Popup layer reconstruction."""
 
     logical_size = window.size()
     pixel_size = QSize(
@@ -657,6 +676,108 @@ def capture_window(window: QQuickWindow, scale: float, timeout_ms: int = 10_000)
         if not image.isNull() and image.size() == pixel_size:
             return image
     return capture_item(window.contentItem(), pixel_size, timeout_ms)
+
+
+def _visible_popup_items(window: QQuickWindow) -> list[QQuickItem]:
+    """Return visible Popup visual roots in Qt Quick stacking order."""
+
+    overlays = [
+        item
+        for item in window.contentItem().childItems()
+        if item.metaObject().className() == "QQuickOverlay"
+    ]
+    if not overlays:
+        return []
+    indexed = [
+        (index, item)
+        for index, item in enumerate(overlays[-1].childItems())
+        if item.metaObject().className() == "QQuickPopupItem"
+        and _is_visible_item(item)
+        and item.width() > 0
+        and item.height() > 0
+    ]
+    indexed.sort(key=lambda pair: (pair[1].z(), pair[0]))
+    return [item for _index, item in indexed]
+
+
+def _suspend_popup_background_layers(
+    window: QQuickWindow,
+) -> list[tuple[QQmlProperty, bool]]:
+    """Expose real Popup backgrounds to Qt's software framebuffer grab.
+
+    The offscreen software backend omits a QQuickItem from an ancestor/window
+    grab when that item is redirected through ``layer.effect: MultiEffect``.
+    The production UI uses that effect only for the dialog shadow.  Disabling
+    the redirection for the duration of the grab keeps the actual background,
+    header, content, footer, and Overlay in one normal scene-graph render.
+    """
+
+    suspended: list[tuple[QQmlProperty, bool]] = []
+    for popup_item in _visible_popup_items(window):
+        background = popup_item.property("background")
+        if not isinstance(background, QQuickItem):
+            continue
+        layer_enabled = QQmlProperty(background, "layer.enabled")
+        if (
+            layer_enabled.isValid()
+            and layer_enabled.isWritable()
+            and bool(layer_enabled.read())
+            and layer_enabled.write(False)
+        ):
+            suspended.append((layer_enabled, True))
+    return suspended
+
+
+def _restore_popup_background_layers(
+    window: QQuickWindow,
+    suspended: list[tuple[QQmlProperty, bool]],
+) -> None:
+    for layer_enabled, original_value in suspended:
+        layer_enabled.write(original_value)
+    if suspended:
+        window.requestUpdate()
+
+
+def capture_window(window: QQuickWindow, scale: float, timeout_ms: int = 10_000) -> QImage:
+    """Capture the full composed QML window at the requested render scale."""
+
+    suspended = _suspend_popup_background_layers(window)
+    try:
+        if suspended:
+            window.requestUpdate()
+            _application().processEvents(QEventLoop.ProcessEventsFlag.AllEvents, 25)
+        return _capture_window_framebuffer(window, scale, timeout_ms)
+    finally:
+        _restore_popup_background_layers(window, suspended)
+
+
+def capture_popup(
+    window: QQuickWindow,
+    popup_item: QQuickItem,
+    scale: float,
+    timeout_ms: int = 10_000,
+    margin: int | None = None,
+) -> QImage:
+    """Capture one actual Popup in its window, optionally cropped with a margin."""
+
+    if popup_item not in _visible_popup_items(window):
+        raise DocshotError("Popup must be visible on the window Overlay before capture.")
+    image = capture_window(window, scale, timeout_ms)
+    x_scale = image.width() / window.width()
+    y_scale = image.height() / window.height()
+    if margin is None:
+        return image
+    origin = popup_item.mapToItem(window.contentItem(), QPointF(0, 0))
+    logical_left = max(0.0, origin.x() - margin)
+    logical_top = max(0.0, origin.y() - margin)
+    logical_right = min(window.width(), origin.x() + popup_item.width() + margin)
+    logical_bottom = min(window.height(), origin.y() + popup_item.height() + margin)
+    return image.copy(
+        round(logical_left * x_scale),
+        round(logical_top * y_scale),
+        round((logical_right - logical_left) * x_scale),
+        round((logical_bottom - logical_top) * y_scale),
+    )
 
 
 def _digest(image: QImage) -> bytes:
@@ -683,7 +804,7 @@ def _wait_for_stable_scene(
     previous: bytes | None = None
     while time.monotonic() < deadline:
         window.requestUpdate()
-        image = capture_item(window.contentItem(), window.size(), timeout_ms)
+        image = capture_window(window, 1.0, timeout_ms)
         current = _digest(image)
         if current == previous:
             return
@@ -736,6 +857,171 @@ def _prepare_window(
         activate(shot.selected_host)
 
     _wait_for_stable_scene(app, engine, window, request.timeout_ms)
+
+
+def _load_prepared_window(
+    fixture: FixtureBundle,
+    qml_type: str,
+    shot: ShotSpec,
+    request: RenderRequest,
+) -> tuple[QQmlApplicationEngine, QQuickWindow]:
+    engine = QQmlApplicationEngine()
+    engine.addImportPath(str(QML_MODULE_DIR.parent))
+    warnings: list[str] = []
+    engine.warnings.connect(
+        lambda messages: warnings.extend(message.toString() for message in messages)
+    )
+    context = engine.rootContext()
+    for name, value in fixture.context_properties().items():
+        context.setContextProperty(name, value)
+    engine.loadFromModule("UI", qml_type)
+    roots = engine.rootObjects()
+    if not roots or not isinstance(roots[-1], QQuickWindow):
+        detail = f" QML warnings: {' | '.join(warnings)}" if warnings else ""
+        engine.deleteLater()
+        raise DocshotError(f"Could not load UI/{qml_type}.{detail}")
+    window = roots[-1]
+    _prepare_window(_application(), engine, window, shot, request)
+    return engine, window
+
+
+def _dispose_qml_window(
+    app: QApplication,
+    engine: QQmlApplicationEngine | None,
+    window: QQuickWindow | None,
+) -> None:
+    if window is not None:
+        window.close()
+        window.deleteLater()
+    if engine is not None:
+        engine.clearComponentCache()
+        engine.deleteLater()
+    app.processEvents(QEventLoop.ProcessEventsFlag.AllEvents, 50)
+    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+    app.processEvents(QEventLoop.ProcessEventsFlag.AllEvents, 50)
+
+
+def _find_dialog(window: QQuickWindow, title: str) -> QObject:
+    candidates = [
+        candidate
+        for candidate in window.findChildren(QObject)
+        if str(candidate.property("title") or "") == title
+        and callable(getattr(candidate, "open", None))
+        and candidate.metaObject().className() != "QQuickPopupItem"
+    ]
+    if len(candidates) != 1:
+        classes = ", ".join(item.metaObject().className() for item in candidates)
+        raise DocshotError(
+            f"Expected one production dialog titled {title!r}, found "
+            f"{len(candidates)} ({classes or 'none'})."
+        )
+    return candidates[0]
+
+
+def _popup_item_for(dialog: QObject) -> QQuickItem:
+    content = dialog.property("contentItem")
+    if not isinstance(content, QQuickItem):
+        raise DocshotError("The opened dialog does not expose a QQuickItem contentItem.")
+    candidate: QQuickItem | None = content
+    while candidate is not None:
+        if candidate.metaObject().className() == "QQuickPopupItem":
+            return candidate
+        candidate = candidate.parentItem()
+    raise DocshotError("The dialog content is not composed inside a QQuickPopupItem.")
+
+
+def _item_fits_popup(item: QQuickItem, popup_item: QQuickItem) -> bool:
+    origin = item.mapToItem(popup_item, QPointF(0, 0))
+    tolerance = 1.0
+    return (
+        origin.x() >= -tolerance
+        and origin.y() >= -tolerance
+        and origin.x() + item.width() <= popup_item.width() + tolerance
+        and origin.y() + item.height() <= popup_item.height() + tolerance
+    )
+
+
+def _validate_dialog_structure(
+    dialog: QObject,
+    window: QQuickWindow,
+    expected_title: str,
+) -> QQuickItem:
+    if str(dialog.property("title") or "") != expected_title:
+        raise DocshotError(
+            f"Dialog title is {dialog.property('title')!r}, expected {expected_title!r}."
+        )
+    if not bool(dialog.property("opened")) or not bool(dialog.property("visible")):
+        raise DocshotError(f"Dialog {expected_title!r} is not opened and visible.")
+    popup_item = _popup_item_for(dialog)
+    overlay = popup_item.parentItem()
+    if overlay is None or overlay.metaObject().className() != "QQuickOverlay":
+        raise DocshotError(f"Dialog {expected_title!r} is not on the window Overlay.")
+    if popup_item.width() <= 0 or popup_item.height() <= 0:
+        raise DocshotError(f"Dialog {expected_title!r} has empty geometry.")
+    origin = popup_item.mapToItem(window.contentItem(), QPointF(0, 0))
+    if (
+        origin.x() < 24
+        or origin.y() < 24
+        or origin.x() + popup_item.width() > window.width() - 24
+        or origin.y() + popup_item.height() > window.height() - 24
+    ):
+        raise DocshotError(
+            f"Dialog {expected_title!r} does not fit the host with a 24 px margin."
+        )
+
+    background = popup_item.property("background")
+    if not isinstance(background, QQuickItem) or not _is_visible_item(background):
+        raise DocshotError(f"Dialog {expected_title!r} has no rendered background item.")
+    if (
+        background.width() < popup_item.width() - 2
+        or background.height() < popup_item.height() - 2
+    ):
+        raise DocshotError(
+            f"Dialog {expected_title!r} background does not cover the Popup surface."
+        )
+
+    for role in ("header", "contentItem", "footer"):
+        item = dialog.property(role)
+        if isinstance(item, QQuickItem) and item.isVisible() and not _item_fits_popup(
+            item, popup_item
+        ):
+            raise DocshotError(
+                f"Dialog {expected_title!r} {role} lies outside the Popup bounds."
+            )
+
+    overlay_children = overlay.childItems()
+    popup_index = overlay_children.index(popup_item)
+    later_full_window_items = [
+        item
+        for item in overlay_children[popup_index + 1 :]
+        if _is_visible_item(item)
+        and item.width() >= window.width() * 0.9
+        and item.height() >= window.height() * 0.9
+    ]
+    if later_full_window_items:
+        raise DocshotError(
+            f"A full-window Overlay item is stacked above dialog {expected_title!r}."
+        )
+    return popup_item
+
+
+def _open_and_settle_dialog(
+    app: QApplication,
+    engine: QQmlApplicationEngine,
+    window: QQuickWindow,
+    dialog: QObject,
+    expected_title: str,
+    request: RenderRequest,
+) -> QQuickItem:
+    dialog.open()
+    _wait_until(
+        app,
+        lambda: bool(dialog.property("opened")) and bool(dialog.property("visible")),
+        request.timeout_ms,
+        f"opened {expected_title} dialog",
+    )
+    _wait_for_stable_scene(app, engine, window, request.timeout_ms)
+    return _validate_dialog_structure(dialog, window, expected_title)
 
 
 def _save_png_atomic(image: QImage, destination: Path) -> None:
@@ -1225,6 +1511,178 @@ def render_vlan_workflow(request: RenderRequest) -> tuple[RenderResult, ...]:
             app.processEvents(QEventLoop.ProcessEventsFlag.AllEvents, 50)
 
 
+def _save_full_window_capture(
+    window: QQuickWindow,
+    request: RenderRequest,
+    destination: Path,
+    popup_item: QQuickItem | None = None,
+    popup_margin: int | None = None,
+) -> RenderResult:
+    image = (
+        capture_popup(
+            window,
+            popup_item,
+            request.scale,
+            request.timeout_ms,
+            popup_margin,
+        )
+        if popup_item is not None
+        else capture_window(window, request.scale, request.timeout_ms)
+    )
+    if image.isNull() or (
+        popup_margin is None and image.size() != request.pixel_size
+    ):
+        raise DocshotError(
+            f"Capture {destination.name} is {image.width()}x{image.height()}, expected "
+            f"{request.pixel_size.width()}x{request.pixel_size.height()}."
+        )
+    if image.hasAlphaChannel():
+        flattened = QImage(image.size(), QImage.Format.Format_RGB32)
+        flattened.fill(QColor("#ffffff" if request.theme == "light" else "#202020"))
+        painter = QPainter(flattened)
+        painter.drawImage(0, 0, image)
+        painter.end()
+        image = flattened
+    _save_png_atomic(image, destination)
+    _validate_saved_png(destination, image.size())
+    return RenderResult(destination, image.width(), image.height())
+
+
+def render_dialog_regressions(request: RenderRequest) -> tuple[RenderResult, ...]:
+    """Render representative production StandardDialog consumers safely."""
+
+    if request.width <= 0 or request.height <= 0 or request.scale <= 0:
+        raise DocshotError("Width, height, and scale must be greater than zero.")
+    if request.width < 928 or request.height < 728:
+        raise DocshotError(
+            "Dialog regression shots require at least a 928x728 logical host."
+        )
+
+    request.output_dir.mkdir(parents=True, exist_ok=True)
+    app = _application()
+    results_by_name: dict[str, RenderResult] = {}
+
+    with tempfile.TemporaryDirectory(
+        prefix=".dialog-docshots-", dir=request.output_dir.parent
+    ) as staging_name:
+        staging = Path(staging_name)
+        vlan_request = RenderRequest(
+            request.width,
+            request.height,
+            request.scale,
+            request.theme,
+            staging / "vlan-workflow",
+            request.timeout_ms,
+        )
+        vlan_results = render_vlan_workflow(vlan_request)
+        view_push_image = QImage(str(vlan_results[-1].path))
+        if view_push_image.isNull():
+            raise DocshotError("Could not read the rendered View & Push regression shot.")
+        view_push_path = staging / DIALOG_REGRESSION_FILENAMES[0]
+        _save_png_atomic(view_push_image, view_push_path)
+        _validate_saved_png(view_push_path, request.pixel_size)
+
+        with FixtureBundle(request) as fixture:
+            engine: QQmlApplicationEngine | None = None
+            window: QQuickWindow | None = None
+            try:
+                engine, window = _load_prepared_window(
+                    fixture,
+                    "Welcome",
+                    ShotSpec("dialog-create-project", "Welcome"),
+                    request,
+                )
+                create_dialog = _find_dialog(window, "Create New Project")
+                create_popup_item = _open_and_settle_dialog(
+                    app,
+                    engine,
+                    window,
+                    create_dialog,
+                    "Create New Project",
+                    request,
+                )
+                normal_height = float(create_dialog.property("height") or 0)
+                if normal_height <= 0:
+                    raise DocshotError("Create Project normal height was not resolved.")
+                normal_path = staging / DIALOG_REGRESSION_FILENAMES[2]
+                _save_full_window_capture(
+                    window, request, normal_path, create_popup_item, 24
+                )
+
+                protect_check = _find_visible_named_item(
+                    window, "welcomeProtectProjectCheck"
+                )
+                _click_item(window, protect_check)
+                _wait_until(
+                    app,
+                    lambda: bool(protect_check.property("checked"))
+                    and float(create_dialog.property("height") or 0)
+                    > normal_height + 100,
+                    request.timeout_ms,
+                    "Create Project password fields and expanded height",
+                )
+                _wait_for_stable_scene(app, engine, window, request.timeout_ms)
+                _validate_dialog_structure(
+                    create_dialog, window, "Create New Project"
+                )
+                password_path = staging / DIALOG_REGRESSION_FILENAMES[3]
+                _save_full_window_capture(
+                    window, request, password_path, create_popup_item, 24
+                )
+            finally:
+                _dispose_qml_window(app, engine, window)
+
+            engine = None
+            window = None
+            try:
+                engine, window = _load_prepared_window(
+                    fixture,
+                    "Main",
+                    ShotSpec(
+                        "dialog-snapshot-history",
+                        "Main",
+                        workspace_name="Campus Network Lab",
+                    ),
+                    request,
+                )
+                snapshot_dialog = _find_dialog(window, "Snapshot History")
+                snapshot_popup_item = _open_and_settle_dialog(
+                    app,
+                    engine,
+                    window,
+                    snapshot_dialog,
+                    "Snapshot History",
+                    request,
+                )
+                snapshots = _to_python(snapshot_dialog.property("snapshots")) or []
+                if len(snapshots) < 2:
+                    raise DocshotError(
+                        "Snapshot History did not receive the documentation fixture model."
+                    )
+                snapshot_path = staging / DIALOG_REGRESSION_FILENAMES[1]
+                _save_full_window_capture(
+                    window, request, snapshot_path, snapshot_popup_item, 24
+                )
+            finally:
+                _dispose_qml_window(app, engine, window)
+
+        for filename in DIALOG_REGRESSION_FILENAMES:
+            staged_path = staging / filename
+            staged_image = QImage(str(staged_path))
+            if staged_image.isNull():
+                raise DocshotError(f"Could not read staged dialog shot {filename}.")
+            destination = request.output_dir / filename
+            staged_path.replace(destination)
+            _validate_saved_png(destination, staged_image.size())
+            results_by_name[filename] = RenderResult(
+                destination,
+                staged_image.width(),
+                staged_image.height(),
+            )
+
+    return tuple(results_by_name[name] for name in DIALOG_REGRESSION_FILENAMES)
+
+
 def render_shot(shot: ShotSpec, request: RenderRequest) -> RenderResult:
     if request.width <= 0 or request.height <= 0 or request.scale <= 0:
         raise DocshotError("Width, height, and scale must be greater than zero.")
@@ -1284,7 +1742,9 @@ __all__ = [
     "VLAN_FIXTURE_ROWS",
     "VLAN_WORKFLOW_FILENAMES",
     "capture_item",
+    "capture_popup",
     "capture_window",
     "render_shot",
+    "render_dialog_regressions",
     "render_vlan_workflow",
 ]

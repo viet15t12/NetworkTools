@@ -24,7 +24,12 @@ from docshots.runtime import (
     VLAN_FIXTURE_HOST,
     VLAN_FIXTURE_ROWS,
 )
-from docshots.shots import SHOT_REGISTRY, VLAN_WORKFLOW_FILENAMES, resolve_shots
+from docshots.shots import (
+    DIALOG_REGRESSION_FILENAMES,
+    SHOT_REGISTRY,
+    VLAN_WORKFLOW_FILENAMES,
+    resolve_shots,
+)
 
 
 APP_DIR = Path(__file__).resolve().parents[1]
@@ -45,6 +50,7 @@ class DocshotCliTests(unittest.TestCase):
         self.assertEqual((custom.width, custom.height, custom.scale), (1200, 750, 1.5))
         self.assertEqual(custom.theme, "dark")
         self.assertEqual(build_parser().parse_args(["vlan"]).shot, "vlan")
+        self.assertEqual(build_parser().parse_args(["dialogs"]).shot, "dialogs")
 
     def test_output_directory_is_created(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -197,6 +203,60 @@ class DocshotHeadlessTests(unittest.TestCase):
                 reader = QImageReader(str(path), b"PNG")
                 self.assertTrue(reader.canRead(), reader.errorString())
                 self.assertEqual((reader.size().width(), reader.size().height()), (1600, 1000))
+                self.assertFalse(reader.read().isNull(), reader.errorString())
+        self.assertEqual(
+            set(Path(tempfile.gettempdir()).glob(fixture_pattern)),
+            fixtures_before,
+        )
+
+    def test_dialog_regressions_render_composed_popups_at_scale_two(self) -> None:
+        fixture_pattern = "networktools-docshots-*"
+        fixtures_before = set(Path(tempfile.gettempdir()).glob(fixture_pattern))
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "dialogs"
+            command = [
+                sys.executable,
+                str(APP_DIR / "scripts" / "docshots.py"),
+                "dialogs",
+                "--width",
+                "1600",
+                "--height",
+                "1000",
+                "--scale",
+                "2",
+                "--output-dir",
+                str(output),
+            ]
+            completed = subprocess.run(
+                command,
+                cwd=APP_DIR,
+                text=True,
+                capture_output=True,
+                timeout=240,
+                check=False,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertIn(
+                "Created dialog regression screenshots:", completed.stdout
+            )
+            self.assertEqual(
+                tuple(path.name for path in sorted(output.glob("*.png"))),
+                tuple(sorted(DIALOG_REGRESSION_FILENAMES)),
+            )
+            expected_sizes = {
+                "view-push-dialog.png": (3200, 2000),
+                "snapshot-history-dialog.png": (1536, 1276),
+                "create-project-dialog.png": (1296, 1066),
+                "create-project-password-dialog.png": (1296, 1346),
+            }
+            for filename in DIALOG_REGRESSION_FILENAMES:
+                path = output / filename
+                reader = QImageReader(str(path), b"PNG")
+                self.assertTrue(reader.canRead(), reader.errorString())
+                self.assertEqual(
+                    (reader.size().width(), reader.size().height()),
+                    expected_sizes[filename],
+                )
                 self.assertFalse(reader.read().isNull(), reader.errorString())
         self.assertEqual(
             set(Path(tempfile.gettempdir()).glob(fixture_pattern)),

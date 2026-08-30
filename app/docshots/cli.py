@@ -8,7 +8,12 @@ from pathlib import Path
 from typing import Sequence
 
 from .environment import configure_qt_environment
-from .shots import SHOT_REGISTRY, VLAN_WORKFLOW_FILENAMES, resolve_shots
+from .shots import (
+    DIALOG_REGRESSION_FILENAMES,
+    SHOT_REGISTRY,
+    VLAN_WORKFLOW_FILENAMES,
+    resolve_shots,
+)
 
 
 APP_DIR = Path(__file__).resolve().parents[1]
@@ -36,8 +41,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "shot",
-        choices=(*SHOT_REGISTRY.keys(), "vlan", "all"),
-        help="registered screenshot name, the 'vlan' workflow, or 'all'",
+        choices=(*SHOT_REGISTRY.keys(), "vlan", "dialogs", "all"),
+        help="registered screenshot name, a workflow ('vlan' or 'dialogs'), or 'all'",
     )
     parser.add_argument("--width", type=_positive_int, default=1600)
     parser.add_argument("--height", type=_positive_int, default=1000)
@@ -63,7 +68,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     configure_qt_environment()
 
     # Qt and main.py must only be imported after the headless/DPI variables exist.
-    from .runtime import DocshotError, RenderRequest, render_shot, render_vlan_workflow
+    from .runtime import (
+        DocshotError,
+        RenderRequest,
+        render_dialog_regressions,
+        render_shot,
+        render_vlan_workflow,
+    )
 
     output_dir = ensure_output_directory(args.output_dir)
     request = RenderRequest(
@@ -86,6 +97,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             results = render_vlan_workflow(workflow_request)
             print("Created VLAN documentation screenshots:")
             for filename, result in zip(VLAN_WORKFLOW_FILENAMES, results, strict=True):
+                print(f"{filename}: {result.path} ({result.width}x{result.height})")
+            return 0
+        if args.shot == "dialogs":
+            results = render_dialog_regressions(request)
+            print("Created dialog regression screenshots:")
+            for filename, result in zip(
+                DIALOG_REGRESSION_FILENAMES, results, strict=True
+            ):
                 print(f"{filename}: {result.path} ({result.width}x{result.height})")
             return 0
         for shot in resolve_shots(args.shot):

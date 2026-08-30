@@ -44,6 +44,13 @@ VLAN_WORKFLOW_FILENAMES = (
     "09-view-preview.png",
 )
 
+DIALOG_REGRESSION_FILENAMES = (
+    "view-push-dialog.png",
+    "snapshot-history-dialog.png",
+    "create-project-dialog.png",
+    "create-project-password-dialog.png",
+)
+
 
 def resolve_shots(name: str) -> tuple[ShotSpec, ...]:
     if name == "all":
@@ -57,6 +64,7 @@ def resolve_shots(name: str) -> tuple[ShotSpec, ...]:
 
 __all__ = [
     "SHOT_REGISTRY",
+    "DIALOG_REGRESSION_FILENAMES",
     "VLAN_WORKFLOW_FILENAMES",
     "ShotSpec",
     "resolve_shots",
