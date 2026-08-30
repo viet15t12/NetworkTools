@@ -226,8 +226,13 @@
 
   show figure.caption: it => {
     set text(size: 12pt, style: "italic")
-    set par(justify: false, leading: 0pt, spacing: 0pt)
-    block(above: 6pt, below: 6pt)[
+    set par(
+      justify: false,
+      first-line-indent: 0pt,
+      leading: 0.65em,
+      spacing: 0pt,
+    )
+    block(width: 100%, above: 6pt, below: 6pt, breakable: false)[
       #align(center, it)
     ]
   }
