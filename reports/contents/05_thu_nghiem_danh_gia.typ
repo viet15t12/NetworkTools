@@ -15,7 +15,7 @@ Quá trình đo đạc và kiểm thử được tiến hành trên môi trườ
 - *Hạ tầng ảo hóa mạng (Virtual Lab):* Máy chủ EVE-NG Professional phiên bản 5.0, chạy các máy ảo phần cứng:
   - Bộ định tuyến: Cisco vIOS-L3 (Cisco IOS Software, vIOS-L3 Software Version 15.9(3)M).
   - Thiết bị chuyển mạch: Cisco vIOS-L2 (Cisco IOS Software, vIOS-L2 Software Version 15.2).
-- *Mạng quản trị ngoại băng (Out-of-band Management Network):* Toàn bộ cổng quản trị `Gi0/0` của các thiết bị được nối vào phân mạng `192.168.122.0/24`. Ứng dụng NetworkTools kết nối tới cổng quản trị này qua SSH/Telnet để thu thập trạng thái và đẩy cấu hình.
+- *Mạng quản trị ngoại băng (Out-of-band Management Network):* Toàn bộ cổng quản trị (thường là Gi0/0 trên router hoặc một cổng VLAN quản trị riêng trên switch, tùy theo model thiết bị) của các thiết bị được nối vào phân mạng 192.168.122.0/24. Ứng dụng NetworkTools kết nối tới cổng quản trị này qua SSH/Telnet để thu thập trạng thái và đẩy cấu hình.
 
 == Kịch bản kiểm thử thực nghiệm trên phòng Lab
 
@@ -84,7 +84,19 @@ Trên switch truy cập `SW5` (IP: `192.168.122.105`), người dùng chuyển s
   image("diagrams/Anh_chuong_5/1_25.png", width: 80%),
   caption: [Cửa sổ View & Push áp dụng chính sách Port Security bảo vệ cổng truy cập trên SW5],
 ) <fig-k1-port-security-push>
-*Giải thích @fig-k1-port-security-push:* Hệ thống sinh đầy đủ tập lệnh chuẩn: `switchport mode access`, `switchport port-security`, `switchport port-security maximum 4`, `switchport port-security violation shutdown`, `switchport port-security mac-address sticky` và `switchport port-security aging time 5`.
+#block[
+  #set par(justify: false)
+  *Giải thích @fig-k1-port-security-push:* Hệ thống sinh đầy đủ khối lệnh Port Security chuẩn để quản trị viên kiểm tra trước khi đẩy xuống thiết bị:
+]
+
+```text
+switchport mode access
+switchport port-security
+switchport port-security maximum 4
+switchport port-security violation shutdown
+switchport port-security mac-address sticky
+switchport port-security aging time 5
+```
 
 *Bước 6: Xác minh kết quả thực thi trên thiết bị thật qua Terminal Alacritty nhúng*
 
@@ -178,7 +190,31 @@ Tiếp theo, tại bước *Networks*, quản trị viên gán các dải mạng
   image("diagrams/Chuong_5_lab2/11.png", width: 80%),
   caption: [Cửa sổ Routing Group - OSPF (Bước 4: Khai báo phân vùng mạng và gán OSPF Area tương ứng)],
 ) <fig-k2-group-networks>
-*Giải thích @fig-k2-group-networks:* Giao diện tự động phân nhóm các cổng của từng router (`R1: 10.1.12.0/24 -> Area 1`, `10.1.13.0/24 -> Area 1`, `10.0.0.0/24 -> Area 0`; `R2: 10.1.12.0/24 -> Area 1`, `10.1.23.0/24 -> Area 1`). Sau khi hoàn tất, quản trị viên nhấn *Save & Push* để hệ thống đẩy cấu hình song song xuống toàn bộ các router.
+#block[
+  #set par(justify: false)
+  *Giải thích @fig-k2-group-networks:* Giao diện tự động phân nhóm các cổng theo từng router và gán mỗi dải mạng vào vùng OSPF tương ứng:
+]
+
+#report-table(
+  columns: (18%, 52%, 30%),
+  header: ([Router], [Dải mạng], [Vùng OSPF]),
+  rows: (
+    (table.cell(rowspan: 3)[*R1*], [#table-code("10.1.12.0/24")], [Area 1]),
+    ([#table-code("10.1.13.0/24")], [Area 1]),
+    ([#table-code("10.0.0.0/24")], [Area 0 (Backbone)]),
+    (table.cell(rowspan: 2)[*R2*], [#table-code("10.1.12.0/24")], [Area 1]),
+    ([#table-code("10.1.23.0/24")], [Area 1]),
+  ),
+  cell-align: (center + horizon, left + horizon, center + horizon),
+  width: 88%,
+  text-size: 10.5pt,
+  cell-inset: (x: 7pt, y: 6pt),
+)
+
+#block[
+  #set par(justify: false)
+  Sau khi kiểm tra các ánh xạ, quản trị viên nhấn *Save & Push*. Hệ thống sau đó đẩy cấu hình song song xuống toàn bộ router đã chọn.
+]
 
 *Bước 3: Cấu hình Tái phân phối tuyến (Route Redistribution) cho mạng LAN người dùng*
 

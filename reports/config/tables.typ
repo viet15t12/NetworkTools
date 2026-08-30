@@ -54,7 +54,9 @@
     breakable: false,
   )[
     #set text(size: text-size)
-    #set par(first-line-indent: 0pt, leading: 0.7em)
+    // Nội dung trong ô cần căn trái tự nhiên. Kế thừa chế độ căn đều của
+    // thân bài sẽ kéo giãn khoảng trắng, đặc biệt ở tiêu đề và cột hẹp.
+    #set par(justify: false, first-line-indent: 0pt, leading: 0.7em)
 
     #table(
       columns: columns,

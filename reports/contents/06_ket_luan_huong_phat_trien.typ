@@ -1,4 +1,4 @@
-#import "../config/tables.typ": report-table
+#import "../config/tables.typ": report-table, table-code
 #import "../config/commands.typ": report-note
 
 #pagebreak(weak: true)
@@ -9,15 +9,41 @@
 Đề tài nghiên cứu khoa học *"Xây dựng phần mềm quản lý tập trung và tự động hóa cấu hình thiết bị mạng"* (NetworkTools) đã hoàn thành xuất sắc các mục tiêu nghiên cứu và kỹ thuật đề ra ban đầu. Nhóm tác giả đã thiết kế và hiện thực hóa thành công một giải pháp phần mềm desktop hoàn chỉnh, kết hợp hài hòa giữa công nghệ giao diện đồ họa hiện đại, cơ sở dữ liệu quan hệ cục bộ và các thư viện tự động hóa mạng chuyên sâu.
 
 #report-table(
-  columns: (22%, 38%, 40%),
+  columns: (23%, 39%, 38%),
   header: ([Mục tiêu đề tài], [Nội dung kỹ thuật đã hoàn thành], [Bằng chứng kiểm chứng thực nghiệm]),
   rows: (
-    ([Kiến trúc phần mềm & Giao diện người dùng], [Xây dựng ứng dụng desktop theo kiến trúc phân lớp Clean Architecture; giao diện Qt Quick/QML mượt mà, hỗ trợ Lazy Loading, đa tab thiết bị, chia đôi khung làm việc và Theme Dark/Light.], [256 tệp QML, 504/523 test tự động đạt, luồng UI đạt 60 FPS, không bị nghẽn khi chạy SSH.]),
-    ([Kiến trúc dữ liệu & Quản lý phiên bản], [Thiết kế lược đồ SQLite chuẩn hóa gồm 93 bảng; phân định rõ giữa cấu hình mong muốn (Desired State) và dữ liệu thu thập (Observed State); tích hợp sao lưu Git bằng Dulwich.], [Hai tệp `device_network.db` và `info_collected.db` vận hành ổn định; lưu trữ lịch sử commit và so sánh Unified Diff trực quan.]),
-    ([Tự động hóa cấu hình Lớp 2 & Lớp 3], [Hoàn thiện luồng Staged Save \rightarrow Jinja2 Rendering \rightarrow Preview \rightarrow Push cho Interface, DHCP, Static Route, OSPFv2, EIGRP, ACL, NAT/PAT, VLAN, EtherChannel, STP, VTP và L2 Security.], [Thực nghiệm thành công 100% trên 4 kịch bản lab EVE-NG; thiết bị nhận lệnh và xác nhận qua Terminal nhúng.]),
-    ([Hệ sinh thái tiện ích mở rộng], [Tích hợp máy chủ Syslog Server thời gian thực (UDP/TCP), máy khách SFTP truyền tệp an toàn hai khung nhìn, và Terminal Alacritty nhúng giao tiếp qua socket IPC (NTTP/1).], [Thu nhận và lọc nhật ký sự kiện theo Severity; tải tệp nền an toàn; mở phiên CLI độc lập không gây xung đột.]),
-    ([Đóng gói & An toàn hệ thống], [Đóng gói toàn bộ Workspace thành tệp `.ntp` chuẩn Zip v1 có kiểm tra mã băm SHA-256; hỗ trợ mã hóa Argon2id + AES-256-GCM; cơ chế Dev-mode Fail-Closed và Host Lock.], [Kiểm thử an toàn Dev-mode khóa hoàn toàn kết nối thật; bảo vệ dữ liệu dự án khi lưu trữ và chia sẻ.]),
+    (
+      [*Kiến trúc phần mềm & giao diện*],
+      [Clean Architecture; Qt Quick/QML; Lazy Loading; đa tab; chia đôi không gian làm việc; giao diện sáng/tối.],
+      [256 tệp QML; 504/523 kiểm thử đạt; giao diện 60 FPS; tác vụ SSH không làm nghẽn UI.],
+    ),
+    (table.hline(stroke: 0.3pt + rgb("#b8b8b8")),),
+    (
+      [*Kiến trúc dữ liệu & quản lý phiên bản*],
+      [SQLite gồm 93 bảng; tách biệt Desired State và Observed State; sao lưu Git bằng Dulwich.],
+      [Hai cơ sở dữ liệu vận hành ổn định; lưu lịch sử commit; hỗ trợ so sánh Unified Diff.],
+    ),
+    (table.hline(stroke: 0.3pt + rgb("#b8b8b8")),),
+    (
+      [*Tự động hóa cấu hình Lớp 2 & Lớp 3*],
+      [Quy trình Staged Save → Jinja2 Rendering → Preview → Push cho các nghiệp vụ định tuyến, chuyển mạch và bảo mật.],
+      [Hoàn thành 100% trên 4 kịch bản EVE-NG; thiết bị nhận cấu hình và được xác minh qua Terminal nhúng.],
+    ),
+    (table.hline(stroke: 0.3pt + rgb("#b8b8b8")),),
+    (
+      [*Hệ sinh thái tiện ích mở rộng*],
+      [Syslog Server thời gian thực; SFTP hai khung nhìn; Terminal Alacritty giao tiếp IPC (NTTP/1).],
+      [Lọc nhật ký theo Severity; truyền tệp nền an toàn; mở phiên CLI độc lập, không xung đột.],
+    ),
+    (table.hline(stroke: 0.3pt + rgb("#b8b8b8")),),
+    (
+      [*Đóng gói & an toàn hệ thống*],
+      [Tệp Workspace #table-code(".ntp", size: 9.5pt); kiểm tra SHA-256; mã hóa Argon2id + AES-256-GCM; Dev-mode Fail-Closed và Host Lock.],
+      [Dev-mode khóa kết nối thật; dữ liệu dự án được bảo vệ khi lưu trữ và chia sẻ.],
+    ),
   ),
+  text-size: 10.5pt,
+  cell-inset: (x: 6pt, y: 7pt),
   caption: [Bảng tổng hợp kết quả đạt được đối chiếu với các mục tiêu nghiên cứu],
 ) <tab-project-results-summary>
 
