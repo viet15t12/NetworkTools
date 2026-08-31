@@ -12,7 +12,7 @@ from features.devices.ssh_algorithm_repository import get_ssh_algorithm_override
 from .ssh_algorithms import SshAlgorithmOverride, make_transport_factory
 
 
-class NetworkToolsCiscoIosSSH(CiscoIosSSH):
+class CAMSCiscoIosSSH(CiscoIosSSH):
     def __init__(
         self,
         *args: Any,
@@ -50,7 +50,7 @@ def connect_device(
             "SSH algorithm overrides currently support only cisco_ios; "
             f"got {device_type!r}."
         )
-    return NetworkToolsCiscoIosSSH(
+    return CAMSCiscoIosSSH(
         **params,
         ssh_algorithm_override=override,
     )

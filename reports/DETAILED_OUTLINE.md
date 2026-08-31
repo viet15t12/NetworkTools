@@ -2,7 +2,7 @@
 
 ## Xây dựng phần mềm quản lý tập trung và tự động hóa cấu hình thiết bị mạng
 
-> **Tên sản phẩm:** NetworkTools  
+> **Tên sản phẩm:** CAMS  
 > **Loại đề tài:** Nghiên cứu khoa học sinh viên  
 > **Lĩnh vực:** Mạng máy tính, tự động hóa mạng, phần mềm desktop  
 > **Phạm vi sản phẩm hiện tại:** Ứng dụng desktop PyQt6/QML, cơ sở dữ liệu SQLite và các worker Python phục vụ thiết bị Cisco IOS
@@ -84,7 +84,7 @@ Kết quả rà soát hiện tại: 30 test được phát hiện; 28 test chứ
 
 - Tên học viện, khoa/bộ môn và hoạt động nghiên cứu khoa học.
 - Tên đề tài thống nhất với quyết định giao đề tài.
-- Tên sản phẩm: NetworkTools.
+- Tên sản phẩm: CAMS.
 - Giảng viên hướng dẫn, thành viên, mã sinh viên, địa điểm và năm.
 
 ## Lời cam đoan

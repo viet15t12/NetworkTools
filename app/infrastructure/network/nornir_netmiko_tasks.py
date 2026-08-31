@@ -1,4 +1,4 @@
-"""Nornir tasks bound to the NetworkTools Netmiko connection plugin."""
+"""Nornir tasks bound to the CAMS Netmiko connection plugin."""
 
 from __future__ import annotations
 

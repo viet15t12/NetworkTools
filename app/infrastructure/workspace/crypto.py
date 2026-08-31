@@ -1,7 +1,7 @@
 """Streaming authenticated encryption for protected ``.ntp`` packages.
 
 The encrypted representation is deliberately not an encrypted ZIP variant.
-It is a small, versioned NetworkTools envelope followed by AES-256-GCM
+It is a small, versioned CAMS envelope followed by AES-256-GCM
 ciphertext.  Decryption recreates the exact ordinary ZIP payload used by an
 unprotected project.
 """
@@ -207,7 +207,7 @@ def _read_envelope(
         raise InvalidWorkspacePackage("The encrypted project header is truncated.")
     magic, header_size = _PREFIX.unpack(prefix)
     if magic != ENVELOPE_MAGIC:
-        raise InvalidWorkspacePackage("Not a NetworkTools encrypted project.")
+        raise InvalidWorkspacePackage("Not a CAMS encrypted project.")
     if not 1 <= header_size <= _MAX_HEADER_SIZE:
         raise InvalidWorkspacePackage("The encrypted project header is invalid.")
     header_bytes = stream.read(header_size)

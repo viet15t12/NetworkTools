@@ -36,7 +36,7 @@ class WindowSettingsTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls._settings_dir = tempfile.TemporaryDirectory()
-        QCoreApplication.setOrganizationName("NetworkToolsTests")
+        QCoreApplication.setOrganizationName("CAMSTests")
         QCoreApplication.setApplicationName("UiContractTests")
         QSettings.setDefaultFormat(QSettings.Format.IniFormat)
         QSettings.setPath(
@@ -68,7 +68,7 @@ class ThemeSettingsTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls._settings_dir = tempfile.TemporaryDirectory()
-        QCoreApplication.setOrganizationName("NetworkToolsThemeTests")
+        QCoreApplication.setOrganizationName("CAMSThemeTests")
         QCoreApplication.setApplicationName("ThemeSettingsTests")
         QSettings.setDefaultFormat(QSettings.Format.IniFormat)
         QSettings.setPath(
@@ -2675,7 +2675,7 @@ class ExternalToolsQmlContractTests(unittest.TestCase):
         self.assertIn("function activeApplicationForType(appType)", self.ui_source)
         self.assertIn('categoryRow.activeApplication + " in use"', self.ui_source)
         self.assertIn('"type": "SFTP Client"', self.ui_source)
-        self.assertIn('"Built into NetworkTools"', self.ui_source)
+        self.assertIn('"Built into CAMS"', self.ui_source)
 
     def test_external_tool_text_icon_actions_use_shared_button_variant(self) -> None:
         root = Path(__file__).resolve().parents[1]
@@ -2701,7 +2701,7 @@ class ExternalToolsQmlContractTests(unittest.TestCase):
         self.assertIn("function activeApplicationForCategory(category)", catalog)
         self.assertIn('categoryRow.activeApplication + " in use"', catalog)
         self.assertIn('text: "Suggestion"', catalog)
-        self.assertIn('"Built into NetworkTools"', catalog)
+        self.assertIn('"Built into CAMS"', catalog)
         self.assertIn("id: toolStatus", catalog)
 
     def test_detected_apps_require_review_and_are_never_auto_saved(self) -> None:
@@ -2745,7 +2745,7 @@ class ExternalToolsQmlContractTests(unittest.TestCase):
 
     def test_windows_default_apps_settings_remains_user_controlled(self) -> None:
         self.assertIn('Qt.openUrlExternally("ms-settings:defaultapps")', self.ui_source)
-        self.assertIn("NetworkTools never changes the system default.", self.ui_source)
+        self.assertIn("CAMS never changes the system default.", self.ui_source)
 
     def test_external_tools_and_catalog_share_one_settings_sidebar_entry(self) -> None:
         root = Path(__file__).resolve().parents[1]
@@ -2789,8 +2789,8 @@ class ExternalToolsQmlContractTests(unittest.TestCase):
         )
         self.assertNotIn("onActivated: cli.openTerminal()", self.main_source)
         self.assertNotIn('statusBar.showMessage("Opened new Terminal"', self.main_source)
-        self.assertIn('tooltip: "Open NetworkTools Terminal"', self.feature_bar_source)
-        self.assertIn('text: "NetworkTools Terminal"', self.device_context_menu_source)
+        self.assertIn('tooltip: "Open CAMS Terminal"', self.feature_bar_source)
+        self.assertIn('text: "CAMS Terminal"', self.device_context_menu_source)
         self.assertIn("function onTerminalStateChanged(host, state)", self.main_source)
         self.assertIn("cli.deviceTerminalState(targetHost)", self.main_source)
 

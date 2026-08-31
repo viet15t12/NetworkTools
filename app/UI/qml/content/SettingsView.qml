@@ -248,7 +248,7 @@ Rectangle {
                             Layout.fillWidth: true
                             message: settingsView.menuBackend !== null
                                      && settingsView.menuBackend.restartRequired
-                                     ? "Restart NetworkTools to apply the selected menu style."
+                                     ? "Restart CAMS to apply the selected menu style."
                                      : ""
                             severity: "info"
                         }
@@ -1059,7 +1059,7 @@ Rectangle {
 
                     Text {
                         Layout.fillWidth: true
-                        text: LanguageState.text("Choose the language used by NetworkTools.")
+                        text: LanguageState.text("Choose the language used by CAMS.")
                         color: Theme.textSecondary
                         font.pixelSize: Theme.fontSizeSmall
                         font.family: Theme.fontFamily

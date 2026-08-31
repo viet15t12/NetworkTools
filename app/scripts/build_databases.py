@@ -403,7 +403,7 @@ def ensure_runtime_databases() -> dict[str, object]:
 
 
 def main() -> int:
-    argparse.ArgumentParser(description="Build NetworkTools SQLite databases.").parse_args()
+    argparse.ArgumentParser(description="Build CAMS SQLite databases.").parse_args()
     try:
         build_all()
     except (OSError, sqlite3.Error) as exc:

@@ -56,7 +56,7 @@ class ProjectFileLock:
         except (BlockingIOError, OSError) as exc:
             stream.close()
             raise WorkspaceConflictError(
-                "This project is already open in another NetworkTools session. "
+                "This project is already open in another CAMS session. "
                 "Close that session before opening it here."
             ) from exc
 

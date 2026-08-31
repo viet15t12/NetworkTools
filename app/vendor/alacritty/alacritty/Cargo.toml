@@ -1,4 +1,4 @@
-# Modified by NetworkTools from Alacritty upstream commit 1b2b36a64e88068ad02c95fad00ee2fad31c00bf.
+# Modified by CAMS from Alacritty upstream commit 1b2b36a64e88068ad02c95fad00ee2fad31c00bf.
 # See ../NETWORKTOOLS-CHANGES.md for provenance and the modification summary.
 [package]
 name = "alacritty"

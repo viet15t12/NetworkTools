@@ -1,6 +1,6 @@
 # qtpyTerminal
 
-> NetworkTools note (reviewed 2026-08-16): this package is compatibility code.
+> CAMS note (reviewed 2026-08-16): this package is compatibility code.
 > Active composition launches the external Alacritty-based companion documented
 > in `app/features/terminal/README.md`; it does not instantiate this widget.
 A Vt100 terminal widget for qtpy (PyQt, Pyside) - works on Linux, MacOS, Windows
@@ -74,7 +74,7 @@ By default, the widgets uses "text" color (`QPalette`) for the main foreground c
 color for the background. It can be changed by calling `set_fgcolor(QColor)` or `set_bgcolor(QColor)`
 respectively.
 
-## NetworkTools external transport adaptation
+## CAMS external transport adaptation
 
 This vendored copy keeps the original MIT license and adds a callback-driven
 transport for an application-owned SSH/Telnet channel:
@@ -84,7 +84,7 @@ console.attach_external(write_bytes_callback)
 console.feed_external(device_output)
 ```
 
-The external mode does not fork a local shell or create a PTY. NetworkTools
+The external mode does not fork a local shell or create a PTY. CAMS
 connects it to its serialized Netmiko worker. Rendering updates only Pyte dirty
 rows in `QPlainTextEdit`; `Tab`, navigation keys, scrollback, cursor, ANSI
 formatting and copy/paste remain owned by the widget.

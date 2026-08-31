@@ -77,7 +77,7 @@ protocol và N log mới nhất trên từng host. Ô Smart filter nhận cú ph
 `facility:LINK mnemonic:UPDOWN`; nút Help trong thanh lọc liệt kê đầy đủ cú pháp.
 **Export Excel** chỉ ghi các row đang hiển thị sau khi áp dụng mọi bộ lọc, đồng
 thời lưu tóm tắt bộ lọc trong workbook. Cancel chỉ xóa destination do
-NetworkTools quản lý.
+CAMS quản lý.
 
 Chưa hỗ trợ RFC6587 octet-counting, TLS, nhiều bind endpoint/port hoặc alert engine.
 Chi tiết vận hành: [`../../docs/SYSTEM_LOGS.md`](../../docs/SYSTEM_LOGS.md).

@@ -586,7 +586,7 @@ class ExternalToolsManager(QObject):
             return "", []
 
         # Desktop Exec field codes are targets supplied by the desktop shell.
-        # NetworkTools supplies its own safe placeholders when launching.
+        # CAMS supplies its own safe placeholders when launching.
         arguments: list[str] = []
         field_code = re.compile(r"%(?:[fFuUdDnNickvm])")
         for token in tokens:

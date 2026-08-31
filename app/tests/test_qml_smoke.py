@@ -2872,7 +2872,7 @@ class QmlSmokeTests(unittest.TestCase):
         self.assertEqual(len(self.engine.rootObjects()), 1)
         window = self.engine.rootObjects()[0]
         self.assertEqual(window.property("workspaceDisplayName"), "")
-        self.assertEqual(window.property("title"), "NetworkTools")
+        self.assertEqual(window.property("title"), "CAMS")
         self.assertEqual(self.warnings, [])
 
     def test_welcome_module_loads_as_independent_entry_window(self) -> None:

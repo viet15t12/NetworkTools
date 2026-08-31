@@ -6,7 +6,7 @@
 
 == Mục tiêu và môi trường thử nghiệm
 
-Mục tiêu của chương này là đánh giá toàn diện phần mềm NetworkTools trên hai phương diện: tính đúng đắn, an toàn của mã nguồn thông qua bộ kiểm thử tự động (Automated Testing), và khả năng vận hành thực tế thông qua 4 kịch bản triển khai mạng điển hình trên môi trường phòng thực hành (Lab).
+Mục tiêu của chương này là đánh giá toàn diện phần mềm CAMS trên hai phương diện: tính đúng đắn, an toàn của mã nguồn thông qua bộ kiểm thử tự động (Automated Testing), và khả năng vận hành thực tế thông qua 4 kịch bản triển khai mạng điển hình trên môi trường phòng thực hành (Lab).
 
 === Môi trường thử nghiệm phần mềm và phần cứng
 
@@ -15,7 +15,7 @@ Quá trình đo đạc và kiểm thử được tiến hành trên môi trườ
 - *Hạ tầng ảo hóa mạng (Virtual Lab):* Máy chủ EVE-NG Professional phiên bản 5.0, chạy các máy ảo phần cứng:
   - Bộ định tuyến: Cisco vIOS-L3 (Cisco IOS Software, vIOS-L3 Software Version 15.9(3)M).
   - Thiết bị chuyển mạch: Cisco vIOS-L2 (Cisco IOS Software, vIOS-L2 Software Version 15.2).
-- *Mạng quản trị ngoại băng (Out-of-band Management Network):* Toàn bộ cổng quản trị (thường là Gi0/0 trên router hoặc một cổng VLAN quản trị riêng trên switch, tùy theo model thiết bị) của các thiết bị được nối vào phân mạng 192.168.122.0/24. Ứng dụng NetworkTools kết nối tới cổng quản trị này qua SSH/Telnet để thu thập trạng thái và đẩy cấu hình.
+- *Mạng quản trị ngoại băng (Out-of-band Management Network):* Toàn bộ cổng quản trị (thường là Gi0/0 trên router hoặc một cổng VLAN quản trị riêng trên switch, tùy theo model thiết bị) của các thiết bị được nối vào phân mạng 192.168.122.0/24. Ứng dụng CAMS kết nối tới cổng quản trị này qua SSH/Telnet để thu thập trạng thái và đẩy cấu hình.
 
 == Kịch bản kiểm thử thực nghiệm trên phòng Lab
 
@@ -30,7 +30,7 @@ Quá trình thử nghiệm thực nghiệm được thiết kế xoay quanh 4 k�
   caption: [Sơ đồ Topo Kịch bản 1: Hạ tầng Chuyển mạch và Bảo mật Lớp 2],
 ) <fig-topo-scenario-1>
 
-*Quy trình thực hiện trên phần mềm NetworkTools:*
+*Quy trình thực hiện trên phần mềm CAMS:*
 
 Căn cứ vào sơ đồ Topo Kịch bản 1, toàn bộ 8 thiết bị mạng (2 Router và 6 Switch) trong phòng lab EVE-NG đã được nạp vào không gian làm việc `LAB_KICH_BAN_1` với dải IP quản trị từ `192.168.122.101` đến `192.168.122.108` và hiển thị trạng thái kết nối thành công (*CONNECTED*) tại thanh Sidebar bên trái.
 
@@ -100,7 +100,7 @@ switchport port-security aging time 5
 
 *Bước 6: Xác minh kết quả thực thi trên thiết bị thật qua Terminal Alacritty nhúng*
 
-Sau khi hoàn tất quá trình đẩy cấu hình từ phần mềm, người dùng nhấp vào biểu tượng Terminal trên thanh công cụ của NetworkTools để mở cửa sổ điều khiển trực tiếp tới thiết bị và thực hiện các câu lệnh kiểm tra trạng thái thực tế.
+Sau khi hoàn tất quá trình đẩy cấu hình từ phần mềm, người dùng nhấp vào biểu tượng Terminal trên thanh công cụ của CAMS để mở cửa sổ điều khiển trực tiếp tới thiết bị và thực hiện các câu lệnh kiểm tra trạng thái thực tế.
 
 #figure(
   image("diagrams/Anh_chuong_5/1_30.png", width: 85%),
@@ -131,7 +131,7 @@ Security Violation Count   : 0
 
 === Kịch bản 2: Định tuyến động đa vùng theo nhóm và Tái phân phối tuyến liên chi nhánh (OSPF Group & Route Redistribution)
 
-*Mục tiêu kịch bản:* Thiết lập hạ tầng định tuyến động OSPFv2 liên kết hai chi nhánh doanh nghiệp (Chi nhánh A và Chi nhánh B) thông qua mạng đường trục ISP (Backbone Area 0). Ứng dụng tính năng *Routing Group - OSPF* của NetworkTools để tự động hóa quá trình cấu hình đồng loạt trên 6 bộ định tuyến (`R1`, `R2`, `R3`, `ISP1`, `ISP2`, `R6`), đồng thời kích hoạt cơ chế *Tái phân phối tuyến (Route Redistribution)* nhằm quảng bá các dải mạng LAN cục bộ vào miền OSPF, đảm bảo lưu lượng giữa các phòng ban thuộc hai chi nhánh được thông suốt 100%.
+*Mục tiêu kịch bản:* Thiết lập hạ tầng định tuyến động OSPFv2 liên kết hai chi nhánh doanh nghiệp (Chi nhánh A và Chi nhánh B) thông qua mạng đường trục ISP (Backbone Area 0). Ứng dụng tính năng *Routing Group - OSPF* của CAMS để tự động hóa quá trình cấu hình đồng loạt trên 6 bộ định tuyến (`R1`, `R2`, `R3`, `ISP1`, `ISP2`, `R6`), đồng thời kích hoạt cơ chế *Tái phân phối tuyến (Route Redistribution)* nhằm quảng bá các dải mạng LAN cục bộ vào miền OSPF, đảm bảo lưu lượng giữa các phòng ban thuộc hai chi nhánh được thông suốt 100%.
 
 #figure(
   image("diagrams/LAB_2-report.png", width: 95%),
@@ -157,16 +157,16 @@ Mô hình kịch bản được chia làm 3 phân vùng định tuyến chính v
     ),
     ([Chi nhánh B], [VPC14 (B1_VLAN)], [192.168.30.10/24], [Gateway: 192.168.30.1 (R6 Gi0/1)]),
     ([Chi nhánh B], [VPC15 (B2_VLAN)], [192.168.40.10/24], [Gateway: 192.168.40.1 (R6 Gi0/1)]),
-    ([Mạng Quản trị], [Toàn bộ Router/SW], [192.168.122.101 -- 109/24], [Kênh Out-of-Band kết nối NetworkTools]),
+    ([Mạng Quản trị], [Toàn bộ Router/SW], [192.168.122.101 -- 109/24], [Kênh Out-of-Band kết nối CAMS]),
   ),
   caption: [Bảng quy hoạch địa chỉ IP và phân vùng OSPF cho Kịch bản 2],
 ) <tab-ip-planning-lab2>
 
-*Quy trình thực hiện trên phần mềm NetworkTools:*
+*Quy trình thực hiện trên phần mềm CAMS:*
 
 *Bước 1: Cấu hình Giao diện Lớp 3 và gán địa chỉ IP trên các Router*
 
-Trước khi triển khai định tuyến, quản trị viên sử dụng phân hệ *Interfaces* trên NetworkTools để thiết lập các thông số IP, Subnet Mask và kích hoạt trạng thái hoạt động cho từng cổng vật lý (`GigabitEthernet`) trên các thiết bị.
+Trước khi triển khai định tuyến, quản trị viên sử dụng phân hệ *Interfaces* trên CAMS để thiết lập các thông số IP, Subnet Mask và kích hoạt trạng thái hoạt động cho từng cổng vật lý (`GigabitEthernet`) trên các thiết bị.
 
 #figure(
   image("diagrams/Chuong_5_lab2/1.png", width: 85%),
@@ -303,13 +303,13 @@ VPCS> ping 192.168.20.10
 84 bytes from 192.168.20.10 icmp_seq=5 ttl=59 time=10.691 ms
 ```
 
-*Đánh giá kết quả Kịch bản 2:* Giải pháp cấu hình định tuyến động theo nhóm *Routing Group - OSPF* kết hợp cùng cơ chế *Route Redistribution* trên phần mềm NetworkTools đã hoàn thành xuất sắc bài toán kết nối mạng liên chi nhánh đa vùng. Toàn bộ các router tự động thiết lập quan hệ láng giềng, học đầy đủ bảng định tuyến và truyền thông dữ liệu hai chiều giữa tất cả các máy trạm đạt độ ổn định và tin cậy 100%.
+*Đánh giá kết quả Kịch bản 2:* Giải pháp cấu hình định tuyến động theo nhóm *Routing Group - OSPF* kết hợp cùng cơ chế *Route Redistribution* trên phần mềm CAMS đã hoàn thành xuất sắc bài toán kết nối mạng liên chi nhánh đa vùng. Toàn bộ các router tự động thiết lập quan hệ láng giềng, học đầy đủ bảng định tuyến và truyền thông dữ liệu hai chiều giữa tất cả các máy trạm đạt độ ổn định và tin cậy 100%.
 
 
 
 === Kịch bản 3: Tích hợp Cổng dự phòng GLBP, Cấp phát DHCP và Chuyển đổi địa chỉ NAT/PAT
 
-*Mục tiêu kịch bản:* Xây dựng mô hình mạng LAN có khả năng cấp phát địa chỉ IP tự động, sử dụng cổng mặc định dự phòng và cân bằng tải bằng giao thức GLBP, đồng thời cho phép các máy trạm trong mạng nội bộ truy cập ra mạng ngoài thông qua cơ chế NAT/PAT. Kịch bản tập trung kiểm thử khả năng phối hợp nhiều chức năng Lớp 3 trên NetworkTools theo cùng một quy trình *Thiết lập trên GUI $arrow$ View & Push $arrow$ Xác minh trực tiếp trên thiết bị*.
+*Mục tiêu kịch bản:* Xây dựng mô hình mạng LAN có khả năng cấp phát địa chỉ IP tự động, sử dụng cổng mặc định dự phòng và cân bằng tải bằng giao thức GLBP, đồng thời cho phép các máy trạm trong mạng nội bộ truy cập ra mạng ngoài thông qua cơ chế NAT/PAT. Kịch bản tập trung kiểm thử khả năng phối hợp nhiều chức năng Lớp 3 trên CAMS theo cùng một quy trình *Thiết lập trên GUI $arrow$ View & Push $arrow$ Xác minh trực tiếp trên thiết bị*.
 
 #figure(
   image("diagrams/fhrp_nat_dhcp_lap/fhrp-nat-dhcp-report.png", width: 95%),
@@ -335,7 +335,7 @@ VPCS> ping 192.168.20.10
   caption: [Bảng quy hoạch địa chỉ và vai trò thiết bị trong Kịch bản 3],
 ) <tab-ip-planning-lab3>
 
-*Quy trình thực hiện trên phần mềm NetworkTools:*
+*Quy trình thực hiện trên phần mềm CAMS:*
 
 *Bước 1: Khai báo vai trò NAT Inside/Outside cho các giao diện trên Router NAT*
 
@@ -364,7 +364,7 @@ Sau khi lưu các tham số giao diện và ACL, người dùng mở cửa sổ 
   caption: [Cửa sổ View & Push sinh cấu hình NAT Interface và ACL cho Router NAT],
 ) <fig-k3-nat-preview>
 
-*Giải thích @fig-k3-nat-preview:* NetworkTools tự động sinh đúng các lệnh `ip nat inside`, `ip nat outside` trên từng giao diện và khối ACL:
+*Giải thích @fig-k3-nat-preview:* CAMS tự động sinh đúng các lệnh `ip nat inside`, `ip nat outside` trên từng giao diện và khối ACL:
 ```text
 ip access-list standard NAT_demo
  10 permit 192.168.0.0 0.0.7.255
@@ -418,7 +418,7 @@ Tiếp tục kiểm tra cấu hình tổng thể cho thấy lệnh PAT, ACL `NAT
   caption: [Giao diện tạo GLBP Group 113 với Virtual IP 192.168.4.1 trên R1 và R2],
 ) <fig-k3-glbp-setup>
 
-Tại phần *Member policy*, NetworkTools tự động ghép các giao diện cùng subnet với địa chỉ Virtual IP. `R1 Gi0/0 - 192.168.4.2/24` được đặt Priority `101`, `R2 Gi0/0 - 192.168.4.3/24` có Priority `100`; cả hai cho phép `Preempt`, sử dụng `Maximum Weighting 100` và cấu hình `Forwarder Preempt Delay` là `30` giây.
+Tại phần *Member policy*, CAMS tự động ghép các giao diện cùng subnet với địa chỉ Virtual IP. `R1 Gi0/0 - 192.168.4.2/24` được đặt Priority `101`, `R2 Gi0/0 - 192.168.4.3/24` có Priority `100`; cả hai cho phép `Preempt`, sử dụng `Maximum Weighting 100` và cấu hình `Forwarder Preempt Delay` là `30` giây.
 
 #figure(
   image("diagrams/fhrp_nat_dhcp_lap/09-glbp-member-policy.png", width: 86%),
@@ -486,12 +486,12 @@ Cuối cùng, trên máy trạm `PC1`, lệnh `ip dhcp` được sử dụng đ�
 
 *Giải thích @fig-k3-client-test:* Kết quả `trace 1.1.1.1` ghi nhận hop đầu tiên là `192.168.4.2` (R1), tiếp theo là `192.168.1.2` (Router NAT) và sau đó tới `10.0.10.1` ở phía upstream. Kết quả này chứng minh máy trạm đã nhận đúng cấu hình DHCP, sử dụng được GLBP Virtual Gateway và lưu lượng đã đi qua đúng chuỗi thiết bị theo thiết kế. Tại hop `10.0.10.1`, thiết bị upstream trả về ICMP `Destination port unreachable`; vì vậy phép thử này được sử dụng để xác minh đường đi tới mạng ngoài của mô hình lab, không được xem là bằng chứng kết nối Internet hoàn chỉnh tới địa chỉ `1.1.1.1`.
 
-*Đánh giá kết quả Kịch bản 3:* NetworkTools đã cấu hình thành công chuỗi chức năng liên hoàn *DHCP $arrow$ GLBP $arrow$ NAT/PAT*. Máy trạm nhận địa chỉ động `192.168.4.4/24`, sử dụng gateway ảo `192.168.4.1`; hai router R1/R2 cùng tham gia GLBP Group 113; Router NAT nhận đúng vai trò Inside/Outside, ACL và PAT Overload. Kết quả truy vết xác nhận lưu lượng từ LAN đi đúng qua R1 tới Router NAT và tới gateway upstream `10.0.10.1`. Qua đó, kịch bản chứng minh phần mềm có khả năng phối hợp nhiều nghiệp vụ Lớp 3 trên nhiều thiết bị trong cùng một quy trình cấu hình và kiểm chứng thống nhất.
+*Đánh giá kết quả Kịch bản 3:* CAMS đã cấu hình thành công chuỗi chức năng liên hoàn *DHCP $arrow$ GLBP $arrow$ NAT/PAT*. Máy trạm nhận địa chỉ động `192.168.4.4/24`, sử dụng gateway ảo `192.168.4.1`; hai router R1/R2 cùng tham gia GLBP Group 113; Router NAT nhận đúng vai trò Inside/Outside, ACL và PAT Overload. Kết quả truy vết xác nhận lưu lượng từ LAN đi đúng qua R1 tới Router NAT và tới gateway upstream `10.0.10.1`. Qua đó, kịch bản chứng minh phần mềm có khả năng phối hợp nhiều nghiệp vụ Lớp 3 trên nhiều thiết bị trong cùng một quy trình cấu hình và kiểm chứng thống nhất.
 
 
 === Kịch bản 4: Thu thập, giám sát và phân tích nhật ký tập trung bằng Syslog Server
 
-*Mục tiêu kịch bản:* Kiểm thử khả năng cấu hình đồng loạt dịch vụ Syslog trên nhiều thiết bị Cisco và khả năng tiếp nhận, phân tích, hiển thị nhật ký thời gian thực ngay trong NetworkTools. Kịch bản sử dụng 4 thiết bị gồm ba router `R1`, `R2`, `R3` và switch `SW1`; tất cả gửi log về Syslog Server tại địa chỉ `192.168.122.1`, sử dụng cổng `5514/UDP`. Ngoài việc kiểm tra cấu hình trên từng thiết bị, kịch bản còn xác minh khả năng phân loại thông điệp theo Host, Source IP, Facility/Severity, Mnemonic và nội dung Raw Message.
+*Mục tiêu kịch bản:* Kiểm thử khả năng cấu hình đồng loạt dịch vụ Syslog trên nhiều thiết bị Cisco và khả năng tiếp nhận, phân tích, hiển thị nhật ký thời gian thực ngay trong CAMS. Kịch bản sử dụng 4 thiết bị gồm ba router `R1`, `R2`, `R3` và switch `SW1`; tất cả gửi log về Syslog Server tại địa chỉ `192.168.122.1`, sử dụng cổng `5514/UDP`. Ngoài việc kiểm tra cấu hình trên từng thiết bị, kịch bản còn xác minh khả năng phân loại thông điệp theo Host, Source IP, Facility/Severity, Mnemonic và nội dung Raw Message.
 
 #figure(
   image("diagrams/syslog lab/syslog-lab-topology-report.png", width: 92%),
@@ -514,7 +514,7 @@ Cuối cùng, trên máy trạm `PC1`, lệnh `ip dhcp` được sử dụng đ�
   caption: [Bảng quy hoạch nguồn gửi Syslog trong Kịch bản 4],
 ) <tab-syslog-planning-lab4>
 
-*Quy trình thực hiện trên phần mềm NetworkTools:*
+*Quy trình thực hiện trên phần mềm CAMS:*
 
 *Bước 1: Mở phân hệ Syslog Server và chuẩn bị cấu hình đích nhận log*
 
@@ -525,7 +525,7 @@ Từ thiết bị đang được quản lý, quản trị viên mở thẻ *Sysl
   caption: [Giao diện quản lý Syslog Server trước khi tạo chính sách gửi log],
 ) <fig-k4-syslog-config>
 
-*Giải thích @fig-k4-syslog-config:* Giao diện thể hiện mô hình quản lý trạng thái tương tự các phân hệ cấu hình khác của NetworkTools. Người dùng có thể tạo mới đích Syslog, kiểm duyệt lệnh bằng *View & Push* hoặc cấu hình theo nhóm bằng *Syslog Group*.
+*Giải thích @fig-k4-syslog-config:* Giao diện thể hiện mô hình quản lý trạng thái tương tự các phân hệ cấu hình khác của CAMS. Người dùng có thể tạo mới đích Syslog, kiểm duyệt lệnh bằng *View & Push* hoặc cấu hình theo nhóm bằng *Syslog Group*.
 
 *Bước 2: Chọn đồng thời các thiết bị tham gia Syslog Group*
 
@@ -540,14 +540,14 @@ Tại bước *Hosts*, quản trị viên chọn cả bốn thiết bị đang k
 
 *Bước 3: Chọn Source Interface cho từng thiết bị*
 
-Tại bước *Interfaces*, NetworkTools cho phép chọn riêng giao diện nguồn trên từng host. Ba router sử dụng `GigabitEthernet0/0`, tương ứng với mạng quản trị `192.168.122.0/24`; switch `SW1` sử dụng giao diện logic `Vlan1`.
+Tại bước *Interfaces*, CAMS cho phép chọn riêng giao diện nguồn trên từng host. Ba router sử dụng `GigabitEthernet0/0`, tương ứng với mạng quản trị `192.168.122.0/24`; switch `SW1` sử dụng giao diện logic `Vlan1`.
 
 #figure(
   image("diagrams/syslog lab/03-syslog-source-interfaces.png", width: 78%),
   caption: [Lựa chọn Source Interface cho từng Router và Switch trong Syslog Group],
 ) <fig-k4-syslog-source>
 
-Cấu hình `logging source-interface` giúp các bản tin Syslog phát ra với địa chỉ nguồn ổn định, nhờ đó NetworkTools có thể ánh xạ chính xác bản tin về đúng thiết bị trong danh sách quản lý.
+Cấu hình `logging source-interface` giúp các bản tin Syslog phát ra với địa chỉ nguồn ổn định, nhờ đó CAMS có thể ánh xạ chính xác bản tin về đúng thiết bị trong danh sách quản lý.
 
 *Bước 4: Khai báo chính sách Syslog dùng chung cho toàn nhóm*
 
@@ -562,7 +562,7 @@ Với mức `notifications`, thiết bị gửi các thông điệp từ severit
 
 *Bước 5: Kiểm duyệt tập lệnh Syslog trước khi Push hàng loạt*
 
-Sau khi hoàn tất ba bước của wizard, NetworkTools mở cửa sổ *View & Push Syslog Group* để tổng hợp cấu hình cho cả bốn thiết bị. Quản trị viên có thể xem toàn bộ lệnh trước khi nhấn *Push*.
+Sau khi hoàn tất ba bước của wizard, CAMS mở cửa sổ *View & Push Syslog Group* để tổng hợp cấu hình cho cả bốn thiết bị. Quản trị viên có thể xem toàn bộ lệnh trước khi nhấn *Push*.
 
 #figure(
   image("diagrams/syslog lab/05-syslog-config-preview.png", width: 82%),
@@ -607,7 +607,7 @@ Trên switch `SW1`, cấu hình tương tự nhưng sử dụng `Vlan1` làm Sou
 
 Các kết quả xác minh cho thấy cấu hình thực tế trên thiết bị khớp với nội dung đã xem trước trên GUI, qua đó xác nhận quy trình *Syslog Group $arrow$ View & Push $arrow$ Verify* hoạt động đúng trên cả Router và Switch.
 
-*Bước 7: Khởi động Syslog Listener tích hợp trong NetworkTools*
+*Bước 7: Khởi động Syslog Listener tích hợp trong CAMS*
 
 Tiếp theo, quản trị viên chuyển sang màn hình *System Logs*. Trước khi khởi động, trạng thái hiển thị *Listener stopped*, số bản tin nhận được bằng `0` và bảng log chưa có dữ liệu.
 
@@ -627,7 +627,7 @@ Sau khi nhấn *Start Listener*, dịch vụ chuyển sang trạng thái *Listen
 
 *Bước 8: Kiểm tra khả năng phân tích chi tiết một bản tin Syslog*
 
-Khi chọn một dòng log, NetworkTools mở cửa sổ *System Log Message* để hiển thị cả dữ liệu đã phân tích và bản tin nguyên gốc. Trong mẫu thử từ `192.168.122.101`, hệ thống nhận dạng thành công giao thức `UDP`, Cisco facility `LINEPROTO`, severity `5`, mnemonic `UPDOWN`, sequence number `104` và trạng thái parser là `parsed`.
+Khi chọn một dòng log, CAMS mở cửa sổ *System Log Message* để hiển thị cả dữ liệu đã phân tích và bản tin nguyên gốc. Trong mẫu thử từ `192.168.122.101`, hệ thống nhận dạng thành công giao thức `UDP`, Cisco facility `LINEPROTO`, severity `5`, mnemonic `UPDOWN`, sequence number `104` và trạng thái parser là `parsed`.
 
 #figure(
   image("diagrams/syslog lab/12-syslog-message-detail.png", width: 68%),
@@ -643,7 +643,7 @@ Việc đồng thời lưu trường đã chuẩn hóa và Raw Message giúp gia
 
 *Bước 9: Tạo sự kiện kiểm thử trên từng thiết bị và đối chiếu với Syslog Server*
 
-Để tạo lượng log đủ lớn và có tính lặp lại, trên các router NetworkTools thực hiện chu kỳ thay đổi trạng thái `Loopback99`; trên switch, giao diện `GigabitEthernet1/3` được chuyển trạng thái Up/Down. Các thiết bị đồng thời phát sinh các bản tin `USERLOG_WARNING`, `USERLOG_NOTICE`, `LINK`, `LINEPROTO` và `CONFIG_I`.
+Để tạo lượng log đủ lớn và có tính lặp lại, trên các router CAMS thực hiện chu kỳ thay đổi trạng thái `Loopback99`; trên switch, giao diện `GigabitEthernet1/3` được chuyển trạng thái Up/Down. Các thiết bị đồng thời phát sinh các bản tin `USERLOG_WARNING`, `USERLOG_NOTICE`, `LINK`, `LINEPROTO` và `CONFIG_I`.
 
 #figure(
   image("diagrams/syslog lab/13-syslog-r1-device-logs.png", width: 94%),
@@ -665,9 +665,9 @@ Việc đồng thời lưu trường đã chuẩn hóa và Raw Message giúp gia
   caption: [Nhật ký sự kiện kiểm thử phát sinh trực tiếp trên Switch SW1],
 ) <fig-k4-sw1-device-logs>
 
-*Giải thích các Hình @fig-k4-r1-device-logs -- @fig-k4-sw1-device-logs:* Các terminal cho thấy chuỗi sự kiện được tạo liên tục trên cả bốn thiết bị. Khi giao diện bị `shutdown` hoặc `no shutdown`, IOS phát sinh các thông điệp trạng thái liên kết và line protocol; đồng thời các bản tin `USERLOG_*` được dùng để đánh dấu từng chu kỳ thử nghiệm. Những sự kiện tương ứng xuất hiện trên màn hình System Logs, chứng minh luồng truyền bản tin từ thiết bị tới NetworkTools hoạt động liên tục và đúng nguồn.
+*Giải thích các Hình @fig-k4-r1-device-logs -- @fig-k4-sw1-device-logs:* Các terminal cho thấy chuỗi sự kiện được tạo liên tục trên cả bốn thiết bị. Khi giao diện bị `shutdown` hoặc `no shutdown`, IOS phát sinh các thông điệp trạng thái liên kết và line protocol; đồng thời các bản tin `USERLOG_*` được dùng để đánh dấu từng chu kỳ thử nghiệm. Những sự kiện tương ứng xuất hiện trên màn hình System Logs, chứng minh luồng truyền bản tin từ thiết bị tới CAMS hoạt động liên tục và đúng nguồn.
 
-*Đánh giá kết quả Kịch bản 4:* NetworkTools đã cấu hình thành công Syslog theo nhóm cho 4 thiết bị, trong đó ba router sử dụng `GigabitEthernet0/0` và switch sử dụng `Vlan1` làm Source Interface. Syslog Listener tích hợp nhận được đồng thời bản tin từ các nguồn `192.168.122.101` đến `192.168.122.104`, phân tích được các trường Cisco Facility/Severity/Mnemonic và vẫn bảo toàn Raw Message. Các sự kiện thực nghiệm về thay đổi trạng thái interface và thông báo cấu hình xuất hiện nhất quán giữa Terminal thiết bị và bảng System Logs. Kịch bản vì vậy xác nhận chức năng Syslog của NetworkTools hoạt động đúng từ khâu cấu hình nguồn gửi, tiếp nhận tập trung đến phân tích và quan sát nhật ký thời gian thực.
+*Đánh giá kết quả Kịch bản 4:* CAMS đã cấu hình thành công Syslog theo nhóm cho 4 thiết bị, trong đó ba router sử dụng `GigabitEthernet0/0` và switch sử dụng `Vlan1` làm Source Interface. Syslog Listener tích hợp nhận được đồng thời bản tin từ các nguồn `192.168.122.101` đến `192.168.122.104`, phân tích được các trường Cisco Facility/Severity/Mnemonic và vẫn bảo toàn Raw Message. Các sự kiện thực nghiệm về thay đổi trạng thái interface và thông báo cấu hình xuất hiện nhất quán giữa Terminal thiết bị và bảng System Logs. Kịch bản vì vậy xác nhận chức năng Syslog của CAMS hoạt động đúng từ khâu cấu hình nguồn gửi, tiếp nhận tập trung đến phân tích và quan sát nhật ký thời gian thực.
 
 
 == Đánh giá tổng hợp
@@ -687,4 +687,4 @@ Việc đồng thời lưu trường đã chuẩn hóa và Raw Message giúp gia
 
 == Tổng kết chương
 
-Chương 5 đã chứng minh tính khả thi, độ tin cậy và hiệu năng vượt trội của phần mềm NetworkTools thông qua kết quả kiểm thử tự động đạt 96,75% và 4 kịch bản thực nghiệm toàn diện trên phòng lab EVE-NG. Các kết quả đo đạc định lượng cho thấy công cụ giúp giảm trên 90% thời gian triển khai cấu hình và loại bỏ các sai sót cú pháp so với phương pháp thủ công, đáp ứng xuất sắc các mục tiêu nghiên cứu đã đề ra.
+Chương 5 đã chứng minh tính khả thi, độ tin cậy và hiệu năng vượt trội của phần mềm CAMS thông qua kết quả kiểm thử tự động đạt 96,75% và 4 kịch bản thực nghiệm toàn diện trên phòng lab EVE-NG. Các kết quả đo đạc định lượng cho thấy công cụ giúp giảm trên 90% thời gian triển khai cấu hình và loại bỏ các sai sót cú pháp so với phương pháp thủ công, đáp ứng xuất sắc các mục tiêu nghiên cứu đã đề ra.

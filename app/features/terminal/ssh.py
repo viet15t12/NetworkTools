@@ -86,7 +86,7 @@ def build_openssh_command(device: dict[str, Any]) -> OpenSshCommand:
     method = str(device.get("method") or "ssh").strip().lower()
     if method != "ssh":
         raise TerminalLaunchError(
-            "NetworkTools Terminal currently supports managed OpenSSH sessions only."
+            "CAMS Terminal currently supports managed OpenSSH sessions only."
         )
     host = validate_host(device.get("host"))
     username = validate_username(device.get("username"))

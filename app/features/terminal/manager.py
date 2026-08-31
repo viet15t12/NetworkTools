@@ -78,7 +78,7 @@ class InternalTerminalManager(QObject):
         return {
             "ok": True,
             "severity": "success",
-            "message": f"NetworkTools CLI opened for {host}.",
+            "message": f"CAMS CLI opened for {host}.",
         }
 
     def send(self, host: str, text: str) -> None:

@@ -1,1 +1,1 @@
-"""Technical adapters shared by NetworkTools features."""
+"""Technical adapters shared by CAMS features."""

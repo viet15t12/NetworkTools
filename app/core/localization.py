@@ -14,7 +14,7 @@ _VIETNAMESE_TEXT: dict[str, str] = {
     "English": "English",
     "Vietnamese": "Tiếng Việt",
     "Interface language": "Ngôn ngữ giao diện",
-    "Choose the language used by NetworkTools.": "Chọn ngôn ngữ được NetworkTools sử dụng.",
+    "Choose the language used by CAMS.": "Chọn ngôn ngữ được CAMS sử dụng.",
     "The language choice is saved automatically and notification messages are translated first.":
         "Lựa chọn ngôn ngữ được tự động lưu và các dòng thông báo được ưu tiên dịch trước.",
     "Technical terms such as host, SSH, Telnet, VLAN, OSPF, workspace, database, and CLI remain unchanged.":
@@ -47,7 +47,7 @@ _VIETNAMESE_TEXT: dict[str, str] = {
     "Create New": "Tạo mới",
     "Start a new .ntp workspace": "Bắt đầu một workspace .ntp mới",
     "Open": "Mở",
-    "Open a NetworkTools project": "Mở một project NetworkTools",
+    "Open a CAMS project": "Mở một project CAMS",
     "Configure global appearance": "Cấu hình giao diện chung",
     "Notifications": "Thông báo",
     "No New Notifications": "Không có thông báo mới",
@@ -60,7 +60,7 @@ _VIETNAMESE_TEXT: dict[str, str] = {
     "Unlock Project": "Mở khóa project",
     "Project password": "Mật khẩu project",
     "Enter the project password": "Nhập mật khẩu project",
-    "NetworkTools does not store project passwords.": "NetworkTools không lưu mật khẩu project.",
+    "CAMS does not store project passwords.": "CAMS không lưu mật khẩu project.",
     "Cancel": "Hủy",
     "Unlock": "Mở khóa",
 
@@ -69,9 +69,9 @@ _VIETNAMESE_TEXT: dict[str, str] = {
     "Task failed.": "Task thất bại.",
     "Python runtime is ready.": "Python runtime đã sẵn sàng.",
     "Select a device before opening CLI.": "Hãy chọn thiết bị trước khi mở CLI.",
-    "Select a device before opening NetworkTools Terminal.":
-        "Hãy chọn thiết bị trước khi mở NetworkTools Terminal.",
-    "NetworkTools Terminal backend is not available.": "NetworkTools Terminal backend hiện không khả dụng.",
+    "Select a device before opening CAMS Terminal.":
+        "Hãy chọn thiết bị trước khi mở CAMS Terminal.",
+    "CAMS Terminal backend is not available.": "CAMS Terminal backend hiện không khả dụng.",
     "Device is waiting. Configuration is disabled.": "Thiết bị đang chờ. Configuration đang bị vô hiệu hóa.",
     "Device added in waiting state. Configuration is disabled until connected.":
         "Đã thêm thiết bị ở trạng thái chờ. Configuration bị vô hiệu hóa cho đến khi kết nối.",
@@ -135,10 +135,10 @@ _VIETNAMESE_PATTERNS: tuple[tuple[re.Pattern[str], str | Callable[[re.Match[str]
     _rule(r"^Opening device connection to (.+)\.\.\.$", r"Đang mở kết nối thiết bị tới \1..."),
     _rule(r"^Finished connection task for (.+)\.$", r"Đã hoàn tất task kết nối cho \1."),
     _rule(r"^Opening CLI session to (.+)\.\.\.$", r"Đang mở CLI session tới \1..."),
-    _rule(r"^NetworkTools (Terminal|CLI) is ready for (.+)\.$", r"NetworkTools \1 đã sẵn sàng cho \2."),
-    _rule(r"^NetworkTools (Terminal|CLI) opened for (.+)\.$", r"Đã mở NetworkTools \1 cho \2."),
-    _rule(r"^NetworkTools (Terminal|CLI) failed for (.+)\.$", r"NetworkTools \1 thất bại cho \2."),
-    _rule(r"^Failed to open NetworkTools Terminal for (.+)\.$", r"Không thể mở NetworkTools Terminal cho \1."),
+    _rule(r"^CAMS (Terminal|CLI) is ready for (.+)\.$", r"CAMS \1 đã sẵn sàng cho \2."),
+    _rule(r"^CAMS (Terminal|CLI) opened for (.+)\.$", r"Đã mở CAMS \1 cho \2."),
+    _rule(r"^CAMS (Terminal|CLI) failed for (.+)\.$", r"CAMS \1 thất bại cho \2."),
+    _rule(r"^Failed to open CAMS Terminal for (.+)\.$", r"Không thể mở CAMS Terminal cho \1."),
     _rule(r"^Command completed for (.+)\.$", r"Command đã hoàn tất trên \1."),
     _rule(r"^Command failed for (.+): (.+)$", r"Command thất bại trên \1: \2"),
     _rule(r"^Waiting for device response from (.+)\.\.\.$", r"Đang chờ phản hồi thiết bị từ \1..."),

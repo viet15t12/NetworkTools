@@ -161,11 +161,11 @@ Rectangle {
                 Layout.leftMargin: Theme.spacing24
                 Layout.rightMargin: Theme.spacing24
                 title: "Listener"
-                helpText: "Start on launch: Automatically starts the local Syslog collector when NetworkTools opens.\n\nListener transports: The collector receives UDP and TCP simultaneously.\n\nListener port: Local destination port, from 1 to 65535. Devices must send to the same port.\n\nBind address: Local address used by the socket. 0.0.0.0 listens on every IPv4 interface. Restart the listener after changing the bind address or port."
+                helpText: "Start on launch: Automatically starts the local Syslog collector when CAMS opens.\n\nListener transports: The collector receives UDP and TCP simultaneously.\n\nListener port: Local destination port, from 1 to 65535. Devices must send to the same port.\n\nBind address: Local address used by the socket. 0.0.0.0 listens on every IPv4 interface. Restart the listener after changing the bind address or port."
 
                 StandardCheckBox {
                     Layout.fillWidth: true
-                    text: "Start the listener when NetworkTools starts"
+                    text: "Start the listener when CAMS starts"
                     enabled: root.backend !== null
                     checked: root.backend !== null ? root.backend.enabledOnStartup : false
                     onToggled: if (root.backend !== null) root.backend.enabledOnStartup = checked
@@ -267,7 +267,7 @@ Rectangle {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "Choose an active local address that connected devices can reach. This address is used when NetworkTools pushes Syslog configuration."
+                    text: "Choose an active local address that connected devices can reach. This address is used when CAMS pushes Syslog configuration."
                     color: Theme.textSecondary
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeSmall

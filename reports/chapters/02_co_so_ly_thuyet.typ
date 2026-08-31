@@ -3,7 +3,7 @@
 
 == Quản lý cấu hình và tự động hóa mạng
 
-Báo cáo phân biệt các khái niệm *current state*, *desired state*, cấu hình pending, preview, apply và verify. NetworkTools không được mô tả là có rollback hoàn chỉnh nếu chưa có mã nguồn và kiểm thử chứng minh. Các khái niệm nền tảng về mạng máy tính và giao thức được tham khảo từ @tanenbaum2021computer.
+Báo cáo phân biệt các khái niệm *current state*, *desired state*, cấu hình pending, preview, apply và verify. CAMS không được mô tả là có rollback hoàn chỉnh nếu chưa có mã nguồn và kiểm thử chứng minh. Các khái niệm nền tảng về mạng máy tính và giao thức được tham khảo từ @tanenbaum2021computer.
 
 == Giao thức truy cập và quản trị
 

@@ -1,4 +1,4 @@
-// Modified by NetworkTools from Alacritty upstream commit 1b2b36a64e88068ad02c95fad00ee2fad31c00bf.
+// Modified by CAMS from Alacritty upstream commit 1b2b36a64e88068ad02c95fad00ee2fad31c00bf.
 // See ../../NETWORKTOOLS-CHANGES.md for provenance and the modification summary.
 use std::cmp::max;
 use std::collections::HashMap;
@@ -23,27 +23,27 @@ use crate::logging::LOG_TARGET_IPC_CONFIG;
 #[derive(Parser, Default, Debug)]
 #[clap(author, about, version = env!("VERSION"))]
 pub struct Options {
-    /// Run as a terminal managed by NetworkTools over NTTP/1.
+    /// Run as a terminal managed by CAMS over NTTP/1.
     #[clap(long)]
     pub nt_managed: bool,
 
-    /// NetworkTools terminal session identifier.
+    /// CAMS terminal session identifier.
     #[clap(long, requires = "nt_managed")]
     pub nt_session_id: Option<String>,
 
-    /// NetworkTools inventory device identifier.
+    /// CAMS inventory device identifier.
     #[clap(long, requires = "nt_managed")]
     pub nt_device_id: Option<String>,
 
-    /// NetworkTools display name for the device.
+    /// CAMS display name for the device.
     #[clap(long, requires = "nt_managed")]
     pub nt_device_name: Option<String>,
 
-    /// NetworkTools inventory host.
+    /// CAMS inventory host.
     #[clap(long, requires = "nt_managed")]
     pub nt_host: Option<String>,
 
-    /// Path to the private NetworkTools NTTP/1 local socket.
+    /// Path to the private CAMS NTTP/1 local socket.
     #[clap(long, value_hint = ValueHint::FilePath, requires = "nt_managed")]
     pub nt_ipc: Option<PathBuf>,
 

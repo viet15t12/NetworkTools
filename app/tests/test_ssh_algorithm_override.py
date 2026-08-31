@@ -19,7 +19,7 @@ from features.devices.ssh_algorithm_repository import (
 from features.devices.login_service import DeviceLoginService
 from features.devices.repository import DeviceRepository
 from infrastructure.network.netmiko_factory import connect_device
-from infrastructure.network.nornir_netmiko_plugin import NetworkToolsNetmiko
+from infrastructure.network.nornir_netmiko_plugin import CAMSNetmiko
 from infrastructure.network.nornir_netmiko_plugin import register_networktools_netmiko
 from infrastructure.network.nornir_netmiko_tasks import netmiko_send_config
 from infrastructure.network.ssh_algorithms import (
@@ -219,7 +219,7 @@ class SshAlgorithmOverrideTests(unittest.TestCase):
         repository.assert_not_called()
 
     def test_nornir_plugin_uses_the_same_connection_factory(self) -> None:
-        plugin = NetworkToolsNetmiko()
+        plugin = CAMSNetmiko()
         connection = Mock()
         with patch(
             "infrastructure.network.nornir_netmiko_plugin.connect_device",

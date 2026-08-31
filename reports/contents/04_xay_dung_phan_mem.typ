@@ -8,7 +8,7 @@
 
 === Môi trường phát triển và các thư viện cốt lõi
 
-Phần mềm NetworkTools được xây dựng trên nền tảng ngôn ngữ lập trình Python kết hợp với bộ framework giao diện Qt 6 (thông qua PyQt6). Toàn bộ quy trình quản lý phụ thuộc, môi trường ảo và thực thi công cụ được đồng bộ thông qua công cụ quản lý gói `uv`, giúp đảm bảo tính nhất quán tuyệt đối giữa các môi trường phát triển và thử nghiệm.
+Phần mềm CAMS được xây dựng trên nền tảng ngôn ngữ lập trình Python kết hợp với bộ framework giao diện Qt 6 (thông qua PyQt6). Toàn bộ quy trình quản lý phụ thuộc, môi trường ảo và thực thi công cụ được đồng bộ thông qua công cụ quản lý gói `uv`, giúp đảm bảo tính nhất quán tuyệt đối giữa các môi trường phát triển và thử nghiệm.
 
 #report-table(
   columns: (28%, 22%, 50%),
@@ -76,7 +76,7 @@ Tệp `app/main.py` đóng vai trò là Composition Root duy nhất của toàn 
 
 === Cơ chế kết nối QML Bridge và Context Properties
 
-Để duy trì kiến trúc tách biệt giữa giao diện đồ họa và logic xử lý Python, NetworkTools áp dụng cơ chế nạp thuộc tính ngữ cảnh (`setContextProperty`). Thông qua cơ chế này, QML có thể gọi trực tiếp các phương thức Python (thông qua `@pyqtSlot`) và lắng nghe các thay đổi dữ liệu từ backend thông qua tín hiệu (`pyqtSignal`):
+Để duy trì kiến trúc tách biệt giữa giao diện đồ họa và logic xử lý Python, CAMS áp dụng cơ chế nạp thuộc tính ngữ cảnh (`setContextProperty`). Thông qua cơ chế này, QML có thể gọi trực tiếp các phương thức Python (thông qua `@pyqtSlot`) và lắng nghe các thay đổi dữ liệu từ backend thông qua tín hiệu (`pyqtSignal`):
 
 #report-table(
   columns: (23%, 25%, 52%),
@@ -204,7 +204,7 @@ Phân hệ EIGRP hỗ trợ cấu hình giao thức định tuyến khoảng cá
 
 === Tiện ích Routing Group và Tách biệt mẫu cấu hình
 
-Đối với các hệ thống lab gồm nhiều router kết nối, NetworkTools cung cấp tính năng *Routing Group*. Tính năng này cho phép tự động quét danh sách các mạng đang kết nối trực tiếp (Connected Networks) trên các router được chọn, sau đó tự động nhân bản chính sách định tuyến và đẩy cấu hình hàng loạt theo cơ chế đa tiến trình, giúp tiết kiệm đáng kể thời gian thiết lập hạ tầng định tuyến ban đầu.
+Đối với các hệ thống lab gồm nhiều router kết nối, CAMS cung cấp tính năng *Routing Group*. Tính năng này cho phép tự động quét danh sách các mạng đang kết nối trực tiếp (Connected Networks) trên các router được chọn, sau đó tự động nhân bản chính sách định tuyến và đẩy cấu hình hàng loạt theo cơ chế đa tiến trình, giúp tiết kiệm đáng kể thời gian thiết lập hạ tầng định tuyến ban đầu.
 
 == Phân hệ Danh sách điều khiển truy cập (ACL)
 
@@ -269,7 +269,7 @@ Phân hệ Chuyển mạch cung cấp giải pháp toàn diện cho việc cấu
 
 == Phân hệ Tiện ích hệ thống và Giám sát
 
-Bên cạnh các nghiệp vụ cấu hình mạng cốt lõi, NetworkTools được trang bị hệ thống tiện ích mở rộng phục vụ công tác vận hành và giám sát chuyên nghiệp:
+Bên cạnh các nghiệp vụ cấu hình mạng cốt lõi, CAMS được trang bị hệ thống tiện ích mở rộng phục vụ công tác vận hành và giám sát chuyên nghiệp:
 
 === Máy chủ nhật ký hệ thống (System Logs / Syslog Server)
 
@@ -288,14 +288,14 @@ Phân hệ `features/sftp` tích hợp trình duyệt và truyền tệp bảo m
 
 === Trình dòng lệnh nhúng đồng hành (Terminal Companion)
 
-Để phục vụ nhu cầu can thiệp dòng lệnh thủ công của kỹ sư, NetworkTools tích hợp phân hệ `networktools-terminal` (dựa trên bản fork mã nguồn mở Alacritty):
-- Ứng dụng desktop giao tiếp với cửa sổ Terminal thông qua socket IPC cục bộ bằng giao thức nội bộ NTTP/1 (NetworkTools Terminal Protocol Version 1).
+Để phục vụ nhu cầu can thiệp dòng lệnh thủ công của kỹ sư, CAMS tích hợp phân hệ `networktools-terminal` (dựa trên bản fork mã nguồn mở Alacritty):
+- Ứng dụng desktop giao tiếp với cửa sổ Terminal thông qua socket IPC cục bộ bằng giao thức nội bộ NTTP/1 (CAMS Terminal Protocol Version 1).
 - Thông tin đăng nhập không bị lộ qua tham số dòng lệnh (`argv`) hay biến môi trường. Đối với thiết bị Cisco IOS legacy, hệ thống sử dụng tiến trình con Paramiko PTY độc lập.
 - Phiên Terminal tương tác được tách biệt hoàn toàn khỏi phiên tự động hóa Netmiko, bảo đảm không gây tranh chấp luồng lệnh.
 
 === Đóng gói dự án và Quản lý Workspace (.ntp)
 
-Hệ thống cung cấp giải pháp lưu trữ toàn bộ không gian làm việc thành một gói tệp duy nhất với phần mở rộng `.ntp` (NetworkTools Package):
+Hệ thống cung cấp giải pháp lưu trữ toàn bộ không gian làm việc thành một gói tệp duy nhất với phần mở rộng `.ntp` (CAMS Package):
 - *Cấu trúc gói nén:* Sử dụng định dạng nén Zip chuẩn hóa Version 1, chứa tệp kê khai `manifest.json`, mã băm kiểm tra toàn vẹn SHA-256, hai tệp cơ sở dữ liệu SQLite (`device_network.db`, `info_collected.db`) và thư mục sao lưu Git `backup/`.
 - *Mã hóa bảo vệ:* Người dùng có thể tùy chọn mã hóa toàn bộ gói dự án bằng thuật toán sinh khóa Argon2id kết hợp với thuật toán mã hóa đối xứng AES-256-GCM.
 - *Cơ chế Snapshot & Rollback:* Cho phép tạo các điểm khôi phục nhanh (Safety Snapshot) trong quá trình làm việc và hỗ trợ hoàn tác dữ liệu khi có sự cố.
@@ -310,6 +310,6 @@ Nhằm đảm bảo tính trung thực và minh bạch trong báo cáo nghiên c
 
 == Tổng kết chương
 
-Chương 4 đã trình bày chi tiết quá trình xây dựng và hiện thực hóa phần mềm NetworkTools. Ứng dụng được tổ chức theo kiến trúc phân lớp hướng module rõ ràng, tận dụng sức mạnh của Python 3.11+, PyQt6/QML và hệ quản trị SQLite cục bộ. Các phân hệ nghiệp vụ cốt lõi từ quản lý thiết bị, cấu hình Lớp 3 (Interface, DHCP, Static Routing, OSPF, EIGRP), chính sách an ninh (ACL, NAT/PAT), chuyển mạch Lớp 2 (VLAN, EtherChannel, STP, VTP, L2 Security) cho đến các tiện ích vận hành (Syslog, SFTP, Terminal Alacritty, Workspace .ntp) đều được cài đặt bài bản, tuân thủ nguyên tắc an toàn dữ liệu và tối ưu trải nghiệm người dùng.
+Chương 4 đã trình bày chi tiết quá trình xây dựng và hiện thực hóa phần mềm CAMS. Ứng dụng được tổ chức theo kiến trúc phân lớp hướng module rõ ràng, tận dụng sức mạnh của Python 3.11+, PyQt6/QML và hệ quản trị SQLite cục bộ. Các phân hệ nghiệp vụ cốt lõi từ quản lý thiết bị, cấu hình Lớp 3 (Interface, DHCP, Static Routing, OSPF, EIGRP), chính sách an ninh (ACL, NAT/PAT), chuyển mạch Lớp 2 (VLAN, EtherChannel, STP, VTP, L2 Security) cho đến các tiện ích vận hành (Syslog, SFTP, Terminal Alacritty, Workspace .ntp) đều được cài đặt bài bản, tuân thủ nguyên tắc an toàn dữ liệu và tối ưu trải nghiệm người dùng.
 
 Nội dung của chương này là nền tảng thực nghiệm quan trọng để tiến hành các quy trình kiểm thử tự động, thử nghiệm kịch bản phòng lab và đánh giá hiệu năng được trình bày chi tiết trong Chương 5.

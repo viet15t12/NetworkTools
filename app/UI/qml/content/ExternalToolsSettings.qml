@@ -45,7 +45,7 @@ Rectangle {
         {
             "type": "DB Browser",
             "title": "DB Browser",
-            "description": "Open the NetworkTools SQLite database",
+            "description": "Open the CAMS SQLite database",
             "icon": AppAssets.navigationDatabaseSearch
         },
         {
@@ -104,19 +104,19 @@ Rectangle {
         if (toolType === "SSH Client")
             return "Available placeholders: {ip} and {username}. Passwords are never passed on the command line."
         if (toolType === "SFTP Client")
-            return "Available placeholders: {ip}, {port}, {username}, and {path}. Passwords are never passed on the command line. NetworkTools uses its built-in SFTP client when no external application is active."
+            return "Available placeholders: {ip}, {port}, {username}, and {path}. Passwords are never passed on the command line. CAMS uses its built-in SFTP client when no external application is active."
         if (toolType === "DB Browser")
-            return "Use {db} where the database path should be inserted. NetworkTools includes its own database browser."
+            return "Use {db} where the database path should be inserted. CAMS includes its own database browser."
         return "Optional arguments passed when the terminal host starts."
     }
 
     function categoryDescription() {
         if (selectedCategory === "SSH Client")
-            return "Choose the application NetworkTools uses to open device CLI sessions."
+            return "Choose the application CAMS uses to open device CLI sessions."
         if (selectedCategory === "DB Browser")
             return "Choose the application used to inspect the local SQLite database."
         if (selectedCategory === "SFTP Client")
-            return "Choose an external SFTP application, or keep using the client built into NetworkTools."
+            return "Choose an external SFTP application, or keep using the client built into CAMS."
         return "Choose one terminal host such as Windows Terminal or Command Prompt. PowerShell is a shell and is not listed separately."
     }
 
@@ -498,7 +498,7 @@ Rectangle {
         editorMode = "empty"
         refreshTools()
         discoverTools()
-        notify("Removed " + removed + " from NetworkTools.", "success")
+        notify("Removed " + removed + " from CAMS.", "success")
     }
 
     Connections {
@@ -571,7 +571,7 @@ Rectangle {
         closeTooltip: "Close remove confirmation"
 
         contentItem: Text {
-            text: "“%1” will be removed from NetworkTools. The application itself will not be uninstalled.".arg(root.selectedApp)
+            text: "“%1” will be removed from CAMS. The application itself will not be uninstalled.".arg(root.selectedApp)
             color: Theme.textSecondary
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeNormal
@@ -624,7 +624,7 @@ Rectangle {
                     }
                     Text {
                         Layout.fillWidth: true
-                        text: "Use operating-system defaults or choose another installed application. NetworkTools never changes the system default."
+                        text: "Use operating-system defaults or choose another installed application. CAMS never changes the system default."
                         color: Theme.textSecondary
                         font.pixelSize: Theme.fontSizeSmall
                         font.family: Theme.fontFamily
@@ -684,7 +684,7 @@ Rectangle {
                         }
                         Text {
                             Layout.fillWidth: true
-                            text: "Select what NetworkTools needs. The application type is fixed by this list."
+                            text: "Select what CAMS needs. The application type is fixed by this list."
                             color: Theme.textSecondary
                             font.pixelSize: Theme.fontSizeSmall
                             font.family: Theme.fontFamily
@@ -762,7 +762,7 @@ Rectangle {
                                                 text: categoryRow.activeApplication !== ""
                                                       ? categoryRow.activeApplication + " in use"
                                                       : (categoryRow.builtInAvailable
-                                                         ? "Built into NetworkTools" : "Not configured")
+                                                         ? "Built into CAMS" : "Not configured")
                                                 color: categoryRow.activeApplication !== ""
                                                        ? Theme.alertSuccess
                                                        : (categoryRow.builtInAvailable ? Theme.accentColor : Theme.textDisabled)

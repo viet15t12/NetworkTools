@@ -278,7 +278,7 @@ Hướng triển khai:
 Pseudo-code:
 
 ```python
-class NetworkToolsCiscoIosSSH(CiscoIosSSH):
+class CAMSCiscoIosSSH(CiscoIosSSH):
     def __init__(self, *args, ssh_algorithm_override=None, **kwargs):
         self._ssh_algorithm_override = ssh_algorithm_override
         super().__init__(*args, **kwargs)
@@ -1061,4 +1061,4 @@ docs: document SSH compatibility and routing synchronization
 
 ## 27. Kết quả mong đợi sau triển khai
 
-NetworkTools sẽ có một chính sách SSH thống nhất cho toàn ứng dụng, hỗ trợ Cisco IOS cũ mà không hạ mức bảo mật cho mọi thiết bị. Clone OSPF/EIGRP sẽ có validation rõ ràng, không sao chép Router ID nguy hiểm và không tác động ngoài phạm vi. Chức năng Manual Sync sẽ thu thập được Static Route/Default Route, đồng thời bảo vệ các thay đổi local chưa push.
+CAMS sẽ có một chính sách SSH thống nhất cho toàn ứng dụng, hỗ trợ Cisco IOS cũ mà không hạ mức bảo mật cho mọi thiết bị. Clone OSPF/EIGRP sẽ có validation rõ ràng, không sao chép Router ID nguy hiểm và không tác động ngoài phạm vi. Chức năng Manual Sync sẽ thu thập được Static Route/Default Route, đồng thời bảo vệ các thay đổi local chưa push.

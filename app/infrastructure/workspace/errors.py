@@ -1,4 +1,4 @@
-"""Typed failures raised by the NetworkTools workspace package layer."""
+"""Typed failures raised by the CAMS workspace package layer."""
 
 from __future__ import annotations
 

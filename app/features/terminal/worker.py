@@ -44,7 +44,7 @@ class TerminalStreamWorker(QThread):
             self.stateChanged.emit("closed", f"Terminal closed for {self.host}.")
         elif not bool(result.get("ok")):
             message = str(result.get("message") or f"Terminal failed for {self.host}.")
-            self.outputReady.emit(f"\r\n[NetworkTools] {message}\r\n")
+            self.outputReady.emit(f"\r\n[CAMS] {message}\r\n")
             self.stateChanged.emit("error", message)
         else:
             self.stateChanged.emit("closed", f"Terminal session ended for {self.host}.")

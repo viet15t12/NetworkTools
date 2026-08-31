@@ -10,7 +10,7 @@ StandardDialog {
     objectName: "shortcutReferenceDialog"
 
     title: "Keyboard Shortcuts"
-    subtitle: "NetworkTools command reference"
+    subtitle: "CAMS command reference"
     closeTooltip: "Close keyboard shortcuts"
     preferredWidth: 720
     implicitHeight: Math.min(660,
@@ -21,7 +21,7 @@ StandardDialog {
     ListModel {
         id: shortcutModel
 
-        ListElement { sectionName: "Application"; shortcutText: "Alt+F4"; description: "Quit NetworkTools" }
+        ListElement { sectionName: "Application"; shortcutText: "Alt+F4"; description: "Quit CAMS" }
         ListElement { sectionName: "Application"; shortcutText: "Ctrl+O"; description: "Open a project" }
         ListElement { sectionName: "Application"; shortcutText: "Ctrl+S"; description: "Save the current workspace" }
         ListElement { sectionName: "Application"; shortcutText: "Ctrl+K Ctrl+S"; description: "Open this keyboard shortcuts reference" }
@@ -45,7 +45,7 @@ StandardDialog {
         ListElement { sectionName: "Devices"; shortcutText: "Ctrl+Shift+C"; description: "Connect all selected devices" }
         ListElement { sectionName: "Devices"; shortcutText: "Ctrl+Shift+R"; description: "Get running-config from all selected devices" }
         ListElement { sectionName: "Devices"; shortcutText: "Ctrl+Shift+D"; description: "Disconnect all selected devices" }
-        ListElement { sectionName: "Devices"; shortcutText: "Ctrl+`"; description: "Open the active device in NetworkTools Terminal" }
+        ListElement { sectionName: "Devices"; shortcutText: "Ctrl+`"; description: "Open the active device in CAMS Terminal" }
 
         ListElement { sectionName: "Device tabs"; shortcutText: "Ctrl+T"; description: "Open a new device" }
         ListElement { sectionName: "Device tabs"; shortcutText: "Ctrl+W / Ctrl+F4"; description: "Close the active tab" }

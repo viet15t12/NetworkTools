@@ -101,7 +101,7 @@ class WorkspacePackageTests(unittest.TestCase):
         first = self.codec.open(package)
         try:
             with self.assertRaisesRegex(
-                WorkspaceConflictError, "already open in another NetworkTools session"
+                WorkspaceConflictError, "already open in another CAMS session"
             ):
                 self.codec.open(package)
         finally:

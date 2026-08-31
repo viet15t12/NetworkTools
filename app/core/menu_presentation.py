@@ -165,11 +165,11 @@ class MenuPresentationController(QObject):
         if self._environment.platform_family == "linux":
             return (
                 "A compatible desktop Global Menu service is not available; "
-                "NetworkTools will use the in-window menu."
+                "CAMS will use the in-window menu."
             )
         return (
             "Native Global menus are not available on this platform; "
-            "NetworkTools will use the in-window menu."
+            "CAMS will use the in-window menu."
         )
 
     @pyqtProperty(bool, notify=stateChanged)
@@ -188,7 +188,7 @@ class MenuPresentationController(QObject):
         if not normalized:
             normalized = (
                 "The Native Global menu presenter could not be loaded; "
-                "NetworkTools is using the in-window menu."
+                "CAMS is using the in-window menu."
             )
         if (
             normalized == self._native_runtime_failure

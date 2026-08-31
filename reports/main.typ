@@ -1,5 +1,5 @@
 // ==========================================================
-// BÁO CÁO NCKH SINH VIÊN - NETWORKTOOLS (TYPST)
+// BÁO CÁO NCKH SINH VIÊN - CAMS (TYPST)
 // Chuyển từ cấu trúc LaTeX modular sang Typst.
 // ==========================================================
 

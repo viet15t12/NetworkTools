@@ -1,4 +1,4 @@
-"""State owned by one externally rendered NetworkTools Terminal session."""
+"""State owned by one externally rendered CAMS Terminal session."""
 
 from __future__ import annotations
 

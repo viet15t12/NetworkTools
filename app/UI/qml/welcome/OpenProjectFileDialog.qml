@@ -8,8 +8,8 @@ FileDialog {
 
     signal projectSelected(url projectUrl)
 
-    title: "Open NetworkTools Project"
+    title: "Open CAMS Project"
     fileMode: FileDialog.OpenFile
-    nameFilters: ["NetworkTools Projects (*.ntp)", "All Files (*)"]
+    nameFilters: ["CAMS Projects (*.ntp)", "All Files (*)"]
     onAccepted: root.projectSelected(selectedFile)
 }

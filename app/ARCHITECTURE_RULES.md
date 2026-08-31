@@ -1,4 +1,4 @@
-# Quy tắc kiến trúc NetworkTools
+# Quy tắc kiến trúc CAMS
 
 Cập nhật: **2026-08-16**.
 

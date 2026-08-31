@@ -88,7 +88,7 @@ build_cython_optional() {
 
     echo >&2
     echo "WARNING: Optional Cython acceleration could not be built or loaded." >&2
-    echo "NetworkTools will use the built-in Python sync engine instead." >&2
+    echo "CAMS will use the built-in Python sync engine instead." >&2
     disable_cython_extension
     uv run --extra speed python -c \
         "from pathlib import Path; from features.devices.sync import _engine; p=Path(_engine.__file__); print(f'sync engine fallback: {p}'); raise SystemExit(0 if p.suffix == '.py' else 1)"
@@ -108,25 +108,25 @@ check_terminal() {
             return 1
         fi
         if [ ! -x "$configured" ]; then
-            echo "ERROR: NetworkTools Terminal is not executable: $configured" >&2
+            echo "ERROR: CAMS Terminal is not executable: $configured" >&2
             return 1
         fi
-        echo "NetworkTools Terminal: $configured"
+        echo "CAMS Terminal: $configured"
         return 0
     fi
 
     discovered=$(command -v networktools-terminal 2>/dev/null || true)
     if [ -n "$discovered" ]; then
-        echo "NetworkTools Terminal: $discovered"
+        echo "CAMS Terminal: $discovered"
         return 0
     fi
 
     if [ -x "$TERMINAL_BINARY" ]; then
-        echo "NetworkTools Terminal: $TERMINAL_BINARY"
+        echo "CAMS Terminal: $TERMINAL_BINARY"
         return 0
     fi
 
-    echo "ERROR: NetworkTools Terminal companion was not found." >&2
+    echo "ERROR: CAMS Terminal companion was not found." >&2
     echo "Build/install the Alacritty fork as 'networktools-terminal', or set:" >&2
     echo "  NETWORKTOOLS_TERMINAL_BINARY=/absolute/path/to/the/binary" >&2
     return 1
@@ -224,7 +224,7 @@ build_terminal() {
         return 1
     fi
     if ! command -v cargo >/dev/null 2>&1; then
-        echo "ERROR: Rust/Cargo is required to build NetworkTools Terminal." >&2
+        echo "ERROR: Rust/Cargo is required to build CAMS Terminal." >&2
         echo "Install Rust from https://rustup.rs/ and run setup again." >&2
         return 1
     fi
@@ -236,7 +236,7 @@ build_terminal() {
         return 1
     fi
     echo "cargo: $(cargo --version)"
-    echo "Building NetworkTools Terminal (release)..."
+    echo "Building CAMS Terminal (release)..."
     cargo build \
         --release \
         --manifest-path "$TERMINAL_SOURCE/Cargo.toml" \
@@ -249,7 +249,7 @@ build_terminal_optional() {
         return 0
     fi
     echo >&2
-    echo "WARNING: NetworkTools Terminal could not be built." >&2
+    echo "WARNING: CAMS Terminal could not be built." >&2
     echo "The main application can still run without device terminal windows." >&2
     return 0
 }
@@ -260,7 +260,7 @@ check_terminal_optional() {
     fi
 
     echo >&2
-    echo "WARNING: The main NetworkTools app is ready, but device terminals" >&2
+    echo "WARNING: The main CAMS app is ready, but device terminals" >&2
     echo "will stay unavailable until the companion binary is configured." >&2
     return 0
 }
@@ -268,7 +268,7 @@ check_terminal_optional() {
 run_app() {
     require_uv
     ensure_runtime_binaries
-    echo "Starting NetworkTools..."
+    echo "Starting CAMS..."
     uv run --extra speed python main.py
 }
 
@@ -282,14 +282,14 @@ setup_all() {
 
 show_menu() {
     echo
-    echo "NetworkTools"
+    echo "CAMS"
     echo "  1) Sync dependencies"
     echo "  2) Build and verify Cython"
     echo "  3) Full setup (sync + optional Cython + terminal build)"
     echo "  4) Check Cython status"
     echo "  5) Run application"
     echo "  6) Full setup and run"
-    echo "  7) Check NetworkTools Terminal"
+    echo "  7) Check CAMS Terminal"
     echo "  8) Build C++ Syslog collector"
     echo "  9) Check C++ Syslog collector"
     echo "  0) Exit"

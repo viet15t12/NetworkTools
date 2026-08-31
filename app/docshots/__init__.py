@@ -1,4 +1,4 @@
-"""Deterministic Qt/QML screenshots for NetworkTools documentation."""
+"""Deterministic Qt/QML screenshots for CAMS documentation."""
 
 from .shots import SHOT_REGISTRY, ShotSpec, resolve_shots
 

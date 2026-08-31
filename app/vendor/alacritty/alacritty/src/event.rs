@@ -1,5 +1,5 @@
 //! Process window events.
-//! Modified by NetworkTools from upstream commit
+//! Modified by CAMS from upstream commit
 //! 1b2b36a64e88068ad02c95fad00ee2fad31c00bf; see ../../NETWORKTOOLS-CHANGES.md.
 
 use crate::ConfigMonitor;
@@ -394,7 +394,7 @@ impl ApplicationHandler<Event> for Processor {
             // Shutdown all windows.
             #[cfg(unix)]
             (EventType::Shutdown, _) => event_loop.exit(),
-            // Process allowlisted NetworkTools window commands.
+            // Process allowlisted CAMS window commands.
             #[cfg(unix)]
             (EventType::Nttp(command), _) => match command {
                 NttpCommand::Focus => {
@@ -584,7 +584,7 @@ pub enum EventType {
     Frame,
 }
 
-/// Window commands accepted from the NetworkTools NTTP/1 control channel.
+/// Window commands accepted from the CAMS NTTP/1 control channel.
 #[cfg(unix)]
 #[derive(Debug, Clone)]
 pub enum NttpCommand {

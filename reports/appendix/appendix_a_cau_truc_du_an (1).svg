@@ -1,0 +1,149 @@
+<svg viewBox="0 0 1000 1440" width="1000" height="1440" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <marker id="arrow" markerWidth="9" markerHeight="9" refX="6.5" refY="4.5" orient="auto">
+    <path d="M0,0 L9,4.5 L0,9 Z" fill="#555555"/>
+  </marker>
+</defs>
+<rect x="0" y="0" width="1000" height="1440" fill="#FFFFFF"/>
+<text x="500.0" y="46" text-anchor="middle" font-family="'Liberation Serif', 'Times New Roman', Times, serif" font-size="21" font-weight="700" fill="#111111">Cấu trúc thư mục mã nguồn ứng dụng &#8212; app/</text>
+<text x="500.0" y="70" text-anchor="middle" font-family="'Liberation Serif', 'Times New Roman', Times, serif" font-size="12.5" font-style="italic" fill="#444444">Tổ chức theo kiến trúc Clean Architecture &#8212; CAMS Desktop</text>
+<rect x="435.0" y="100" width="130" height="38" fill="#F2F2F2" stroke="#111111" stroke-width="1.3"/>
+<text x="500.0" y="124.0" text-anchor="middle" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="14.5" font-weight="700" fill="#111111">app/</text>
+<line x1="500.0" y1="138" x2="500.0" y2="164" stroke="#555555" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="50" y="164" width="900" height="46" fill="#F7FAFD" stroke="#111111" stroke-width="1.1"/>
+<rect x="50" y="164" width="5" height="46" fill="#1F4E79"/>
+<path d="M68,180.3696 L68,191.04 L86,191.04 L86,180.3696 L78.56,180.3696 L75.56,177 L68,177 Z" fill="none" stroke="#1F4E79" stroke-width="1.4"/>
+<text x="94" y="184" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="15" font-weight="700" fill="#1F4E79">UI/</text>
+<text x="94" y="201" font-family="'Liberation Serif', 'Times New Roman', Times, serif" font-size="11" font-style="italic" fill="#555555">Lớp giao diện người dùng (Qt Quick / QML)</text>
+<rect x="66" y="222" width="868" height="26" fill="#FFFFFF" stroke="#1F4E79" stroke-width="1"/>
+<text x="76" y="240" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="12" font-weight="700" fill="#111111">components/</text>
+<rect x="66" y="256" width="48.0" height="22" fill="#F7FAFD" stroke="#1F4E79" stroke-width="0.8"/>
+<text x="90.0" y="271" text-anchor="middle" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="10.8" fill="#111111">base/</text>
+<rect x="120.0" y="256" width="48.0" height="22" fill="#F7FAFD" stroke="#1F4E79" stroke-width="0.8"/>
+<text x="144.0" y="271" text-anchor="middle" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="10.8" fill="#111111">form/</text>
+<rect x="174.0" y="256" width="61.6" height="22" fill="#F7FAFD" stroke="#1F4E79" stroke-width="0.8"/>
+<text x="204.8" y="271" text-anchor="middle" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="10.8" fill="#111111">layout/</text>
+<rect x="241.6" y="256" width="75.19999999999999" height="22" fill="#F7FAFD" stroke="#1F4E79" stroke-width="0.8"/>
+<text x="279.2" y="271" text-anchor="middle" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="10.8" fill="#111111">standard/</text>
+<rect x="66" y="288" width="868" height="26" fill="#FFFFFF" stroke="#1F4E79" stroke-width="1"/>
+<text x="76" y="306" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="12" font-weight="700" fill="#111111">qml/</text>
+<rect x="66" y="322" width="41.2" height="22" fill="#F7FAFD" stroke="#1F4E79" stroke-width="0.8"/>
+<text x="86.6" y="337" text-anchor="middle" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="10.8" fill="#111111">app/</text>
+<rect x="113.2" y="322" width="68.4" height="22" fill="#F7FAFD" stroke="#1F4E79" stroke-width="0.8"/>
+<text x="147.4" y="337" text-anchor="middle" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="10.8" fill="#111111">content/</text>
+<rect x="187.60000000000002" y="322" width="68.4" height="22" fill="#F7FAFD" stroke="#1F4E79" stroke-width="0.8"/>
+<text x="221.8" y="337" text-anchor="middle" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="10.8" fill="#111111">devices/</text>
+<rect x="262.0" y="322" width="68.4" height="22" fill="#F7FAFD" stroke="#1F4E79" stroke-width="0.8"/>
+<text x="296.2" y="337" text-anchor="middle" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="10.8" fill="#111111">feature/</text>
+<rect x="336.4" y="322" width="75.19999999999999" height="22" fill="#F7FAFD" stroke="#1F4E79" stroke-width="0.8"/>
+<text x="374.0" y="337" text-anchor="middle" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="10.8" fill="#111111">features/</text>
+<rect x="66" y="354" width="868" height="26" fill="#FFFFFF" stroke="#1F4E79" stroke-width="1"/>
+<text x="76" y="372" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="12" font-weight="700" fill="#111111">resources/</text>
+<text x="196" y="372" font-family="'Liberation Serif', 'Times New Roman', Times, serif" font-size="10.3" fill="#555555">Biểu tượng SVG, Brand Logo, Font chữ</text>
+<rect x="50" y="164" width="900" height="230" fill="none" stroke="#111111" stroke-width="1.1"/>
+<line x1="500.0" y1="394" x2="500.0" y2="420" stroke="#555555" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="50" y="420" width="900" height="46" fill="#F9F8FC" stroke="#111111" stroke-width="1.1"/>
+<rect x="50" y="420" width="5" height="46" fill="#4C3B6E"/>
+<path d="M68,436.3696 L68,447.04 L86,447.04 L86,436.3696 L78.56,436.3696 L75.56,433 L68,433 Z" fill="none" stroke="#4C3B6E" stroke-width="1.4"/>
+<text x="94" y="440" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="15" font-weight="700" fill="#4C3B6E">core/</text>
+<text x="94" y="457" font-family="'Liberation Serif', 'Times New Roman', Times, serif" font-size="11" font-style="italic" fill="#555555">Lớp cầu nối và điều phối Facade (PyQt6)</text>
+<rect x="66" y="476" width="868" height="40" fill="#FFFFFF" stroke="#999999" stroke-width="0.9"/>
+<path d="M78,489.9952 L78,499.48 L94,499.48 L94,489.9952 L87.72,489.9952 L84.72,487 L78,487 Z" fill="none" stroke="#4C3B6E" stroke-width="1.4"/>
+<text x="102" y="493" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="12" font-weight="700" fill="#111111">database/</text>
+<text x="102" y="507" font-family="'Liberation Serif', 'Times New Roman', Times, serif" font-size="10.3" fill="#555555">DatabaseManager facade kết nối QML</text>
+<rect x="66" y="524" width="868" height="40" fill="#FFFFFF" stroke="#999999" stroke-width="0.9"/>
+<path d="M78,534 L86.2368,534 L90.48,538.2432 L90.48,550 L78,550 Z" fill="none" stroke="#4C3B6E" stroke-width="1.4"/><path d="M86.2368,534 L86.2368,538.2432 L90.48,538.2432" fill="none" stroke="#4C3B6E" stroke-width="1.4"/>
+<text x="102" y="541" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="12" font-weight="700" fill="#111111">network_monitor.py</text>
+<text x="102" y="555" font-family="'Liberation Serif', 'Times New Roman', Times, serif" font-size="10.3" fill="#555555">Giám sát giao diện mạng và CPU/RAM máy trạm</text>
+<rect x="66" y="572" width="868" height="40" fill="#FFFFFF" stroke="#999999" stroke-width="0.9"/>
+<path d="M78,582 L86.2368,582 L90.48,586.2432 L90.48,598 L78,598 Z" fill="none" stroke="#4C3B6E" stroke-width="1.4"/><path d="M86.2368,582 L86.2368,586.2432 L90.48,586.2432" fill="none" stroke="#4C3B6E" stroke-width="1.4"/>
+<text x="102" y="589" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="12" font-weight="700" fill="#111111">terminal_helper.py</text>
+<text x="102" y="603" font-family="'Liberation Serif', 'Times New Roman', Times, serif" font-size="10.3" fill="#555555">Điều phối CLI session và Alacritty companion</text>
+<rect x="66" y="620" width="868" height="40" fill="#FFFFFF" stroke="#999999" stroke-width="0.9"/>
+<path d="M78,633.9952 L78,643.48 L94,643.48 L94,633.9952 L87.72,633.9952 L84.72,631 L78,631 Z" fill="none" stroke="#4C3B6E" stroke-width="1.4"/>
+<text x="102" y="637" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="12" font-weight="700" fill="#111111">settings/</text>
+<text x="102" y="651" font-family="'Liberation Serif', 'Times New Roman', Times, serif" font-size="10.3" fill="#555555">Quản lý cài đặt giao diện, Theme, cửa sổ</text>
+<rect x="50" y="420" width="900" height="254" fill="none" stroke="#111111" stroke-width="1.1"/>
+<line x1="500.0" y1="674" x2="500.0" y2="700" stroke="#555555" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="50" y="700" width="900" height="46" fill="#F5FAF8" stroke="#111111" stroke-width="1.1"/>
+<rect x="50" y="700" width="5" height="46" fill="#1F5C4A"/>
+<path d="M68,716.3696 L68,727.04 L86,727.04 L86,716.3696 L78.56,716.3696 L75.56,713 L68,713 Z" fill="none" stroke="#1F5C4A" stroke-width="1.4"/>
+<text x="94" y="720" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="15" font-weight="700" fill="#1F5C4A">features/</text>
+<text x="94" y="737" font-family="'Liberation Serif', 'Times New Roman', Times, serif" font-size="11" font-style="italic" fill="#555555">Lớp nghiệp vụ theo từng tính năng (Model / Repository / Worker / Template)</text>
+<rect x="66.0" y="758" width="284.0" height="34" fill="#FFFFFF" stroke="#1F5C4A" stroke-width="0.9"/>
+<path d="M75.0,769.808 L75.0,778.7 L90.0,778.7 L90.0,769.808 L84.3,769.808 L81.3,767 L75.0,767 Z" fill="none" stroke="#1F5C4A" stroke-width="1.4"/>
+<text x="96.0" y="779.0" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="11.3" font-weight="700" fill="#111111">acl/</text>
+<rect x="358.0" y="758" width="284.0" height="34" fill="#FFFFFF" stroke="#1F5C4A" stroke-width="0.9"/>
+<path d="M367.0,769.808 L367.0,778.7 L382.0,778.7 L382.0,769.808 L376.3,769.808 L373.3,767 L367.0,767 Z" fill="none" stroke="#1F5C4A" stroke-width="1.4"/>
+<text x="388.0" y="779.0" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="11.3" font-weight="700" fill="#111111">config_backup/</text>
+<rect x="650.0" y="758" width="284.0" height="34" fill="#FFFFFF" stroke="#1F5C4A" stroke-width="0.9"/>
+<path d="M659.0,769.808 L659.0,778.7 L674.0,778.7 L674.0,769.808 L668.3,769.808 L665.3,767 L659.0,767 Z" fill="none" stroke="#1F5C4A" stroke-width="1.4"/>
+<text x="680.0" y="779.0" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="11.3" font-weight="700" fill="#111111">config_sync/</text>
+<rect x="66.0" y="800" width="284.0" height="34" fill="#FFFFFF" stroke="#1F5C4A" stroke-width="0.9"/>
+<path d="M75.0,811.808 L75.0,820.7 L90.0,820.7 L90.0,811.808 L84.3,811.808 L81.3,809 L75.0,809 Z" fill="none" stroke="#1F5C4A" stroke-width="1.4"/>
+<text x="96.0" y="821.0" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="11.3" font-weight="700" fill="#111111">devices/</text>
+<rect x="358.0" y="800" width="284.0" height="34" fill="#FFFFFF" stroke="#1F5C4A" stroke-width="0.9"/>
+<path d="M367.0,811.808 L367.0,820.7 L382.0,820.7 L382.0,811.808 L376.3,811.808 L373.3,809 L367.0,809 Z" fill="none" stroke="#1F5C4A" stroke-width="1.4"/>
+<text x="388.0" y="821.0" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="11.3" font-weight="700" fill="#111111">dhcp/</text>
+<rect x="650.0" y="800" width="284.0" height="34" fill="#FFFFFF" stroke="#1F5C4A" stroke-width="0.9"/>
+<path d="M659.0,811.808 L659.0,820.7 L674.0,820.7 L674.0,811.808 L668.3,811.808 L665.3,809 L659.0,809 Z" fill="none" stroke="#1F5C4A" stroke-width="1.4"/>
+<text x="680.0" y="821.0" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="11.3" font-weight="700" fill="#111111">external_tools/</text>
+<rect x="66.0" y="842" width="284.0" height="34" fill="#FFFFFF" stroke="#1F5C4A" stroke-width="0.9"/>
+<path d="M75.0,853.808 L75.0,862.7 L90.0,862.7 L90.0,853.808 L84.3,853.808 L81.3,851 L75.0,851 Z" fill="none" stroke="#1F5C4A" stroke-width="1.4"/>
+<text x="96.0" y="863.0" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="11.3" font-weight="700" fill="#111111">fhrp/</text>
+<rect x="358.0" y="842" width="284.0" height="34" fill="#FFFFFF" stroke="#1F5C4A" stroke-width="0.9"/>
+<path d="M367.0,853.808 L367.0,862.7 L382.0,862.7 L382.0,853.808 L376.3,853.808 L373.3,851 L367.0,851 Z" fill="none" stroke="#1F5C4A" stroke-width="1.4"/>
+<text x="388.0" y="863.0" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="11.3" font-weight="700" fill="#111111">interfaces/</text>
+<rect x="650.0" y="842" width="284.0" height="34" fill="#FFFFFF" stroke="#1F5C4A" stroke-width="0.9"/>
+<path d="M659.0,853.808 L659.0,862.7 L674.0,862.7 L674.0,853.808 L668.3,853.808 L665.3,851 L659.0,851 Z" fill="none" stroke="#1F5C4A" stroke-width="1.4"/>
+<text x="680.0" y="863.0" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="11.3" font-weight="700" fill="#111111">nat/</text>
+<rect x="66.0" y="884" width="284.0" height="34" fill="#FFFFFF" stroke="#1F5C4A" stroke-width="0.9"/>
+<path d="M75.0,895.808 L75.0,904.7 L90.0,904.7 L90.0,895.808 L84.3,895.808 L81.3,893 L75.0,893 Z" fill="none" stroke="#1F5C4A" stroke-width="1.4"/>
+<text x="96.0" y="905.0" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="11.3" font-weight="700" fill="#111111">routing/</text>
+<rect x="358.0" y="884" width="284.0" height="34" fill="#FFFFFF" stroke="#1F5C4A" stroke-width="0.9"/>
+<path d="M367.0,895.808 L367.0,904.7 L382.0,904.7 L382.0,895.808 L376.3,895.808 L373.3,893 L367.0,893 Z" fill="none" stroke="#1F5C4A" stroke-width="1.4"/>
+<text x="388.0" y="905.0" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="11.3" font-weight="700" fill="#111111">sftp/</text>
+<rect x="650.0" y="884" width="284.0" height="34" fill="#FFFFFF" stroke="#1F5C4A" stroke-width="0.9"/>
+<path d="M659.0,895.808 L659.0,904.7 L674.0,904.7 L674.0,895.808 L668.3,895.808 L665.3,893 L659.0,893 Z" fill="none" stroke="#1F5C4A" stroke-width="1.4"/>
+<text x="680.0" y="905.0" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="11.3" font-weight="700" fill="#111111">switching/</text>
+<rect x="66.0" y="926" width="284.0" height="34" fill="#FFFFFF" stroke="#1F5C4A" stroke-width="0.9"/>
+<path d="M75.0,937.808 L75.0,946.7 L90.0,946.7 L90.0,937.808 L84.3,937.808 L81.3,935 L75.0,935 Z" fill="none" stroke="#1F5C4A" stroke-width="1.4"/>
+<text x="96.0" y="947.0" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="11.3" font-weight="700" fill="#111111">syslog/</text>
+<rect x="358.0" y="926" width="284.0" height="34" fill="#FFFFFF" stroke="#1F5C4A" stroke-width="0.9"/>
+<path d="M367.0,937.808 L367.0,946.7 L382.0,946.7 L382.0,937.808 L376.3,937.808 L373.3,935 L367.0,935 Z" fill="none" stroke="#1F5C4A" stroke-width="1.4"/>
+<text x="388.0" y="947.0" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="11.3" font-weight="700" fill="#111111">terminal/</text>
+<rect x="50" y="700" width="900" height="274" fill="none" stroke="#111111" stroke-width="1.1"/>
+<line x1="500.0" y1="974" x2="500.0" y2="1000" stroke="#555555" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="50" y="1000" width="900" height="46" fill="#F6F7F8" stroke="#111111" stroke-width="1.1"/>
+<rect x="50" y="1000" width="5" height="46" fill="#37424A"/>
+<path d="M68,1016.3696 L68,1027.04 L86,1027.04 L86,1016.3696 L78.56,1016.3696 L75.56,1013 L68,1013 Z" fill="none" stroke="#37424A" stroke-width="1.4"/>
+<text x="94" y="1020" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="15" font-weight="700" fill="#37424A">infrastructure/</text>
+<text x="94" y="1037" font-family="'Liberation Serif', 'Times New Roman', Times, serif" font-size="11" font-style="italic" fill="#555555">Lớp hạ tầng và adapter kỹ thuật</text>
+<rect x="66" y="1056" width="868" height="40" fill="#FFFFFF" stroke="#999999" stroke-width="0.9"/>
+<path d="M78,1069.9952 L78,1079.48 L94,1079.48 L94,1069.9952 L87.72,1069.9952 L84.72,1067 L78,1067 Z" fill="none" stroke="#37424A" stroke-width="1.4"/>
+<text x="102" y="1073" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="12" font-weight="700" fill="#111111">database/</text>
+<text x="102" y="1087" font-family="'Liberation Serif', 'Times New Roman', Times, serif" font-size="10.3" fill="#555555">Lược đồ SQLite (schemas/), adapter kết nối</text>
+<rect x="66" y="1104" width="868" height="40" fill="#FFFFFF" stroke="#999999" stroke-width="0.9"/>
+<path d="M78,1117.9952 L78,1127.48 L94,1127.48 L94,1117.9952 L87.72,1117.9952 L84.72,1115 L78,1115 Z" fill="none" stroke="#37424A" stroke-width="1.4"/>
+<text x="102" y="1121" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="12" font-weight="700" fill="#111111">network/</text>
+<text x="102" y="1135" font-family="'Liberation Serif', 'Times New Roman', Times, serif" font-size="10.3" fill="#555555">DeviceSessionRegistry, Host Lock, Netmiko Adapter</text>
+<rect x="66" y="1152" width="868" height="40" fill="#FFFFFF" stroke="#999999" stroke-width="0.9"/>
+<path d="M78,1165.9952 L78,1175.48 L94,1175.48 L94,1165.9952 L87.72,1165.9952 L84.72,1163 L78,1163 Z" fill="none" stroke="#37424A" stroke-width="1.4"/>
+<text x="102" y="1169" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="12" font-weight="700" fill="#111111">workspace/</text>
+<text x="102" y="1183" font-family="'Liberation Serif', 'Times New Roman', Times, serif" font-size="10.3" fill="#555555">Đóng gói .ntp, quản lý Snapshot và mã hóa</text>
+<rect x="50" y="1000" width="900" height="206" fill="none" stroke="#111111" stroke-width="1.1"/>
+<line x1="500.0" y1="1206" x2="500.0" y2="1232" stroke="#555555" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="50" y="1232" width="900" height="46" fill="#F4F4F4" stroke="#111111" stroke-width="1.1"/>
+<rect x="50" y="1232" width="5" height="46" fill="#1A1A1A"/>
+<text x="68" y="1252" font-family="'Liberation Serif', 'Times New Roman', Times, serif" font-size="15" font-weight="700" fill="#1A1A1A">Tệp và thư mục gốc khác</text>
+<text x="68" y="1269" font-family="'Liberation Serif', 'Times New Roman', Times, serif" font-size="11" font-style="italic" fill="#555555">Thành phần cấp cao nhất của app/</text>
+<rect x="66" y="1288" width="868" height="40" fill="#FFFFFF" stroke="#999999" stroke-width="0.9"/>
+<path d="M78,1301.9952 L78,1311.48 L94,1311.48 L94,1301.9952 L87.72,1301.9952 L84.72,1299 L78,1299 Z" fill="none" stroke="#1A1A1A" stroke-width="1.4"/>
+<text x="102" y="1305" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="12" font-weight="700" fill="#111111">scripts/</text>
+<text x="102" y="1319" font-family="'Liberation Serif', 'Times New Roman', Times, serif" font-size="10.3" fill="#555555">build_databases.py, validate_structure.py</text>
+<rect x="66" y="1336" width="868" height="40" fill="#FFFFFF" stroke="#999999" stroke-width="0.9"/>
+<path d="M78,1346 L86.2368,1346 L90.48,1350.2432 L90.48,1362 L78,1362 Z" fill="none" stroke="#1A1A1A" stroke-width="1.4"/><path d="M86.2368,1346 L86.2368,1350.2432 L90.48,1350.2432" fill="none" stroke="#1A1A1A" stroke-width="1.4"/>
+<text x="102" y="1353" font-family="'DejaVu Sans Mono', Consolas, 'Courier New', monospace" font-size="12" font-weight="700" fill="#111111">main.py</text>
+<text x="102" y="1367" font-family="'Liberation Serif', 'Times New Roman', Times, serif" font-size="10.3" fill="#555555">Composition Root khởi tạo toàn bộ ứng dụng</text>
+<rect x="50" y="1232" width="900" height="158" fill="none" stroke="#111111" stroke-width="1.1"/>
+</svg>

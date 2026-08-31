@@ -61,7 +61,7 @@ if errorlevel 1 exit /b %errorlevel%
 if not errorlevel 1 exit /b 0
 echo.
 echo WARNING: Optional Cython acceleration could not be built or loaded.
-echo NetworkTools will use the built-in Python sync engine instead.
+echo CAMS will use the built-in Python sync engine instead.
 for %%F in ("features\devices\sync\_engine*.pyd" "features\devices\sync\_engine*.so") do if exist "%%~fF" (
     move /Y "%%~fF" "%%~fF.disabled" >nul
     echo Disabled unusable extension: %%~nxF
@@ -92,7 +92,7 @@ if errorlevel 1 (
     exit /b 1
 )
 uv --version
-echo Starting NetworkTools...
+echo Starting CAMS...
 uv run --extra speed python main.py
 exit /b %errorlevel%
 
@@ -104,7 +104,7 @@ exit /b %errorlevel%
 
 :menu
 echo.
-echo NetworkTools
+echo CAMS
 echo   1^) Sync dependencies
 echo   2^) Build and verify Cython
 echo   3^) Full setup ^(sync + optional Cython^)

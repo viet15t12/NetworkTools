@@ -1,4 +1,4 @@
-# Kế hoạch tái cấu trúc thư mục `app/` của NetworkTools
+# Kế hoạch tái cấu trúc thư mục `app/` của CAMS
 
 > Phạm vi đối chiếu: `app/` tại commit `57d6baf621d8ec68aafec4b5a7891f8aa610ec7e`  
 > Mục tiêu: tổ chức lại mã nguồn PyQt6/QML theo chức năng, giữ ứng dụng chạy được sau từng giai đoạn và bổ sung hệ thống tài liệu trong từng thư mục.

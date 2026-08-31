@@ -20,7 +20,7 @@ Window {
     flags: Qt.Dialog | Qt.FramelessWindowHint
 
     // Các biến cho bên ngoài truyền vào
-    property string titleText: "NetworkTools Alert"
+    property string titleText: "CAMS Alert"
     property string messageText: ""
     property bool isError: false
 

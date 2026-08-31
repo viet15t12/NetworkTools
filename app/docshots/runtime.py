@@ -505,7 +505,7 @@ class FixtureBundle:
         )
         app = QCoreApplication.instance()
         if app is not None:
-            app.setOrganizationName("NetworkToolsDocumentation")
+            app.setOrganizationName("CAMSDocumentation")
             app.setApplicationName("Docshots")
         settings = QSettings()
         settings.clear()
@@ -610,7 +610,7 @@ def _application() -> QApplication:
     app = QApplication.instance()
     if app is None:
         app = QApplication(["networktools-docshots"])
-    app.setOrganizationName("NetworkToolsDocumentation")
+    app.setOrganizationName("CAMSDocumentation")
     app.setOrganizationDomain("documentation.invalid")
     app.setApplicationName("Docshots")
     return app

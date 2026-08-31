@@ -135,7 +135,7 @@ def _sheet_xml(rows: Sequence[Mapping[str, object]], filters: Mapping[str, objec
     sheet_rows: list[str] = []
     sheet_rows.append(
         '<row r="1" ht="28" customHeight="1">'
-        + _inline_cell("A1", "NetworkTools Syslog Export", 1) + "</row>"
+        + _inline_cell("A1", "CAMS Syslog Export", 1) + "</row>"
     )
     sheet_rows.append(
         '<row r="2">' + _inline_cell("A2", "Exported at (UTC)", 2)
@@ -301,12 +301,12 @@ def export_logs_xlsx(
     created = datetime.now(timezone.utc).isoformat(timespec="seconds")
     core = f'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <dc:title>NetworkTools Syslog Export</dc:title><dc:creator>NetworkTools</dc:creator>
+  <dc:title>CAMS Syslog Export</dc:title><dc:creator>CAMS</dc:creator>
   <dcterms:created xsi:type="dcterms:W3CDTF">{created}</dcterms:created>
 </cp:coreProperties>'''
     app = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
-  <Application>NetworkTools</Application><AppVersion>1.0</AppVersion>
+  <Application>CAMS</Application><AppVersion>1.0</AppVersion>
 </Properties>'''
 
     file_descriptor, temporary_name = tempfile.mkstemp(

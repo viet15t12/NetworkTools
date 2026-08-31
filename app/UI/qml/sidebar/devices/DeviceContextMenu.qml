@@ -385,7 +385,7 @@ Rectangle {
 
         ContextMenuItem {
             visible: !contextMenu.selectionMode
-            text: "NetworkTools Terminal"
+            text: "CAMS Terminal"
             shortcutText: "Ctrl+`"
             iconSource: AppAssets.navigationTerminal
             onTriggered: {

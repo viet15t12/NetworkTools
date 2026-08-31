@@ -1,4 +1,4 @@
-# NetworkTools desktop app
+# CAMS desktop app
 
 Ứng dụng desktop PyQt6/QML để quản lý inventory, cấu hình và giám sát thiết bị mạng. QML module công khai vẫn là `UI`; Python cung cấp QObject/slot, feature service/repository/worker và adapter SQLite/network.
 
@@ -8,7 +8,7 @@
 - PyQt6 6.7–6.10 và dependency trong `pyproject.toml`
 
 Khởi chạy tương tác, bao gồm kiểm tra `uv`, đồng bộ dependency,
-thử build/kiểm tra Cython, kiểm tra NetworkTools Terminal companion và chạy app:
+thử build/kiểm tra Cython, kiểm tra CAMS Terminal companion và chạy app:
 
 ```bash
 ./networktools.sh
@@ -145,7 +145,7 @@ app/
 | `switching/` | switchport, VLAN, SVI/L3, monitoring và View/Push Layer 2 Cisco IOS |
 | `syslog/` | listener/filter log và nhiều Syslog destination theo từng router/SW2/SW3 |
 | `sftp/` | kết nối, duyệt file và hàng đợi truyền SFTP |
-| `terminal/` | session/QProcess/NTTP manager cho NetworkTools Terminal độc lập |
+| `terminal/` | session/QProcess/NTTP manager cho CAMS Terminal độc lập |
 | `external_tools/` | catalog và metadata cho ứng dụng ngoài |
 | `config_backup/` | lịch sử running-config theo thiết bị bằng Dulwich |
 | `config_sync/` | policy đồng bộ router/switch, preview xung đột Manual Sync |
@@ -237,7 +237,7 @@ không có capability `save_config`; app không tự mở kết nối ngầm.
 | Tên | Python | Vai trò |
 | --- | --- | --- |
 | `dbManager` | `DatabaseManager` | CRUD, feature facade, preview/push và delegate đọc lịch sử config backup |
-| `cli` | `TerminalHelper` | mở/focus NetworkTools Terminal ngoài app, facade batch/vòng đời session và `saveDeviceConfigAsync(host)`; API batch gồm `connectHostsAsync`, `getRunningConfigsAsync`, `disconnectHostsAsync`, `cancelBatch` |
+| `cli` | `TerminalHelper` | mở/focus CAMS Terminal ngoài app, facade batch/vòng đời session và `saveDeviceConfigAsync(host)`; API batch gồm `connectHostsAsync`, `getRunningConfigsAsync`, `disconnectHostsAsync`, `cancelBatch` |
 | `networkMonitor` | `NetworkMonitor` | trạng thái mạng/RAM |
 | `statusBarSettings` | `StatusBarSettings` | tùy chọn status bar |
 | `themeSettings` | `ThemeSettings` | theme persistence |
@@ -248,7 +248,7 @@ không có capability `save_config`; app không tự mở kết nối ngầm.
 | `syslogManager` / `syslogSettings` | Syslog feature | listener/query/filter và cấu hình destination theo thiết bị |
 
 Feature bar, menu chuột phải và `Ctrl+\`` mở hoặc focus ứng dụng đồng hành
-`networktools-terminal`. NetworkTools sinh UUID, khởi chạy bằng `QProcess`, theo
+`networktools-terminal`. CAMS sinh UUID, khởi chạy bằng `QProcess`, theo
 dõi state qua NTTP/1 user-local và không render terminal. SSH child không dùng
 password trên argv; Cisco IOS legacy dùng Paramiko PTY riêng để tránh giới hạn
 SHA-1 của Fedora libcrypto. Terminal không dùng chung Netmiko session automation. Tích hợp

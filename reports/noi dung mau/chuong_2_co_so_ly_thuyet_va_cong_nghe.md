@@ -10,7 +10,7 @@ Trong cách quản trị truyền thống, kỹ sư mạng thường truy cập 
 
 Quản lý tập trung hướng đến việc đưa thông tin thiết bị, trạng thái kết nối, dữ liệu cấu hình và lịch sử thao tác về một hệ thống thống nhất. Thay vì xem từng thiết bị như một thực thể hoàn toàn tách biệt, phần mềm xây dựng một lớp quản lý chung để người dùng lựa chọn thiết bị, chỉnh sửa dữ liệu, kiểm tra cấu hình dự kiến và thực hiện triển khai khi cần thiết.
 
-Đối với đề tài NetworkTools, quản lý thiết bị được xem theo ba nhóm chính: **inventory**, **kết nối** và **cấu hình**. Inventory mô tả thiết bị đang được quản lý; lớp kết nối xác định cách phần mềm giao tiếp với thiết bị; lớp cấu hình quản lý dữ liệu mà người dùng muốn áp dụng. Cách phân chia này giúp tách thông tin quản trị khỏi logic giao tiếp và là nền tảng cho thiết kế module ở các chương sau.
+Đối với đề tài CAMS, quản lý thiết bị được xem theo ba nhóm chính: **inventory**, **kết nối** và **cấu hình**. Inventory mô tả thiết bị đang được quản lý; lớp kết nối xác định cách phần mềm giao tiếp với thiết bị; lớp cấu hình quản lý dữ liệu mà người dùng muốn áp dụng. Cách phân chia này giúp tách thông tin quản trị khỏi logic giao tiếp và là nền tảng cho thiết kế module ở các chương sau.
 
 ### 2.1.2. Tự động hóa mạng
 
@@ -60,7 +60,7 @@ Push
 Verify
 ```
 
-Việc tách các trạng thái giúp thao tác chỉnh sửa trên giao diện không đồng nghĩa với thay đổi ngay thiết bị thật. Đây là một nguyên tắc quan trọng đối với NetworkTools vì hệ thống hướng tới quy trình người dùng chuẩn bị cấu hình, xem trước rồi mới chủ động triển khai. Backup lịch sử cấu hình cũng cần được phân biệt với rollback tự động; có phiên bản cũ để tham khảo chưa đồng nghĩa hệ thống đã có cơ chế khôi phục tự động hoàn chỉnh.
+Việc tách các trạng thái giúp thao tác chỉnh sửa trên giao diện không đồng nghĩa với thay đổi ngay thiết bị thật. Đây là một nguyên tắc quan trọng đối với CAMS vì hệ thống hướng tới quy trình người dùng chuẩn bị cấu hình, xem trước rồi mới chủ động triển khai. Backup lịch sử cấu hình cũng cần được phân biệt với rollback tự động; có phiên bản cũ để tham khảo chưa đồng nghĩa hệ thống đã có cơ chế khôi phục tự động hoàn chỉnh.
 
 ## 2.2. Giao diện dòng lệnh và giao thức quản trị thiết bị
 
@@ -87,7 +87,7 @@ CLI có ưu điểm là tương thích với nhiều thiết bị đang được
 Secure Shell (SSH) là giao thức truy cập từ xa có cơ chế bảo vệ kết nối. Kiến trúc SSH được mô tả trong RFC 4251 [2]. Trong quản trị mạng, SSH thường được sử dụng để xác thực người dùng, tạo kênh CLI và trao đổi dữ liệu giữa phần mềm quản trị với router hoặc switch.
 
 ```text
-NetworkTools
+CAMS
     │
     │ SSH
     ▼
@@ -120,7 +120,7 @@ Mở một kết nối mới cho từng câu lệnh làm tăng số lần xác t
 
 Bên cạnh CLI, thiết bị mạng hiện đại có thể cung cấp giao diện quản trị có cấu trúc. NETCONF được chuẩn hóa trong RFC 6241 [7], còn RESTCONF được mô tả trong RFC 8040 [8]. Hai giao thức có thể kết hợp với mô hình dữ liệu YANG để biểu diễn cấu hình và trạng thái rõ ràng hơn so với text CLI.
 
-NETCONF sử dụng các thao tác RPC để truy xuất hoặc chỉnh sửa cấu hình. RESTCONF cung cấp cách truy cập dữ liệu quản trị qua HTTP. Trong NetworkTools, `ncclient` và `requests` tạo nền tảng cho các phương thức này, nhưng luồng quản trị thiết bị chính vẫn tập trung vào SSH/Telnet và CLI. Vì vậy, NETCONF/RESTCONF được xem là công nghệ bổ trợ và hướng mở rộng cho các module phù hợp, không phải cơ chế duy nhất của hệ thống.
+NETCONF sử dụng các thao tác RPC để truy xuất hoặc chỉnh sửa cấu hình. RESTCONF cung cấp cách truy cập dữ liệu quản trị qua HTTP. Trong CAMS, `ncclient` và `requests` tạo nền tảng cho các phương thức này, nhưng luồng quản trị thiết bị chính vẫn tập trung vào SSH/Telnet và CLI. Vì vậy, NETCONF/RESTCONF được xem là công nghệ bổ trợ và hướng mở rộng cho các module phù hợp, không phải cơ chế duy nhất của hệ thống.
 
 ## 2.3. Các nghiệp vụ mạng thuộc phạm vi đề tài
 
@@ -235,7 +235,7 @@ First Hop Redundancy Protocol (FHRP) là nhóm cơ chế cung cấp dự phòng 
        R1           R2
 ```
 
-Trong switching, VLAN chia hạ tầng Layer 2 thành các miền broadcast logic. Access port thường thuộc một VLAN, trunk có thể mang nhiều VLAN qua tagging 802.1Q, còn SVI cung cấp giao diện Layer 3 cho VLAN trên multilayer switch. FHRP và switching được trình bày ở mức nền tảng vì chúng mở rộng phạm vi NetworkTools sang bài toán đa thiết bị và quản lý Layer 2/Layer 3.
+Trong switching, VLAN chia hạ tầng Layer 2 thành các miền broadcast logic. Access port thường thuộc một VLAN, trunk có thể mang nhiều VLAN qua tagging 802.1Q, còn SVI cung cấp giao diện Layer 3 cho VLAN trên multilayer switch. FHRP và switching được trình bày ở mức nền tảng vì chúng mở rộng phạm vi CAMS sang bài toán đa thiết bị và quản lý Layer 2/Layer 3.
 
 ## 2.4. Cơ sở dữ liệu và SQLite
 
@@ -259,7 +259,7 @@ Quan hệ một-nhiều phù hợp với thực tế một thiết bị có nhi�
 
 ### 2.4.2. SQLite
 
-SQLite là hệ quản trị cơ sở dữ liệu quan hệ nhúng. Dữ liệu thường được lưu trong file và ứng dụng truy cập trực tiếp thông qua thư viện, không cần triển khai database server riêng. Đặc điểm này phù hợp với ứng dụng desktop local-first như NetworkTools.
+SQLite là hệ quản trị cơ sở dữ liệu quan hệ nhúng. Dữ liệu thường được lưu trong file và ứng dụng truy cập trực tiếp thông qua thư viện, không cần triển khai database server riêng. Đặc điểm này phù hợp với ứng dụng desktop local-first như CAMS.
 
 SQLite hỗ trợ SQL, transaction, index, constraint và foreign key. Tuy nhiên, khả năng ghi đồng thời khác với các hệ quản trị cơ sở dữ liệu server chuyên dụng. Khi nhiều worker cập nhật gần như cùng lúc, backend cần giữ transaction ngắn và hạn chế giữ write lock không cần thiết.
 
@@ -273,7 +273,7 @@ Constraint như `NOT NULL`, `UNIQUE`, `CHECK` và foreign key hỗ trợ bảo v
 
 ### 2.5.1. Python trong tự động hóa mạng
 
-Python có hệ sinh thái thư viện mạnh cho SSH, REST API, NETCONF, template, database và automation. Trong NetworkTools, Python có thể đảm nhiệm xử lý nghiệp vụ, truy cập SQLite, sinh cấu hình, điều phối worker và cung cấp object cho giao diện Qt.
+Python có hệ sinh thái thư viện mạnh cho SSH, REST API, NETCONF, template, database và automation. Trong CAMS, Python có thể đảm nhiệm xử lý nghiệp vụ, truy cập SQLite, sinh cấu hình, điều phối worker và cung cấp object cho giao diện Qt.
 
 Việc sử dụng Python không tự động tạo ra kiến trúc tốt. Nếu UI trực tiếp truy cập SQL hoặc gửi SSH, code vẫn khó bảo trì. Vì vậy, Python cần được tổ chức theo các lớp có trách nhiệm rõ ràng như service, repository, worker và infrastructure.
 
@@ -400,7 +400,7 @@ Router/Switch → Syslog Receiver → Parser → Storage → UI
 
 SFTP cung cấp khả năng truyền file trên kênh bảo mật dựa trên SSH. Trong ứng dụng desktop, thao tác truyền file có thể kéo dài nên cần được thực hiện dưới dạng tác vụ nền và báo tiến độ về giao diện.
 
-Hai chức năng này mở rộng NetworkTools từ công cụ cấu hình sang hướng quản lý tập trung hơn. Tuy nhiên, chúng đóng vai trò hỗ trợ cho các nghiệp vụ cấu hình cốt lõi như interface, routing, DHCP, ACL và NAT.
+Hai chức năng này mở rộng CAMS từ công cụ cấu hình sang hướng quản lý tập trung hơn. Tuy nhiên, chúng đóng vai trò hỗ trợ cho các nghiệp vụ cấu hình cốt lõi như interface, routing, DHCP, ACL và NAT.
 
 ## 2.9. Nguyên tắc kiểm thử phần mềm
 
@@ -435,7 +435,7 @@ Một công cụ automation cần bảo đảm môi trường phát triển khô
 Sau kiểm thử logic, hệ thống mạng vẫn cần thử nghiệm end-to-end trên thiết bị hoặc môi trường mô phỏng như EVE-NG/GNS3:
 
 ```text
-NetworkTools
+CAMS
     ↓
 SSH/Telnet
     ↓
@@ -473,11 +473,11 @@ SQLite                    Session / Connector
                             Router/Switch
 ```
 
-Hai nguyên tắc quan trọng được rút ra. Thứ nhất, presentation không nên phụ thuộc trực tiếp vào công nghệ kết nối. Người dùng thực hiện thao tác trên QML nhưng QML không cần biết Netmiko hoặc ncclient được gọi ra sao. Thứ hai, nghiệp vụ cần tách khỏi persistence và network adapter để có thể kiểm thử và mở rộng độc lập. Đây là cơ sở lý thuyết trực tiếp cho kiến trúc `QML → slot/service → repository/worker → infrastructure` được áp dụng trong thiết kế NetworkTools.
+Hai nguyên tắc quan trọng được rút ra. Thứ nhất, presentation không nên phụ thuộc trực tiếp vào công nghệ kết nối. Người dùng thực hiện thao tác trên QML nhưng QML không cần biết Netmiko hoặc ncclient được gọi ra sao. Thứ hai, nghiệp vụ cần tách khỏi persistence và network adapter để có thể kiểm thử và mở rộng độc lập. Đây là cơ sở lý thuyết trực tiếp cho kiến trúc `QML → slot/service → repository/worker → infrastructure` được áp dụng trong thiết kế CAMS.
 
 ## 2.11. Tổng kết chương
 
-Chương này đã trình bày các cơ sở lý thuyết và công nghệ phục vụ xây dựng NetworkTools. Các nội dung chính gồm quản lý cấu hình theo trạng thái, CLI, SSH/Telnet, NETCONF/RESTCONF, interface, DHCP, định tuyến, ACL, NAT, FHRP, switching, cơ sở dữ liệu SQLite, Python, Qt Quick/QML, PyQt6 và các thư viện tự động hóa. Bên cạnh đó, chương đã làm rõ nhu cầu xử lý tác vụ nền, giới hạn concurrency, khóa theo host và các cấp kiểm thử phần mềm.
+Chương này đã trình bày các cơ sở lý thuyết và công nghệ phục vụ xây dựng CAMS. Các nội dung chính gồm quản lý cấu hình theo trạng thái, CLI, SSH/Telnet, NETCONF/RESTCONF, interface, DHCP, định tuyến, ACL, NAT, FHRP, switching, cơ sở dữ liệu SQLite, Python, Qt Quick/QML, PyQt6 và các thư viện tự động hóa. Bên cạnh đó, chương đã làm rõ nhu cầu xử lý tác vụ nền, giới hạn concurrency, khóa theo host và các cấp kiểm thử phần mềm.
 
 Những nội dung trên là cơ sở để Chương 3 chuyển từ “công nghệ có thể sử dụng” sang “hệ thống được phân tích và thiết kế như thế nào”, bao gồm yêu cầu chức năng, kiến trúc phân lớp, mô hình dữ liệu, cơ chế View & Push, quản lý session và thực thi đa thiết bị.
 

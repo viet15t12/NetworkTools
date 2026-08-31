@@ -16,7 +16,7 @@ StandardDialog {
                            string password, bool setAsDefault)
 
     title: "Create New Project"
-    subtitle: "Start a NetworkTools workspace"
+    subtitle: "Start a CAMS workspace"
     preferredWidth: 600
     implicitHeight: protectProjectCheck.checked ? 625 : 485
 

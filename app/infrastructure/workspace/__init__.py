@@ -1,4 +1,4 @@
-"""Public API for NetworkTools project package handling."""
+"""Public API for CAMS project package handling."""
 
 from .crypto import Argon2Parameters, ENVELOPE_MAGIC, is_encrypted_package
 from .errors import (

@@ -167,7 +167,7 @@ Controls.MenuBar {
         }
         Controls.MenuSeparator {}
         Controls.MenuItem {
-            text: qsTr("About NetworkTools")
+            text: qsTr("About CAMS")
             onTriggered: root.invoke(root.aboutHandler)
         }
     }

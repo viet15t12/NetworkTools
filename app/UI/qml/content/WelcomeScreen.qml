@@ -23,7 +23,7 @@ Rectangle {
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: "NetworkTools"
+            text: "CAMS"
             color: Theme.textDisabled
             font.pixelSize: 32
             font.family: Theme.fontFamily

@@ -161,7 +161,7 @@ class ConfigBackupRepository:
     "message": "20/07/2026 14:35:27",
     "timestamp": 1784532927,
     "dateTime": "20/07/2026 14:35:27",
-    "author": "NetworkTools",
+    "author": "CAMS",
     "host": "10.2.3.1"
 }
 ```
@@ -206,7 +206,7 @@ Nên dùng múi giờ máy đang chạy ứng dụng và ghi timezone vào metad
 ### Author/committer
 
 ```text
-NetworkTools <networktools@localhost>
+CAMS <networktools@localhost>
 ```
 
 Có thể bổ sung hostname thiết bị vào message:
@@ -494,7 +494,7 @@ Cần đặc biệt xử lý:
 * Không nhận `commit_id` tùy ý rồi dùng làm đường dẫn.
 * Giới hạn lịch sử UI, ví dụ 100 commit mỗi lần.
 * Không checkout commit khi chỉ xem.
-* `backup/` tiếp tục nằm trong `.gitignore` của repository NetworkTools bên ngoài.
+* `backup/` tiếp tục nằm trong `.gitignore` của repository CAMS bên ngoài.
 * Không đưa `.git` bên trong các thư mục backup lên repository mã nguồn chính.
 
 ## 10. Dependency

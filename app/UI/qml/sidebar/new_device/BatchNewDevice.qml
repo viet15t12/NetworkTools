@@ -34,7 +34,7 @@ Window {
     readonly property int actionColumnWidth: 34
     readonly property string defaultOs: "cisco_ios"
     readonly property string defaultRole: "rou"
-    readonly property string sampleFileName: "Template_NetworkTools-MultipleDevices.xlsx"
+    readonly property string sampleFileName: "Template_CAMS-MultipleDevices.xlsx"
     property int rowRevision: 0
     property string formMessage: ""
     property string formSeverity: "info"

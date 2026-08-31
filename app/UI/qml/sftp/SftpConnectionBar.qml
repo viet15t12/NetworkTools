@@ -73,7 +73,7 @@ Rectangle {
         titleText: "Get running-config via SCP"
         confirmation: true
         acceptText: "Get config"
-        messageText: "NetworkTools will enable and save the Cisco SCP server setting "
+        messageText: "CAMS will enable and save the Cisco SCP server setting "
                      + "if it is missing, create a temporary running-config file in "
                      + "flash, download it, and remove the temporary file. Continue?"
         onAccepted: {

@@ -2,7 +2,7 @@
 """
 fake_syslog.py - Sinh log syslog giả lập (theo định dạng Cisco IOS) và gửi
 qua UDP hoặc TCP tới một syslog server, để test hệ thống thu thập/giám sát log
-(ví dụ NetworkTools).
+(ví dụ CAMS).
 
 Cách dùng:
     python3 fake_syslog.py --host 192.168.122.1 --port 5514 --count 20 --interval 1

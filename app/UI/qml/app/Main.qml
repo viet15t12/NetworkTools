@@ -13,8 +13,8 @@ StatefulWindow {
     title: (workspaceDisplayName !== ""
             ? workspaceDisplayName
               + (workspaceBackend !== null && workspaceBackend.dirty ? " *" : "")
-              + " - NetworkTools"
-            : "NetworkTools")
+              + " - CAMS"
+            : "CAMS")
 
     // =====================================================================
     // 1. PROPERTIES (Trạng thái và Cờ điều khiển)
@@ -117,7 +117,7 @@ StatefulWindow {
             root.pendingRollbackSnapshotId = snapshotId
             rollbackConfirmationDialog.messageText =
                 "Roll back the workspace to ‘" + label + "’? "
-                + "NetworkTools will create a pinned safety snapshot first."
+                + "CAMS will create a pinned safety snapshot first."
             rollbackConfirmationDialog.open()
         }
     }
@@ -420,7 +420,7 @@ StatefulWindow {
             return false
         }
         if (typeof cli === "undefined" || cli === null || !cli.openDeviceTerminal) {
-            statusBar.showMessage("NetworkTools Terminal backend is not available.", "error")
+            statusBar.showMessage("CAMS Terminal backend is not available.", "error")
             return false
         }
 
@@ -430,8 +430,8 @@ StatefulWindow {
         const message = result && result.message
                       ? String(result.message)
                       : (ok
-                         ? "NetworkTools Terminal opened for " + targetHost + "."
-                         : "Failed to open NetworkTools Terminal for " + targetHost + ".")
+                         ? "CAMS Terminal opened for " + targetHost + "."
+                         : "Failed to open CAMS Terminal for " + targetHost + ".")
         statusBar.showMessage(message, ok ? "success" : "error")
         return ok
     }
@@ -628,9 +628,9 @@ StatefulWindow {
         function onTerminalStateChanged(host, state) {
             root.recordTerminalState(host, state)
             if (state === "open")
-                statusBar.showMessage("NetworkTools Terminal is ready for " + host + ".", "success")
+                statusBar.showMessage("CAMS Terminal is ready for " + host + ".", "success")
             else if (state === "error")
-                statusBar.showMessage("NetworkTools Terminal failed for " + host + ".", "error")
+                statusBar.showMessage("CAMS Terminal failed for " + host + ".", "error")
         }
         function onTerminalError(host, message) {
             root.recordNotification(

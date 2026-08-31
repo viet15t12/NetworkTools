@@ -1,4 +1,4 @@
-"""Managed external NetworkTools Terminal lifecycle and device registry."""
+"""Managed external CAMS Terminal lifecycle and device registry."""
 
 from __future__ import annotations
 
@@ -68,7 +68,7 @@ class ManagedTerminalManager(QObject):
                 return self._result(
                     True,
                     "info",
-                    f"NetworkTools Terminal is already starting for {host}.",
+                    f"CAMS Terminal is already starting for {host}.",
                     state="starting",
                 )
             existing.restart_requested = True
@@ -76,7 +76,7 @@ class ManagedTerminalManager(QObject):
             return self._result(
                 True,
                 "info",
-                f"Restarting NetworkTools Terminal for {host}.",
+                f"Restarting CAMS Terminal for {host}.",
                 state="starting",
             )
 
@@ -117,7 +117,7 @@ class ManagedTerminalManager(QObject):
         return self._result(
             True,
             "success",
-            f"Starting NetworkTools Terminal for {device_name}.",
+            f"Starting CAMS Terminal for {device_name}.",
             state="starting",
             sessionId=session_id,
         )
@@ -131,7 +131,7 @@ class ManagedTerminalManager(QObject):
             return self._result(
                 True,
                 "info",
-                f"NetworkTools Terminal is still starting for {host}.",
+                f"CAMS Terminal is still starting for {host}.",
                 state="starting",
             )
         request_id = self._ipc.send_command(session.session_id, "window.focus")
@@ -145,7 +145,7 @@ class ManagedTerminalManager(QObject):
         return self._result(
             True,
             "success",
-            f"Requested focus for NetworkTools Terminal on {host}.",
+            f"Requested focus for CAMS Terminal on {host}.",
             state=session.ui_state,
             requestId=request_id,
         )
@@ -170,7 +170,7 @@ class ManagedTerminalManager(QObject):
         return self._result(
             True,
             "success",
-            f"Closing NetworkTools Terminal for {host}.",
+            f"Closing CAMS Terminal for {host}.",
             state="closed",
             requestId=request_id or "",
         )
@@ -184,7 +184,7 @@ class ManagedTerminalManager(QObject):
         result = self.close(host)
         return {
             **result,
-            "message": f"Restarting NetworkTools Terminal for {host}.",
+            "message": f"Restarting CAMS Terminal for {host}.",
             "state": "starting",
         }
 
@@ -351,7 +351,7 @@ class ManagedTerminalManager(QObject):
             return
         session.process_state = ProcessState.ERROR
         session.window_state = WindowState.ERROR
-        session.last_error = f"NetworkTools Terminal process error: {error}"
+        session.last_error = f"CAMS Terminal process error: {error}"
         self._set_state(session, "error", force=True)
         self.terminalError.emit(session.host, session.last_error)
         if error == QProcess.ProcessError.FailedToStart:

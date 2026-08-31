@@ -428,7 +428,7 @@ Item {
                 SwitchInspectorSection {
                     Layout.fillWidth: true
                     title: "Destination"
-                    helpText: "Server IP: Reachable IPv4 or IPv6 address of the collector.\n\nProtocol: UDP or TCP transport used by this destination.\n\nPort: Destination port from 1 to 65535; normally the NetworkTools listener port.\n\nSource interface: Cisco interface used as the source address of outgoing Syslog traffic. Prefer a reachable Loopback, management interface, or SVI."
+                    helpText: "Server IP: Reachable IPv4 or IPv6 address of the collector.\n\nProtocol: UDP or TCP transport used by this destination.\n\nPort: Destination port from 1 to 65535; normally the CAMS listener port.\n\nSource interface: Cisco interface used as the source address of outgoing Syslog traffic. Prefer a reachable Loopback, management interface, or SVI."
                     SwitchPropertyRow { visible: root.formMode === 0; label: "Server"; value: root.endpoint(root.activeData()); emphasize: true }
                     SwitchPropertyRow { visible: root.formMode === 0; label: "Protocol"; value: String(root.activeData().protocol || "—").toUpperCase() }
                     SwitchPropertyRow { visible: root.formMode === 0; label: "Source interface"; value: root.activeData().source_interface || "—" }

@@ -59,7 +59,7 @@ class SyslogExcelExportTests(unittest.TestCase):
                 sheet = workbook.read("xl/worksheets/sheet1.xml")
                 ElementTree.fromstring(sheet)
                 text = sheet.decode("utf-8")
-                self.assertIn("NetworkTools Syslog Export", text)
+                self.assertIn("CAMS Syslog Export", text)
                 self.assertIn("last:20 severity:error,notice", text)
                 self.assertIn('autoFilter ref="A6:L8"', text)
                 self.assertIn("Interface Loopback99 changed state to down", text)

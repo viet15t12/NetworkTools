@@ -238,7 +238,7 @@ def main():
 
 def print_help():
     """In hướng dẫn sử dụng CLI network-code."""
-    print("NetworkTools network-code CLI")
+    print("CAMS network-code CLI")
     print()
     print("Database creation is handled by the PyQt app.")
     print(f"This CLI reads DB paths from: {JSON_FILE}")

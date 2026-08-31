@@ -19,7 +19,7 @@ class DpapiCredentialStore:
     """Current-user Windows DPAPI storage backed by the application settings."""
 
     _PREFIX = "SFTP/credentials/"
-    _ENTROPY = b"NetworkTools:SFTP:v1"
+    _ENTROPY = b"CAMS:SFTP:v1"
     _UI_FORBIDDEN = 0x1
 
     def __init__(self, settings: QSettings) -> None:
@@ -85,7 +85,7 @@ class DpapiCredentialStore:
             if protect
             else self._crypt32.CryptUnprotectData
         )
-        description = "NetworkTools SFTP credential" if protect else None
+        description = "CAMS SFTP credential" if protect else None
         if not function(
             ctypes.byref(input_blob),
             description,

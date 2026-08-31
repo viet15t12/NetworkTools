@@ -6,7 +6,7 @@
 
 == Kết quả đạt được
 
-Đề tài nghiên cứu khoa học *"Xây dựng phần mềm quản lý tập trung và tự động hóa cấu hình thiết bị mạng"* (NetworkTools) đã hoàn thành xuất sắc các mục tiêu nghiên cứu và kỹ thuật đề ra ban đầu. Nhóm tác giả đã thiết kế và hiện thực hóa thành công một giải pháp phần mềm desktop hoàn chỉnh, kết hợp hài hòa giữa công nghệ giao diện đồ họa hiện đại, cơ sở dữ liệu quan hệ cục bộ và các thư viện tự động hóa mạng chuyên sâu.
+Đề tài nghiên cứu khoa học *"Nghiên cứu và xây dựng hệ thống quản lý tập trung, tự động hóa cấu hình và giám sát an ninh mạng"* (CAMS) đã hoàn thành xuất sắc các mục tiêu nghiên cứu và kỹ thuật đề ra ban đầu. Nhóm tác giả đã thiết kế và hiện thực hóa thành công một giải pháp phần mềm desktop hoàn chỉnh, kết hợp hài hòa giữa công nghệ giao diện đồ họa hiện đại, cơ sở dữ liệu quan hệ cục bộ và các thư viện tự động hóa mạng chuyên sâu.
 
 #report-table(
   columns: (23%, 39%, 38%),
@@ -58,7 +58,7 @@
 === Ý nghĩa thực tiễn
 
 - *Ứng dụng trong đào tạo và nghiên cứu:* Phần mềm là công cụ đắc lực hỗ trợ sinh viên ngành Công nghệ Kỹ thuật Viễn thông và Công nghệ Thông tin tại Học viện thực hành các môn học Mạng máy tính, Định tuyến và Chuyển mạch; giúp sinh viên sớm tiếp cận với tư duy Tự động hóa mạng (Network Automation) và Quản lý hạ tầng bằng mã (IaC).
-- *Tối ưu hóa thời gian và nâng cao độ tin cậy:* Kết quả đo đạc thực nghiệm chứng minh NetworkTools giúp rút ngắn trên 90% thời gian thiết lập hạ tầng mạng phòng lab và giảm thiểu tối đa các sai sót cú pháp hoặc nhầm lẫn tham số so với cấu hình thủ công qua CLI.
+- *Tối ưu hóa thời gian và nâng cao độ tin cậy:* Kết quả đo đạc thực nghiệm chứng minh CAMS giúp rút ngắn trên 90% thời gian thiết lập hạ tầng mạng phòng lab và giảm thiểu tối đa các sai sót cú pháp hoặc nhầm lẫn tham số so với cấu hình thủ công qua CLI.
 - *Quản lý tập trung và kiểm soát phiên bản:* Tính năng sao lưu Git tự động và đóng gói dự án `.ntp` giúp giảng viên và quản trị viên dễ dàng lưu trữ, phục hồi và phân phối các kịch bản bài tập lab chuẩn hóa.
 
 == Hạn chế của đề tài
@@ -72,7 +72,7 @@ Bên cạnh những kết quả tích cực đã đạt được, nhóm tác gi�
 
 == Lộ trình phát triển ưu tiên
 
-Nhằm mở rộng tính năng và nâng cao độ tin cậy của phần mềm NetworkTools, nhóm nghiên cứu đề xuất lộ trình phát triển theo 7 giai đoạn ưu tiên sau:
+Nhằm mở rộng tính năng và nâng cao độ tin cậy của phần mềm CAMS, nhóm nghiên cứu đề xuất lộ trình phát triển theo 7 giai đoạn ưu tiên sau:
 
 + *Giai đoạn 1 (Nâng cấp Bảo mật Secret):* Tích hợp kho quản lý khóa bí mật chuyên dụng (Secret Vault) hoặc tích hợp hoàn toàn cơ chế mã hóa mật khẩu qua OS Keyring (Windows DPAPI, Linux Secret Service / Keyutils), đảm bảo không còn mật khẩu dạng bản rõ trong cơ sở dữ liệu.
 + *Giai đoạn 2 (Xây dựng Engine Rollback thông minh):* Phát triển bộ điều khiển tự động tạo tập lệnh hoàn tác ngược (Reverse Command Generator) tương ứng với từng tác vụ Push, cho phép tự động khôi phục trạng thái thiết bị về điểm an toàn gần nhất khi phát sinh lỗi.
@@ -84,4 +84,4 @@ Nhằm mở rộng tính năng và nâng cao độ tin cậy của phần mềm 
 
 == Tổng kết
 
-Đề tài nghiên cứu khoa học *"Xây dựng phần mềm quản lý tập trung và tự động hóa cấu hình thiết bị mạng"* đã hoàn thành toàn diện các mục tiêu đặt ra, tạo nên một công cụ desktop *NetworkTools* ổn định, trực quan và hiệu quả. Sản phẩm không chỉ mang ý nghĩa thực tiễn cao trong việc hỗ trợ công tác học tập, giảng dạy tại Học viện Công nghệ Bưu chính Viễn thông mà còn là tiền đề vững chắc cho các nghiên cứu chuyên sâu tiếp theo trong kỷ nguyên Tự động hóa mạng và Quản trị hạ tầng thông minh.
+Đề tài nghiên cứu khoa học *"Nghiên cứu và xây dựng hệ thống quản lý tập trung, tự động hóa cấu hình và giám sát an ninh mạng"* đã hoàn thành toàn diện các mục tiêu đặt ra, tạo nên một công cụ desktop *CAMS* ổn định, trực quan và hiệu quả. Sản phẩm không chỉ mang ý nghĩa thực tiễn cao trong việc hỗ trợ công tác học tập, giảng dạy tại Học viện Công nghệ Bưu chính Viễn thông mà còn là tiền đề vững chắc cho các nghiên cứu chuyên sâu tiếp theo trong kỷ nguyên Tự động hóa mạng và Quản trị hạ tầng thông minh.

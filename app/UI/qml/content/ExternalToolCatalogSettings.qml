@@ -265,7 +265,7 @@ Rectangle {
                                         text: categoryRow.activeApplication !== ""
                                               ? categoryRow.activeApplication + " in use"
                                               : (categoryRow.builtInAvailable
-                                                 ? "Built into NetworkTools" : "No app in use")
+                                                 ? "Built into CAMS" : "No app in use")
                                         color: categoryRow.activeApplication !== ""
                                                ? Theme.alertSuccess
                                                : (categoryRow.builtInAvailable ? Theme.accentColor : Theme.textDisabled)
@@ -347,7 +347,7 @@ Rectangle {
                             anchors.fill: parent
                             anchors.leftMargin: Theme.spacing12
                             anchors.rightMargin: Theme.spacing12
-                            text: "NetworkTools does not install packages, run package managers, or change operating-system defaults."
+                            text: "CAMS does not install packages, run package managers, or change operating-system defaults."
                             color: Theme.textPrimary
                             font.pixelSize: Theme.fontSizeSmall
                             font.family: Theme.fontFamily

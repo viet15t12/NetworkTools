@@ -11,7 +11,7 @@ from pathlib import Path
 _QT_DLL_DIRECTORY_HANDLES: list[object] = []
 _QT_LIBRARY_HANDLES: list[object] = []
 _QT_LABS_PLATFORM_REGISTERED = False
-APP_USER_MODEL_ID = "3TM.NetworkTools.App"
+APP_USER_MODEL_ID = "3TM.CAMS.App"
 RUNTIME_QML_DIR = Path(__file__).resolve().parent / "runtime_qml"
 
 
@@ -191,7 +191,7 @@ def main() -> int:
     app = QApplication(qt_arguments)
     app.setOrganizationName("3TM")
     app.setOrganizationDomain("ptit.edu.vn")
-    app.setApplicationName("NetworkTools")
+    app.setApplicationName("CAMS")
 
     icon_path = QML_MODULE_DIR / "resources" / "brand" / "logo.ico"
     if icon_path.exists():

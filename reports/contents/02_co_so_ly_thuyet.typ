@@ -10,7 +10,7 @@ Trong mô hình quản trị truyền thống, kỹ sư mạng thường truy c�
 
 Quản lý tập trung hướng đến việc đưa thông tin thiết bị, trạng thái kết nối, dữ liệu cấu hình và lịch sử thao tác về một hệ thống thống nhất. Thay vì xem từng thiết bị như một thực thể hoàn toàn tách biệt, phần mềm xây dựng một lớp quản lý chung để người dùng lựa chọn thiết bị, chỉnh sửa dữ liệu, kiểm tra cấu hình dự kiến và thực hiện triển khai khi cần thiết.
 
-Đối với đề tài NetworkTools, quản lý thiết bị được xem theo ba nhóm chính: *inventory*, *kết nối* và *cấu hình*. Inventory mô tả thiết bị đang được quản lý; lớp kết nối xác định cách phần mềm giao tiếp với thiết bị; lớp cấu hình quản lý dữ liệu mà người dùng muốn áp dụng. Cách phân chia này giúp tách thông tin quản trị khỏi logic giao tiếp và là nền tảng cho thiết kế module ở các chương sau.
+Đối với đề tài CAMS, quản lý thiết bị được xem theo ba nhóm chính: *inventory*, *kết nối* và *cấu hình*. Inventory mô tả thiết bị đang được quản lý; lớp kết nối xác định cách phần mềm giao tiếp với thiết bị; lớp cấu hình quản lý dữ liệu mà người dùng muốn áp dụng. Cách phân chia này giúp tách thông tin quản trị khỏi logic giao tiếp và là nền tảng cho thiết kế module ở các chương sau.
 
 ===  Tự Động hóa mạng
 
@@ -40,7 +40,7 @@ Trong quản lý cấu hình, cần phân biệt trạng thái đang tồn tại
   caption: [Vòng đời một thay đổi cấu hình theo trạng thái],
 )
 
-Việc tách các trạng thái giúp thao tác chỉnh sửa trên giao diện không đồng nghĩa với thay đổi ngay thiết bị thật. Đây là nguyên tắc quan trọng đối với NetworkTools vì hệ thống hướng tới quy trình người dùng chuẩn bị cấu hình, xem trước rồi mới chủ động triển khai. Backup lịch sử cấu hình cũng cần được phân biệt với rollback tự động; có phiên bản cũ để tham khảo chưa đồng nghĩa hệ thống đã có cơ chế khôi phục tự động hoàn chỉnh.
+Việc tách các trạng thái giúp thao tác chỉnh sửa trên giao diện không đồng nghĩa với thay đổi ngay thiết bị thật. Đây là nguyên tắc quan trọng đối với CAMS vì hệ thống hướng tới quy trình người dùng chuẩn bị cấu hình, xem trước rồi mới chủ động triển khai. Backup lịch sử cấu hình cũng cần được phân biệt với rollback tự động; có phiên bản cũ để tham khảo chưa đồng nghĩa hệ thống đã có cơ chế khôi phục tự động hoàn chỉnh.
 
 == Giao diện dòng lệnh và giao thức quản trị thiết bị
 
@@ -65,7 +65,7 @@ Secure Shell (SSH) là giao thức truy cập từ xa có cơ chế bảo vệ k
 
 #figure(
   image("diagrams/04_ssh_connection.svg", width: 45%),
-  caption: [Kết nối từ NetworkTools tới thiết bị qua SSH],
+  caption: [Kết nối từ CAMS tới thiết bị qua SSH],
 )
 
 SSH được ưu tiên vì thông tin xác thực và nội dung phiên được bảo vệ tốt hơn so với Telnet. Trong Python, các thư viện như Paramiko và Netmiko hỗ trợ xử lý nhiều chi tiết liên quan đến kết nối, xác thực, prompt và gửi lệnh.
@@ -262,7 +262,7 @@ Quan hệ một-nhiều phù hợp với thực tế một thiết bị có nhi�
 
 === SQLite
 
-SQLite là hệ quản trị cơ sở dữ liệu quan hệ nhúng. Dữ liệu thường được lưu trong file và ứng dụng truy cập trực tiếp thông qua thư viện, không cần triển khai database server riêng. Đặc điểm này phù hợp với ứng dụng desktop local-first như NetworkTools.
+SQLite là hệ quản trị cơ sở dữ liệu quan hệ nhúng. Dữ liệu thường được lưu trong file và ứng dụng truy cập trực tiếp thông qua thư viện, không cần triển khai database server riêng. Đặc điểm này phù hợp với ứng dụng desktop local-first như CAMS.
 
 SQLite hỗ trợ SQL, transaction, index, constraint và foreign key. Tuy nhiên, khả năng ghi đồng thời khác với các hệ quản trị cơ sở dữ liệu server chuyên dụng. Khi nhiều worker cập nhật gần như cùng lúc, backend cần giữ transaction ngắn và hạn chế giữ write lock không cần thiết.
 
@@ -276,7 +276,7 @@ Constraint như `NOT NULL`, `UNIQUE`, `CHECK` và foreign key hỗ trợ bảo v
 
 === Python trong tự động hóa mạng
 
-Python có hệ sinh thái thư viện mạnh cho SSH, template, database và automation. Trong NetworkTools, Python có thể đảm nhiệm xử lý nghiệp vụ, truy cập SQLite, sinh cấu hình, điều phối worker và cung cấp object cho giao diện Qt.
+Python có hệ sinh thái thư viện mạnh cho SSH, template, database và automation. Trong CAMS, Python có thể đảm nhiệm xử lý nghiệp vụ, truy cập SQLite, sinh cấu hình, điều phối worker và cung cấp object cho giao diện Qt.
 
 Việc sử dụng Python không tự động tạo ra kiến trúc tốt. Nếu UI trực tiếp truy cập SQL hoặc gửi SSH, code vẫn khó bảo trì. Vì vậy, Python cần được tổ chức theo các lớp có trách nhiệm rõ ràng như service, repository, worker và infrastructure.
 
@@ -385,7 +385,7 @@ Syslog là cơ chế phổ biến để thiết bị gửi thông điệp sự k
 
 SFTP cung cấp khả năng truyền file trên kênh bảo mật dựa trên SSH. Trong ứng dụng desktop, thao tác truyền file có thể kéo dài nên cần được thực hiện dưới dạng tác vụ nền và báo tiến độ về giao diện.
 
-Hai chức năng này mở rộng NetworkTools từ công cụ cấu hình sang hướng quản lý tập trung hơn. Tuy nhiên, chúng đóng vai trò hỗ trợ cho các nghiệp vụ cấu hình cốt lõi như interface, routing, DHCP, ACL và NAT.
+Hai chức năng này mở rộng CAMS từ công cụ cấu hình sang hướng quản lý tập trung hơn. Tuy nhiên, chúng đóng vai trò hỗ trợ cho các nghiệp vụ cấu hình cốt lõi như interface, routing, DHCP, ACL và NAT.
 
 == Nguyên tắc kiểm thử phần mềm
 
@@ -437,10 +437,10 @@ Các thành phần được trình bày trong chương tạo thành một chuỗ
   caption: [Chuỗi xử lý tổng quan từ người dùng tới thiết bị],
 )
 
-Hai nguyên tắc quan trọng được rút ra. Thứ nhất, presentation không nên phụ thuộc trực tiếp vào công nghệ kết nối. Người dùng thực hiện thao tác trên QML nhưng QML không cần biết Netmiko được gọi ra sao. Thứ hai, nghiệp vụ cần tách khỏi persistence và network adapter để có thể kiểm thử và mở rộng độc lập. Đây là cơ sở lý thuyết trực tiếp cho kiến trúc `QML → slot/service → repository/worker → infrastructure` được áp dụng trong thiết kế NetworkTools.
+Hai nguyên tắc quan trọng được rút ra. Thứ nhất, presentation không nên phụ thuộc trực tiếp vào công nghệ kết nối. Người dùng thực hiện thao tác trên QML nhưng QML không cần biết Netmiko được gọi ra sao. Thứ hai, nghiệp vụ cần tách khỏi persistence và network adapter để có thể kiểm thử và mở rộng độc lập. Đây là cơ sở lý thuyết trực tiếp cho kiến trúc `QML → slot/service → repository/worker → infrastructure` được áp dụng trong thiết kế CAMS.
 
 == Tổng kết chương
 
-Chương này đã trình bày các cơ sở lý thuyết và công nghệ phục vụ xây dựng NetworkTools. Các nội dung chính gồm quản lý cấu hình theo trạng thái, CLI, SSH/Telnet, interface, DHCP, định tuyến, ACL, NAT, FHRP, switching, cơ sở dữ liệu SQLite, Python, Qt Quick/QML, PyQt6 và các thư viện tự động hóa. Bên cạnh đó, chương đã làm rõ nhu cầu xử lý tác vụ nền, giới hạn concurrency, khóa theo host và các cấp kiểm thử phần mềm.
+Chương này đã trình bày các cơ sở lý thuyết và công nghệ phục vụ xây dựng CAMS. Các nội dung chính gồm quản lý cấu hình theo trạng thái, CLI, SSH/Telnet, interface, DHCP, định tuyến, ACL, NAT, FHRP, switching, cơ sở dữ liệu SQLite, Python, Qt Quick/QML, PyQt6 và các thư viện tự động hóa. Bên cạnh đó, chương đã làm rõ nhu cầu xử lý tác vụ nền, giới hạn concurrency, khóa theo host và các cấp kiểm thử phần mềm.
 
 Những nội dung trên là cơ sở để Chương 3 chuyển từ "công nghệ có thể sử dụng" sang "hệ thống được phân tích và thiết kế như thế nào", bao gồm yêu cầu chức năng, kiến trúc phân lớp, mô hình dữ liệu, cơ chế View & Push, quản lý session và thực thi đa thiết bị.

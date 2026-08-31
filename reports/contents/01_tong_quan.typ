@@ -10,7 +10,7 @@ Trong bối cảnh hạ tầng mạng viễn thông và công nghệ thông tin 
 - *Hiện tượng sai lệch cấu hình (Configuration Drift):* Việc thiếu một hệ thống ghi nhận cấu hình tập trung khiến trạng thái thực tế trên các thiết bị dễ bị phân tán, mất đồng bộ so với thiết kế ban đầu.
 - *Thiếu hụt cơ sở dữ liệu quản trị tập trung:* Hầu hết các phiên cấu hình CLI chỉ tồn tại cục bộ trên bộ nhớ thiết bị, không có cơ chế lưu trữ lịch sử, theo dõi phiên bản hay quản lý không gian làm việc đồng nhất.
 
-Bên cạnh đó, xu hướng Tự động hóa mạng (Network Automation) và Quản lý hạ tầng bằng mã (Infrastructure as Code - IaC) đang trở thành tiêu chuẩn vận hành hiện đại trong kỷ nguyên số. Việc ứng dụng các ngôn ngữ lập trình mạnh mẽ như Python kết hợp với giao diện đồ họa trực quan không chỉ giúp chuẩn hóa quy trình, giảm thiểu sai sót do con người mà còn nâng cao tính sẵn sàng của hệ thống. Xuất phát từ nhu cầu thực tiễn đó, đề tài *"Xây dựng phần mềm quản lý tập trung và tự động hóa cấu hình thiết bị mạng"* (NetworkTools) được lựa chọn nghiên cứu nhằm tạo ra một giải pháp desktop toàn diện, phục vụ công tác giảng dạy, học tập và quản trị phòng lab mạng Cisco.
+Bên cạnh đó, xu hướng Tự động hóa mạng (Network Automation) và Quản lý hạ tầng bằng mã (Infrastructure as Code - IaC) đang trở thành tiêu chuẩn vận hành hiện đại trong kỷ nguyên số. Việc ứng dụng các ngôn ngữ lập trình mạnh mẽ như Python kết hợp với giao diện đồ họa trực quan không chỉ giúp chuẩn hóa quy trình, giảm thiểu sai sót do con người mà còn nâng cao tính sẵn sàng của hệ thống. Xuất phát từ nhu cầu thực tiễn đó, đề tài *"Nghiên cứu và xây dựng hệ thống quản lý tập trung, tự động hóa cấu hình và giám sát an ninh mạng"* (CAMS) được lựa chọn nghiên cứu nhằm tạo ra một giải pháp desktop toàn diện, phục vụ công tác giảng dạy, học tập và quản trị phòng lab mạng Cisco.
 
 == Bài toán nghiên cứu
 
@@ -26,7 +26,7 @@ Vấn đề cốt lõi mà đề tài giải quyết là xây dựng một quy t
 
 === Mục tiêu tổng quát
 
-Xây dựng hoàn thiện một nền tảng phần mềm desktop (*NetworkTools*) phục vụ công tác quản lý tập trung và tự động hóa các tác vụ cấu hình trên thiết bị định tuyến (Router) và chuyển mạch (Switch) Cisco IOS, đáp ứng đầy đủ các kịch bản triển khai mạng từ cơ bản đến nâng cao trong môi trường học tập và thực nghiệm phòng lab.
+Xây dựng hoàn thiện một nền tảng phần mềm desktop (*CAMS*) phục vụ công tác quản lý tập trung và tự động hóa các tác vụ cấu hình trên thiết bị định tuyến (Router) và chuyển mạch (Switch) Cisco IOS, đáp ứng đầy đủ các kịch bản triển khai mạng từ cơ bản đến nâng cao trong môi trường học tập và thực nghiệm phòng lab.
 
 === Mục tiêu cụ thể
 
@@ -57,7 +57,7 @@ Xây dựng hoàn thiện một nền tảng phần mềm desktop (*NetworkTools
 
 === Đóng góp chính của đề tài
 
-- Xây dựng thành công ứng dụng desktop *NetworkTools* với giao diện đồ họa trực quan, hỗ trợ quy trình quản trị cấu hình mạng an toàn thông qua cơ chế View & Push và quản lý trạng thái (Desired State vs. Current State).
+- Xây dựng thành công ứng dụng desktop *CAMS* với giao diện đồ họa trực quan, hỗ trợ quy trình quản trị cấu hình mạng an toàn thông qua cơ chế View & Push và quản lý trạng thái (Desired State vs. Current State).
 - Hiện thực hóa cơ chế quản lý phiên kết nối thông minh với Host Lock và Batch Executor, cho phép xử lý đồng thời nhiều thiết bị nhưng đảm bảo tuần tự trên từng luồng CLI.
 - Tích hợp kiểm soát phiên bản cấu hình thiết bị bằng Git thông qua thư viện Dulwich cục bộ, hỗ trợ xem lịch sử và so sánh sai lệch cấu hình trực quan.
 - Cung cấp một bộ công cụ hoàn chỉnh phục vụ nghiên cứu và thực hành mạng, bao gồm quản lý thiết bị, cấu hình L2/L3, Syslog Server, SFTP Client và Terminal Alacritty nhúng.

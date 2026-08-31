@@ -91,7 +91,7 @@ def _confirm_changed_host_key(exc: paramiko.BadHostKeyException) -> bool:
             "or the IP address now belongs to another device.\n\n"
             f"Saved key: {_fingerprint(exc.expected_key)}\n"
             f"Received key: {_fingerprint(exc.key)}\n\n"
-            "Continue only if you recognize this change. NetworkTools will replace "
+            "Continue only if you recognize this change. CAMS will replace "
             "the saved key and continue connecting."
         )
         cancel_button = dialog.addButton("Cancel", QMessageBox.ButtonRole.RejectRole)
@@ -102,7 +102,7 @@ def _confirm_changed_host_key(exc: paramiko.BadHostKeyException) -> bool:
         return dialog.clickedButton() is continue_button
     except Exception as dialog_error:
         print(
-            f"NetworkTools could not display the host-key warning: {dialog_error}",
+            f"CAMS could not display the host-key warning: {dialog_error}",
             file=sys.stderr,
         )
         return False
@@ -219,7 +219,7 @@ def main() -> int:
         client, channel = _connect_with_host_key_confirmation(args.db, args.host)
         return _relay(channel)
     except (OSError, paramiko.SSHException, RuntimeError) as exc:
-        print(f"NetworkTools SSH failed: {exc}", file=sys.stderr)
+        print(f"CAMS SSH failed: {exc}", file=sys.stderr)
         return 1
     finally:
         if client is not None:

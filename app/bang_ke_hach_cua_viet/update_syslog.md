@@ -1,16 +1,16 @@
-# Kế hoạch thiết kế và tái cấu trúc Cisco Syslog cho NetworkTools
+# Kế hoạch thiết kế và tái cấu trúc Cisco Syslog cho CAMS
 
 ## 1. Phạm vi
 
 Module này được xác định là:
 
-> **Cisco Syslog Collector for NetworkTools**
+> **Cisco Syslog Collector for CAMS**
 
 Mục tiêu chính:
 
 - Nhận Syslog từ thiết bị Cisco IOS / IOS-XE.
 - Phân tích đúng cấu trúc message Cisco.
-- Ánh xạ log vào thiết bị đã quản lý trong NetworkTools.
+- Ánh xạ log vào thiết bị đã quản lý trong CAMS.
 - Lưu trữ, tìm kiếm, lọc và hiển thị log.
 - Hỗ trợ cấu hình Syslog destination trực tiếp trên thiết bị Cisco.
 - Giữ kiến trúc Syslog tách biệt, không trộn socket, parser, database, Cisco CLI và Qt/QML trong cùng một file.
@@ -1121,7 +1121,7 @@ Syslog refactor được coi là hoàn thành khi:
 
 # 20. Kết luận
 
-NetworkTools không cần trở thành một Syslog server tổng quát.
+CAMS không cần trở thành một Syslog server tổng quát.
 
 Hướng phù hợp hơn là:
 

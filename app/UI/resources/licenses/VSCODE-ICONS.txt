@@ -1,4 +1,4 @@
-Icon SVG loai file cho NetworkTools / file manager
+Icon SVG loai file cho CAMS / file manager
 Nguon: vscode-icons (https://github.com/vscode-icons/vscode-icons) - MIT License
 
 - file_type_cpp.svg      -> file .cpp / .h / .hpp

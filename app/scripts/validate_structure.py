@@ -1,4 +1,4 @@
-"""Read-only structural checks for the NetworkTools application tree."""
+"""Read-only structural checks for the CAMS application tree."""
 
 from __future__ import annotations
 

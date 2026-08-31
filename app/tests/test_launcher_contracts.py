@@ -93,7 +93,7 @@ class LauncherContractTests(unittest.TestCase):
         self.assertIn("terminal_sources_are_newer", shell)
         self.assertLess(
             shell.index("ensure_runtime_binaries", shell.index("run_app()")),
-            shell.index('echo "Starting NetworkTools..."', shell.index("run_app()")),
+            shell.index('echo "Starting CAMS..."', shell.index("run_app()")),
         )
 
     def test_terminal_check_accepts_configured_executable(self) -> None:

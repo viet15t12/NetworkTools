@@ -22,7 +22,7 @@ Facade QML ổn định `dbManager` ủy quyền bốn slot sang feature này:
 
 `InformationView` có hai chế độ Snapshot/Compare. Compare mặc định dùng commit mới nhất và commit ngay trước đó, đồng thời cho phép chọn hai endpoint bất kỳ trong 100 phiên bản đã tải. Diff chỉ đọc Git object, không checkout working tree.
 
-Repository chuẩn hóa host, chặn traversal/ký tự điều khiển, ghi file tạm rồi `os.replace()`, và dùng lock riêng cho từng host trong tiến trình. Commit dùng author `NetworkTools <networktools@localhost>`, thời gian local dạng `dd/MM/yyyy HH:mm:ss`, cùng timezone trong metadata.
+Repository chuẩn hóa host, chặn traversal/ký tự điều khiển, ghi file tạm rồi `os.replace()`, và dùng lock riêng cho từng host trong tiến trình. Commit dùng author `CAMS <networktools@localhost>`, thời gian local dạng `dd/MM/yyyy HH:mm:ss`, cùng timezone trong metadata.
 
 ## Migration
 

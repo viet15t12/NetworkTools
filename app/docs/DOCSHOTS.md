@@ -1,4 +1,4 @@
-# NetworkTools documentation screenshots
+# CAMS documentation screenshots
 
 `docshots` renders the production `UI` QML module directly into lossless PNG files. It is intended for stable illustrations in the Typst book and does not capture the desktop, cursor, console, or operating-system window decorations.
 

@@ -2,7 +2,7 @@
 
 #front-heading[LỜI CAM ĐOAN]
 
-Chúng tôi xin cam đoan báo cáo nghiên cứu khoa học với đề tài *"NetworkTools"* là công trình nghiên cứu do nhóm tác giả thực hiện dưới sự hướng dẫn khoa học của ThS. Phan Thanh Toản, Bộ môn Mạng Viễn thông, Học viện Công nghệ Bưu chính Viễn thông cơ sở tại TP. Hồ Chí Minh.
+Chúng tôi xin cam đoan báo cáo nghiên cứu khoa học với đề tài *"Nghiên cứu và xây dựng hệ thống quản lý tập trung, tự động hóa cấu hình và giám sát an ninh mạng"*, với tên hệ thống *CAMS (Centralized Automation & Monitoring System)*, là công trình nghiên cứu do nhóm sinh viên thực hiện dưới sự hướng dẫn khoa học của ThS. Phan Thanh Toản, Bộ môn Mạng Viễn thông, Học viện Công nghệ Bưu chính Viễn thông cơ sở tại TP. Hồ Chí Minh.
 
 Kết quả trình bày trong báo cáo là trung thực, do nhóm tự thực hiện và chưa từng được công bố trong bất kỳ công trình nào khác. Các phần mã nguồn do nhóm tự xây dựng, các thư viện nguồn mở, tài liệu kỹ thuật và mã tham khảo sử dụng trong quá trình phát triển đều được phân biệt rõ ràng và trích dẫn đầy đủ theo đúng quy định.
 

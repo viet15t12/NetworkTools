@@ -16,7 +16,7 @@ Dịch vụ dùng chung và các facade QML ổn định. Không thêm CRUD, SQL
 - `database/`: giữ contract `DatabaseManager`; manager chỉ composition/signal/health slot, còn inventory, import, routing, view-push và unsupported contract nằm trong các file `*_slots.py` riêng; `conversion.py` chứa helper thuần.
 - `terminal.py`: giữ API một host tương thích và cung cấp batch ID, progress,
   result/cancel cho Connect, Get running-config và Disconnect nhiều host.
-  `openDeviceTerminal(host)` quản lý NetworkTools Terminal bên ngoài qua
+  `openDeviceTerminal(host)` quản lý CAMS Terminal bên ngoài qua
   `QProcess` + NTTP/1 mà không render terminal trong app.
 - `__init__.py`: export facade theo lazy import để feature/test thuần không phải tải toàn bộ dependency runtime.
 

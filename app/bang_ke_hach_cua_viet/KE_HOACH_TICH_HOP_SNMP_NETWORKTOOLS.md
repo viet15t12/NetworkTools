@@ -1,8 +1,8 @@
-# Kế hoạch tích hợp SNMP vào NetworkTools
+# Kế hoạch tích hợp SNMP vào CAMS
 
 ## 1. Mục tiêu
 
-Tích hợp SNMP để NetworkTools có khả năng giám sát trạng thái vận hành của router và switch, thu thập số liệu định kỳ, nhận cảnh báo sự kiện và kiểm chứng kết quả sau khi cấu hình thiết bị bằng SSH/Netmiko.
+Tích hợp SNMP để CAMS có khả năng giám sát trạng thái vận hành của router và switch, thu thập số liệu định kỳ, nhận cảnh báo sự kiện và kiểm chứng kết quả sau khi cấu hình thiết bị bằng SSH/Netmiko.
 
 SNMP trong dự án chỉ đảm nhiệm đọc dữ liệu và nhận thông báo. Giai đoạn NCKH không triển khai SNMP SET.
 
@@ -166,7 +166,7 @@ Không sử dụng `t01_devices.success` để quyết định polling. Trạng 
 |---|---|---|
 | `target_id` | INTEGER PK | Định danh target |
 | `host` | TEXT FK | Thiết bị gửi trap |
-| `server_ip` | TEXT | IP máy chạy NetworkTools |
+| `server_ip` | TEXT | IP máy chạy CAMS |
 | `server_port` | INTEGER | 1162 trong lab hoặc 162 khi triển khai chuẩn |
 | `version` | TEXT | `2c` hoặc `3` |
 | `security_name` | TEXT | Community label hoặc SNMPv3 user |

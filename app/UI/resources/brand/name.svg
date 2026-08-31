@@ -4,7 +4,7 @@
     viewBox="0 0 900 180"
     xmlns="http://www.w3.org/2000/svg"
     role="img"
-    aria-label="NetworkTools"
+    aria-label="CAMS"
 >
     <defs>
         <!-- Gradient chính của chữ: xanh lam -> cam -->
@@ -60,7 +60,7 @@
                 font-weight="800"
                 letter-spacing="3"
             >
-                NetworkTools
+                CAMS
             </text>
         </clipPath>
     </defs>
@@ -129,7 +129,7 @@
         letter-spacing="3"
         filter="url(#textGlow)"
     >
-        NetworkTools
+        CAMS
     </text>
 
     <!-- Vệt sáng chạy qua chữ -->

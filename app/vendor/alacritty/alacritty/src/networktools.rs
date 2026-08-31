@@ -1,5 +1,5 @@
-//! NetworkTools-managed terminal integration over the local NTTP/1 socket.
-//! Added by NetworkTools to Alacritty upstream baseline
+//! CAMS-managed terminal integration over the local NTTP/1 socket.
+//! Added by CAMS to Alacritty upstream baseline
 //! 1b2b36a64e88068ad02c95fad00ee2fad31c00bf; see ../../NETWORKTOOLS-CHANGES.md.
 
 use std::io::{BufRead, BufReader, Write};
@@ -46,7 +46,7 @@ impl NttpClient {
                 let mut stream = match UnixStream::connect(&options.ipc_path) {
                     Ok(stream) => stream,
                     Err(err) => {
-                        eprintln!("NetworkTools Terminal IPC connection failed: {err}");
+                        eprintln!("CAMS Terminal IPC connection failed: {err}");
                         return;
                     },
                 };
@@ -54,7 +54,7 @@ impl NttpClient {
                 let reader_stream = match stream.try_clone() {
                     Ok(stream) => stream,
                     Err(err) => {
-                        eprintln!("NetworkTools Terminal IPC initialization failed: {err}");
+                        eprintln!("CAMS Terminal IPC initialization failed: {err}");
                         return;
                     },
                 };
@@ -91,7 +91,7 @@ impl NttpClient {
                     }
                 }
             })
-            .expect("failed to spawn NetworkTools NTTP thread");
+            .expect("failed to spawn CAMS NTTP thread");
         Self { sender }
     }
 

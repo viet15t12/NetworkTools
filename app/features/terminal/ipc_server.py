@@ -78,7 +78,7 @@ class NttpServer(QObject):
         self._remove_stale_socket(path)
         if not self._server.listen(str(path)):
             raise RuntimeError(
-                f"Could not start the NetworkTools Terminal IPC server: "
+                f"Could not start the CAMS Terminal IPC server: "
                 f"{self._server.errorString()}"
             )
         self._socket_path = path
@@ -178,7 +178,7 @@ class NttpServer(QObject):
         runtime = os.environ.get("XDG_RUNTIME_DIR", "").strip()
         if not runtime:
             raise RuntimeError(
-                "XDG_RUNTIME_DIR is required for NetworkTools Terminal IPC on Linux."
+                "XDG_RUNTIME_DIR is required for CAMS Terminal IPC on Linux."
             )
         return Path(runtime) / "networktools" / "manager.sock"
 

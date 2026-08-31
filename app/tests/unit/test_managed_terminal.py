@@ -1,4 +1,4 @@
-"""NetworkTools-side contracts for the external Alacritty terminal fork."""
+"""CAMS-side contracts for the external Alacritty terminal fork."""
 
 from __future__ import annotations
 

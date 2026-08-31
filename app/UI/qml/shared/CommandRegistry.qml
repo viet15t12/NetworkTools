@@ -259,7 +259,7 @@ Item {
         id: aboutCommand
         objectName: "commandAppAbout"
         commandId: "app.about"
-        text: qsTr("About NetworkTools")
+        text: qsTr("About CAMS")
         iconSource: AppAssets.brandLogo
         enabled: root.commandsEnabled && root.aboutAvailable
         nativeRole: "about"

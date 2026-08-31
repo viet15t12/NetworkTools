@@ -39,7 +39,14 @@
   let heading-number = counter(heading).at(location)
   let chapter = if heading-number.len() > 0 { heading-number.at(0) } else { 0 }
   let figure-number = counter(figure.where(kind: kind)).at(location).at(0)
-  let formatted-number = if chapter > 0 {
+  let appendix-markers = query(<appendix-a-start>)
+  let in-appendix-a = (
+    appendix-markers.len() > 0 and
+    location.position().page >= appendix-markers.first().location().position().page
+  )
+  let formatted-number = if in-appendix-a {
+    [A.#figure-number]
+  } else if chapter > 0 {
     numbering("1.1", chapter, figure-number)
   } else {
     numbering("1", figure-number)

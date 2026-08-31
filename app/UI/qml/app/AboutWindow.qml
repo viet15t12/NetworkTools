@@ -9,7 +9,7 @@ Window {
     id: root
 
     objectName: "aboutWindow"
-    title: qsTr("About NetworkTools")
+    title: qsTr("About CAMS")
     width: 500
     height: 340
     minimumWidth: 500
@@ -77,9 +77,9 @@ Window {
 
             DialogTitleBar {
                 Layout.fillWidth: true
-                title: qsTr("About NetworkTools")
+                title: qsTr("About CAMS")
                 subtitle: qsTr("Centralized network management and automation workspace")
-                closeTooltip: qsTr("Close About NetworkTools")
+                closeTooltip: qsTr("Close About CAMS")
                 onCloseRequested: root.close()
             }
 
@@ -101,7 +101,7 @@ Window {
                     spacing: Theme.spacing8
 
                     Text {
-                        text: "NetworkTools v1.0"
+                        text: "CAMS v1.0"
                         color: Theme.textPrimary
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSizeLarge

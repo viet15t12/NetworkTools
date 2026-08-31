@@ -53,11 +53,11 @@ Hệ thống phải đáp ứng các tiêu chuẩn kỹ thuật nghiêm ngặt v
 
 == Kiến trúc phân lớp hệ thống
 
-Kiến trúc phần mềm NetworkTools được thiết kế theo mô hình 4 tầng độc lập, bảo đảm nguyên tắc phân tách trách nhiệm và phân định ranh giới rõ ràng:
+Kiến trúc phần mềm CAMS được thiết kế theo mô hình 4 tầng độc lập, bảo đảm nguyên tắc phân tách trách nhiệm và phân định ranh giới rõ ràng:
 
 #figure(
   image("diagrams/22_architecture_overview.svg", width: 78%),
-  caption: [Kiến trúc phân lớp tổng thể của phần mềm NetworkTools],
+  caption: [Kiến trúc phân lớp tổng thể của phần mềm CAMS],
 ) <fig-layer-architecture>
 
 / 1. Lớp Giao diện (Presentation Layer - Qt Quick / QML): Chịu trách nhiệm hiển thị các thành phần trực quan (Cửa sổ, Bảng dữ liệu, Biểu mẫu, Thẻ tiến trình, Hộp thoại View & Push) và tiếp nhận tương tác từ người dùng. Lớp này hoàn toàn không chứa câu lệnh SQL hay mã kết nối mạng trực tiếp.
@@ -110,7 +110,7 @@ Quá trình ghi nhận cấu hình do người dùng thiết lập diễn ra an 
 
 == Thiết kế cơ sở dữ liệu
 
-Hệ thống cơ sở dữ liệu SQLite của NetworkTools được phân hoạch thành hai tệp cơ sở dữ liệu độc lập nhằm tách biệt luồng cấu hình mong muốn và luồng dữ liệu quan sát/giám sát:
+Hệ thống cơ sở dữ liệu SQLite của CAMS được phân hoạch thành hai tệp cơ sở dữ liệu độc lập nhằm tách biệt luồng cấu hình mong muốn và luồng dữ liệu quan sát/giám sát:
 
 *Nhóm 1: Cơ sở dữ liệu Cấu hình và Trạng thái (`device_network.db` — 73 bảng)*
 
@@ -166,7 +166,7 @@ Trong các bảng cấu hình nghiệp vụ, tính nhất quán giữa dữ li�
 
 == Thiết kế giao diện người dùng
 
-Giao diện người dùng của NetworkTools được thiết kế hiện đại trên nền tảng Qt Quick/QML, hướng tới sự tối giản, tối ưu không gian làm việc và hỗ trợ thao tác nhanh cho kỹ sư mạng:
+Giao diện người dùng của CAMS được thiết kế hiện đại trên nền tảng Qt Quick/QML, hướng tới sự tối giản, tối ưu không gian làm việc và hỗ trợ thao tác nhanh cho kỹ sư mạng:
 
 === Khung ứng dụng chính (Application Shell)
 
@@ -188,7 +188,7 @@ Giao diện ứng dụng bao gồm 4 khu vực chức năng chính:
 
 == Thiết kế an toàn và xử lý lỗi
 
-Đặc thù của tự động hóa mạng là một sai sót nhỏ có thể làm sập toàn bộ đường truyền. Do đó, NetworkTools được tích hợp các cơ chế phòng vệ đa tầng:
+Đặc thù của tự động hóa mạng là một sai sót nhỏ có thể làm sập toàn bộ đường truyền. Do đó, CAMS được tích hợp các cơ chế phòng vệ đa tầng:
 
 - *Cô lập môi trường phát triển (Dev-mode Fail-Closed):* Hệ thống cung cấp cờ `dev = 1` cho thiết bị. Khi được bật, mọi luồng giao tiếp SSH/Telnet hướng tới cổng vật lý bị ngắt hoàn toàn theo nguyên tắc "fail-closed". Mọi thao tác View & Push trong chế độ này đều chạy qua hàm mô phỏng (Mock Worker), cho phép kỹ sư kiểm tra tính đúng đắn của logic mà không gây rủi ro cho mạng thật.
 - *Khóa theo thiết bị (Host Lock):* Mỗi thiết bị được quản lý bởi một khóa tuần tự hóa (`operation_lock`). Khi một tác vụ SSH đang chạy, mọi yêu cầu can thiệp khác vào cùng thiết bị sẽ được xếp vào hàng đợi hoặc từ chối an toàn, ngăn ngừa xung đột trạng thái CLI.
@@ -197,4 +197,4 @@ Giao diện ứng dụng bao gồm 4 khu vực chức năng chính:
 
 == Tổng kết chương
 
-Chương 3 đã hoàn thiện bức tranh phân tích và thiết kế toàn diện cho phần mềm NetworkTools. Từ việc mô hình hóa các ca sử dụng, phân rã yêu cầu chức năng/phi chức năng, xác lập kiến trúc 4 tầng chuẩn mực, đến việc thiết kế luồng dữ liệu 3 bước (Sync \rightarrow Desired State \rightarrow View & Push), chuẩn hóa lược đồ cơ sở dữ liệu 93 bảng và xây dựng trải nghiệm người dùng tối ưu. Toàn bộ các nguyên tắc an toàn, cô lập lỗi và bảo vệ dữ liệu đã được lồng ghép chặt chẽ vào thiết kế, làm tiền đề vững chắc cho việc hiện thực hóa mã nguồn trong Chương 4.
+Chương 3 đã hoàn thiện bức tranh phân tích và thiết kế toàn diện cho phần mềm CAMS. Từ việc mô hình hóa các ca sử dụng, phân rã yêu cầu chức năng/phi chức năng, xác lập kiến trúc 4 tầng chuẩn mực, đến việc thiết kế luồng dữ liệu 3 bước (Sync \rightarrow Desired State \rightarrow View & Push), chuẩn hóa lược đồ cơ sở dữ liệu 93 bảng và xây dựng trải nghiệm người dùng tối ưu. Toàn bộ các nguyên tắc an toàn, cô lập lỗi và bảo vệ dữ liệu đã được lồng ghép chặt chẽ vào thiết kế, làm tiền đề vững chắc cho việc hiện thực hóa mã nguồn trong Chương 4.

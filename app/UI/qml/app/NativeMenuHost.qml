@@ -26,7 +26,7 @@ Item {
         root.failed = true
         const message =
             "The Native Global menu presenter could not be loaded; "
-            + "NetworkTools is using the in-window menu."
+            + "CAMS is using the in-window menu."
         root.loadFailed(message)
         console.warn(message)
     }

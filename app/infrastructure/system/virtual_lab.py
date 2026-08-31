@@ -468,7 +468,7 @@ class VirtualLabProbe:
 
             urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
             self._session = requests.Session()
-            self._session.headers.update({"Accept": "application/json", "User-Agent": "NetworkTools/VirtualLabMonitor"})
+            self._session.headers.update({"Accept": "application/json", "User-Agent": "CAMS/VirtualLabMonitor"})
         return self._session
 
     def _reachable_server(

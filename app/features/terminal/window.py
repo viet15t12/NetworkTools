@@ -27,12 +27,12 @@ class InternalTerminalWindow(QMainWindow):
         self.host = host
         self._pending_output: list[str] = []
 
-        self.setWindowTitle(f"NetworkTools CLI — {host}")
+        self.setWindowTitle(f"CAMS CLI — {host}")
         self.resize(980, 620)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, False)
 
         # qtpyTerminal-main is adapted with an external callback backend, so it
-        # never forks a local shell for NetworkTools device sessions.
+        # never forks a local shell for CAMS device sessions.
         self._terminal = qtpyTerminal(self, cols=120)
         self._terminal.set_bgcolor(QColor("#1e1e1e"))
         self._terminal.set_fgcolor(QColor("#cccccc"))

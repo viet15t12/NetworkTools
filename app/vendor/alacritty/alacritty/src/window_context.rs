@@ -1,5 +1,5 @@
 //! Terminal window context.
-//! Modified by NetworkTools from upstream commit
+//! Modified by CAMS from upstream commit
 //! 1b2b36a64e88068ad02c95fad00ee2fad31c00bf; see ../../NETWORKTOOLS-CHANGES.md.
 
 use std::error::Error;

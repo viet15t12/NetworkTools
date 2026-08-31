@@ -405,7 +405,7 @@ Item {
         scpConfirmDialog.targetHost = host
         scpConfirmDialog.messageText =
             "Get running-config from " + host + " via SCP?\n\nIf SCP is not enabled, "
-            + "NetworkTools will configure 'ip scp server enable' and save that "
+            + "CAMS will configure 'ip scp server enable' and save that "
             + "change. A temporary file will be created in flash, downloaded to "
             + "the SFTP/SCP local directory, then removed."
         scpConfirmDialog.open()
@@ -472,7 +472,7 @@ Item {
             const res = cli.openDeviceTerminal(ip)
             if (!res.ok) {
                 const message = "CLI Error: "
-                              + (res.message || "Failed to open NetworkTools Terminal.")
+                              + (res.message || "Failed to open CAMS Terminal.")
                 showDeviceShortcutMessage(message, "error")
             } else {
                 showDeviceShortcutMessage(
@@ -481,7 +481,7 @@ Item {
                 )
             }
         } else {
-            showDeviceShortcutMessage("CLI Error: NetworkTools Terminal backend is not available.", "error")
+            showDeviceShortcutMessage("CLI Error: CAMS Terminal backend is not available.", "error")
         }
     }
 

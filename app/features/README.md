@@ -14,7 +14,7 @@ hữu toàn bộ validation/persistence/template/worker HSRP, VRRP, GLBP; cả h
 đọc contract interface đã công bố để lọc network/interface phù hợp.
 
 `terminal/` sở hữu manager `QProcess`, session UUID, OpenSSH argv validation và
-NTTP/1 local IPC cho ứng dụng NetworkTools Terminal độc lập. NetworkTools không
+NTTP/1 local IPC cho ứng dụng CAMS Terminal độc lập. CAMS không
 render terminal và interactive OpenSSH không dùng chung session Netmiko của
 automation. Adapter `qtpyTerminal-main` cũ chỉ còn là compatibility code không
 được composition root khởi tạo.

@@ -10,7 +10,7 @@ Rectangle {
 
     property var mainFeatures: [
         { id: "information", icon: AppAssets.navigationInformation,      tooltip: "Information" },
-        { id: "cli",         icon: AppAssets.navigationTerminal,  tooltip: "Open NetworkTools Terminal" },
+        { id: "cli",         icon: AppAssets.navigationTerminal,  tooltip: "Open CAMS Terminal" },
         { id: "interface",   icon: AppAssets.navigationInterface, tooltip: "Interface"   }
     ]
 
@@ -21,11 +21,11 @@ Rectangle {
         if (feature.id !== "cli")
             return feature.tooltip
         switch (terminalState) {
-        case "open": return "Focus NetworkTools Terminal (Open)"
-        case "starting": return "NetworkTools Terminal is starting"
-        case "disconnected": return "Restart NetworkTools Terminal (SSH ended)"
-        case "error": return "Restart NetworkTools Terminal (Error)"
-        default: return "Open NetworkTools Terminal"
+        case "open": return "Focus CAMS Terminal (Open)"
+        case "starting": return "CAMS Terminal is starting"
+        case "disconnected": return "Restart CAMS Terminal (SSH ended)"
+        case "error": return "Restart CAMS Terminal (Error)"
+        default: return "Open CAMS Terminal"
         }
     }
 

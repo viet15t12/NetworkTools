@@ -1,4 +1,4 @@
-# NetworkTools – Typst report
+# CAMS – Typst report
 
 Bộ báo cáo NCKH đã được chuyển từ cấu trúc LaTeX modular sang Typst.
 
@@ -50,7 +50,7 @@ Trong file `.typ`:
 #insert-image(
   "figures/gui/main_window.png",
   width: 80%,
-  caption: [Giao diện chính của NetworkTools],
+  caption: [Giao diện chính của CAMS],
 ) <fig-main-window>
 ```
 

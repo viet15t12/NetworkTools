@@ -239,12 +239,12 @@ class TerminalHelper(QObject):
         """Compatibility slot; device CLI now requires an explicit inventory host."""
         self.taskFinished.emit(
             False,
-            "Select a device before opening NetworkTools Terminal.",
+            "Select a device before opening CAMS Terminal.",
         )
 
     @pyqtSlot(str, result="QVariant")
     def openDeviceTerminal(self, host: str) -> dict[str, Any]:
-        """Open or focus the external NetworkTools Terminal for one host."""
+        """Open or focus the external CAMS Terminal for one host."""
         return self._terminal_manager.open(host)
 
     @pyqtSlot(str, result="QVariant")

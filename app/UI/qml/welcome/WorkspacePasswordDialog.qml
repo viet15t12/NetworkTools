@@ -47,7 +47,7 @@ StandardDialog {
         InlineMessage {
             Layout.fillWidth: true
             visible: root.errorMessage === ""
-            message: LanguageState.text("NetworkTools does not store project passwords.")
+            message: LanguageState.text("CAMS does not store project passwords.")
             severity: "info"
         }
 

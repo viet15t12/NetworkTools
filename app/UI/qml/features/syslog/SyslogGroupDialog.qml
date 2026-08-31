@@ -352,7 +352,7 @@ StandardDialog {
                     visible: dialog.stepIndex === 2
                     title: "Shared Syslog destination and message policy"
                     helpTitle: "Shared Syslog policy"
-                    helpText: "Server IP: Reachable IPv4 or IPv6 address of the Syslog collector.\n\nTransport: UDP is lightweight; TCP provides a connection-oriented stream. It must match the collector.\n\nPort: Destination port from 1 to 65535; it should match Listener port when sending to NetworkTools.\n\nTrap severity: Highest verbosity sent by Cisco, from 0 Emergency through 7 Debug.\n\nMillisecond timestamps: Adds precise event time.\n\nSequence numbers: Adds an increasing device-side message number for ordering and troubleshooting."
+                    helpText: "Server IP: Reachable IPv4 or IPv6 address of the Syslog collector.\n\nTransport: UDP is lightweight; TCP provides a connection-oriented stream. It must match the collector.\n\nPort: Destination port from 1 to 65535; it should match Listener port when sending to CAMS.\n\nTrap severity: Highest verbosity sent by Cisco, from 0 Emergency through 7 Debug.\n\nMillisecond timestamps: Adds precise event time.\n\nSequence numbers: Adds an increasing device-side message number for ordering and troubleshooting."
 
                     StandardTextField {
                         Layout.fillWidth: true

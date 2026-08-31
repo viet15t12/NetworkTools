@@ -133,7 +133,7 @@ Rectangle {
     }
 
     function exportFileName() {
-        return "NetworkTools-Syslog-"
+        return "CAMS-Syslog-"
              + Qt.formatDateTime(new Date(), "yyyyMMdd-HHmmss") + ".xlsx"
     }
 

@@ -1,4 +1,4 @@
-"""Discovery and QProcess launch specification for NetworkTools Terminal."""
+"""Discovery and QProcess launch specification for CAMS Terminal."""
 
 from __future__ import annotations
 
@@ -49,7 +49,7 @@ class TerminalLauncher:
             if candidate.is_file() and os.access(candidate, os.X_OK):
                 return str(candidate.resolve())
             raise TerminalLaunchError(
-                "Configured NetworkTools Terminal binary is missing or not executable."
+                "Configured CAMS Terminal binary is missing or not executable."
             )
         discovered = shutil.which("networktools-terminal")
         if discovered:
@@ -65,7 +65,7 @@ class TerminalLauncher:
         if bundled.is_file() and os.access(bundled, os.X_OK):
             return str(bundled)
         raise TerminalLaunchError(
-            "NetworkTools Terminal is not installed, built in vendor/alacritty, "
+            "CAMS Terminal is not installed, built in vendor/alacritty, "
             "or available on PATH."
         )
 
@@ -87,7 +87,7 @@ class TerminalLauncher:
             device.get("device_name"), fallback=host, limit=80
         )
         title = sanitize_display_text(
-            f"{name} — NetworkTools", fallback="NetworkTools Terminal", limit=128
+            f"{name} — CAMS", fallback="CAMS Terminal", limit=128
         )
         ssh = build_terminal_command(device)
         arguments = (

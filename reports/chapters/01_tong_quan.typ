@@ -46,7 +46,7 @@ Cụ thể, hệ thống phải đảm bảo khả năng duy trì kết nối an
 
 == Mục tiêu
 === Mục tiêu tổng quát
-Xây dựng hoàn thiện một nền tảng phần mềm desktop (NetworkTools) phục vụ công tác quản lý tập trung và tự động hóa các tác vụ cấu hình trên thiết bị định tuyến Cisco IOS, ứng dụng trực tiếp vào quá trình học tập và thực nghiệm thực tế tại phòng lab.
+Xây dựng hoàn thiện một nền tảng phần mềm desktop (CAMS) phục vụ công tác quản lý tập trung và tự động hóa các tác vụ cấu hình trên thiết bị định tuyến Cisco IOS, ứng dụng trực tiếp vào quá trình học tập và thực nghiệm thực tế tại phòng lab.
 
 === Mục tiêu cụ thể
 - *Về giao diện và trải nghiệm:* Xây dựng giao diện đồ họa trực quan bằng framework Qt Quick/QML kết hợp với cầu nối PyQt6, đảm bảo không gây nghẽn luồng xử lý chính khi chạy các tác vụ nền.

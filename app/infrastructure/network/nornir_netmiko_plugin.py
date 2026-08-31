@@ -10,7 +10,7 @@ from nornir_netmiko.connections.netmiko import napalm_to_netmiko_map
 from .netmiko_factory import connect_device
 
 
-class NetworkToolsNetmiko:
+class CAMSNetmiko:
     def open(
         self,
         hostname,
@@ -46,4 +46,4 @@ def register_networktools_netmiko() -> None:
     """Register the application's isolated Nornir connection plugin once."""
     name = "networktools_netmiko"
     if name not in ConnectionPluginRegister.available:
-        ConnectionPluginRegister.register(name, NetworkToolsNetmiko)
+        ConnectionPluginRegister.register(name, CAMSNetmiko)

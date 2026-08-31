@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render documentation screenshots from the real NetworkTools QML module."""
+"""Render documentation screenshots from the real CAMS QML module."""
 
 from __future__ import annotations
 

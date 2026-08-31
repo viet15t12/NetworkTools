@@ -1,6 +1,6 @@
 Có. Nếu xây dựng theo hướng này, mình khuyên tách **Interface module** thành 5 lớp rõ ràng: **Device Profile → Database → Domain Model/Service → IOS Generator → QML UI**. Không nên để QML tự quyết định interface nào được tạo/xóa hay sinh trực tiếp câu lệnh IOS.
 
-Dưới đây là thiết kế chi tiết có thể áp dụng trực tiếp cho NetworkTools.
+Dưới đây là thiết kế chi tiết có thể áp dụng trực tiếp cho CAMS.
 
 ---
 
@@ -1619,7 +1619,7 @@ push configuration
 → commit DB
 ```
 
-Nhưng với architecture offline configuration của NetworkTools, mình khuyên lưu **desired state** trong DB trước rồi generator tính diff về sau sẽ mạnh hơn.
+Nhưng với architecture offline configuration của CAMS, mình khuyên lưu **desired state** trong DB trước rồi generator tính diff về sau sẽ mạnh hơn.
 
 ---
 
@@ -1718,7 +1718,7 @@ ConfigPlan(
 )
 ```
 
-Cách này rất phù hợp với NetworkTools về lâu dài.
+Cách này rất phù hợp với CAMS về lâu dài.
 
 ---
 
@@ -2411,8 +2411,8 @@ Nên dialog:
 ```text
 Delete Tunnel0?
 
-○ Remove from NetworkTools only
-● Remove from device and NetworkTools
+○ Remove from CAMS only
+● Remove from device and CAMS
 
 Device command:
 no interface Tunnel0
@@ -2648,7 +2648,7 @@ Mình sẽ triển khai theo 6 phase:
 
 ---
 
-## Cấu trúc mình khuyên chốt cho NetworkTools
+## Cấu trúc mình khuyên chốt cho CAMS
 
 ```text
 Interface
@@ -2673,4 +2673,4 @@ Interface
 
 Điểm quan trọng nhất là **Physical và Virtual phải khác nhau ngay từ domain model**, chứ không chỉ khác nhau ở giao diện. Một khi backend đã coi tất cả là một loại `Interface` có CRUD giống nhau thì UI sau này sẽ liên tục phải thêm exception.
 
-Với NetworkTools hiện tại, mình sẽ ưu tiên làm **Physical + Loopback + Tunnel trước**, sau đó **SVI/Subinterface**, và để **Port-channel cuối cùng** vì Port-channel kéo theo transaction đa-interface, dependency, L2/L3 mode và EtherChannel membership.
+Với CAMS hiện tại, mình sẽ ưu tiên làm **Physical + Loopback + Tunnel trước**, sau đó **SVI/Subinterface**, và để **Port-channel cuối cùng** vì Port-channel kéo theo transaction đa-interface, dependency, L2/L3 mode và EtherChannel membership.

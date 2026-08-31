@@ -1,4 +1,4 @@
-"""Command-line interface for the NetworkTools documentation renderer."""
+"""Command-line interface for the CAMS documentation renderer."""
 
 from __future__ import annotations
 
@@ -37,7 +37,7 @@ def _positive_scale(value: str) -> float:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Render deterministic NetworkTools QML screenshots as PNG files."
+        description="Render deterministic CAMS QML screenshots as PNG files."
     )
     parser.add_argument(
         "shot",

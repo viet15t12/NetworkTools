@@ -13,7 +13,7 @@ ApplicationWindow {
 
     objectName: "welcomeWindow"
     visible: true
-    title: "Welcome to NetworkTools"
+    title: "Welcome to CAMS"
     width: 1080
     height: 680
     minimumWidth: 820
@@ -135,7 +135,7 @@ ApplicationWindow {
 
     MessageDialog {
         id: workspaceErrorDialog
-        title: "NetworkTools"
+        title: "CAMS"
         text: ""
         buttons: MessageDialog.Ok
     }
@@ -244,7 +244,7 @@ ApplicationWindow {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "NetworkTools"
+                    text: "CAMS"
                     color: Theme.textPrimary
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeDisplay
@@ -266,7 +266,7 @@ ApplicationWindow {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "NetworkTools 0.1"
+                    text: "CAMS 0.1"
                     color: Theme.textSecondary
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeCaption
@@ -322,7 +322,7 @@ ApplicationWindow {
                         Layout.fillWidth: true
                         actionIcon: AppAssets.fileFolder
                         titleText: LanguageState.text("Open")
-                        descriptionText: LanguageState.text("Open a NetworkTools project")
+                        descriptionText: LanguageState.text("Open a CAMS project")
                         onClicked: openProjectDialog.open()
                     }
 
