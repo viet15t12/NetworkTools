@@ -25,10 +25,12 @@ Kết quả trình bày trong báo cáo là trung thực, do nhóm tự thực h
   [N24DCVT113],
   [Kiến trúc dữ liệu, quản trị cơ sở dữ liệu SQLite, tích hợp backend – giao diện, mô-đun Syslog, phối hợp tích hợp SFTP, điều phối kỹ thuật và hợp nhất mã nguồn],
 
-  [Nguyễn Phan Kiên], [N24DCVT046],
+  [Nguyễn Phan Kiên],
+  [N24DCVT046],
   [Nền tảng backend, API và logic nghiệp vụ cho Routing/DHCP/ACL/NAT/VLAN, mẫu cấu hình Jinja, đồng bộ Running Configuration, kiểm thử tích hợp],
 
-  [Nguyễn Trần Đạt Phú], [N24DCVT072],
+  [Nguyễn Trần Đạt Phú],
+  [N24DCVT072],
   [Thiết kế giao diện PyQt6/QML, trải nghiệm người dùng, biên soạn tài liệu, quản lý kho mã nguồn và tích hợp nhánh GitHub],
 )
 
