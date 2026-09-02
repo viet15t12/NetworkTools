@@ -14,7 +14,7 @@ from infrastructure.network.nornir_netmiko_tasks import (
     netmiko_send_config,
 )
 from nornir.core.task import Result
-from infrastructure.network.nornir_netmiko_plugin import register_networktools_netmiko
+from infrastructure.network.nornir_netmiko_plugin import register_cams_netmiko
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -190,7 +190,7 @@ def build_dhcp_inventory(db_path, task_list):
                     "port": conn_port,          # Đã fix port linh hoạt
                     "platform": platform_final, # Đã fix hệ điều hành Telnet/SSH
                     "connection_options": {
-                        "networktools_netmiko": {
+                        "cams_netmiko": {
                             "extras": {
                                 "banner_timeout": 30, 
                                 "auth_timeout": 30, 
@@ -316,7 +316,7 @@ def run_dhcp_config(task_list, db_path, output_path, session_provider=None):
         _write_results(output_path, output_data)
         return
     
-    register_networktools_netmiko()
+    register_cams_netmiko()
     nr = InitNornir(runner={"plugin": "threaded", "options": {"num_workers": 10}}, inventory={"plugin": "SimpleInventory", "options": {"host_file": inv_file_path}}, logging={"enabled": False})
     results = nr.run(task=task_manage_dhcp)
     for host, task_res in results.items():

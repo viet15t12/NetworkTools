@@ -25,7 +25,7 @@ SFTP hoặc Database Browser ngoài bị thiếu hay cấu hình không hợp l�
   model tách primary/secondary action; error có primary action và progress
   notification là các trường hợp sticky.
 
-## Contract của NetworkTools
+## Contract của CAMS
 
 ### Model
 

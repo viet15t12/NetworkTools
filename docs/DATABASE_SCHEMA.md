@@ -1,4 +1,4 @@
-# Kiến trúc cơ sở dữ liệu NetworkTools
+# Kiến trúc cơ sở dữ liệu CAMS
 
 Cập nhật: **2026-08-16**. Desktop app và backend kế thừa không dùng chung một
 schema authority. Phần dưới mô tả chính xác schema của desktop trước, sau đó ghi
@@ -12,7 +12,7 @@ riêng ranh giới backend để không trộn tên bảng hoặc trạng thái.
 | `app/data/info_collected.db` | `app/infrastructure/database/schemas/info_collected/*.sql` | Dữ liệu quan sát và Syslog | Có |
 | `app/data/app_state.db` | `recent_projects.py` | Recent project metadata | Không |
 
-`NETWORKTOOLS_DATA_DIR` đổi thư mục mặc định. Khi project mở, các service được
+`CAMS_DATA_DIR` đổi thư mục mặc định. Khi project mở, các service được
 route đến hai database giải nén trong workspace; khi đóng project, chúng quay về
 database mặc định. `app_state.db` không đi theo workspace.
 

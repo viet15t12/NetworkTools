@@ -1,4 +1,4 @@
-# Hướng dẫn cài đặt và sử dụng NetworkTools
+# Hướng dẫn cài đặt và sử dụng CAMS
 
 Cập nhật: **2026-08-16**. Hướng dẫn này dành cho desktop app trong `app/`.
 `api_server.py`/`backend/` không phải bước cài đặt bắt buộc và không được khởi
@@ -17,13 +17,13 @@ Yêu cầu:
 Từ `app/`:
 
 ```bash
-./networktools.sh
+./cams.sh
 ```
 
 Trên Windows:
 
 ```bat
-networktools.bat
+cams.bat
 ```
 
 Launcher tương tác kiểm tra `uv`, sync dependency, thử Cython accelerator tùy
@@ -31,7 +31,7 @@ chọn, kiểm tra/build terminal companion rồi chạy app. Nếu chỉ muốn
 trường đã sẵn sàng:
 
 ```bash
-./networktools.sh run
+./cams.sh run
 ```
 
 Hoặc chạy trực tiếp:
@@ -40,7 +40,7 @@ Hoặc chạy trực tiếp:
 uv run main.py
 ```
 
-Database mặc định được tạo trong `app/data/`. Đặt `NETWORKTOOLS_DATA_DIR` trước
+Database mặc định được tạo trong `app/data/`. Đặt `CAMS_DATA_DIR` trước
 khi chạy để đổi vị trí. Không chạy nhiều instance cùng ghi một workspace.
 
 ## 2. Project `.ntp`
@@ -153,10 +153,10 @@ Folder delete không đệ quy. Lưu password tắt mặc định và chỉ có 
 
 ## 8. Terminal, external tools và Device Logs
 
-- `Ctrl+\`` hoặc action terminal mở/focus `networktools-terminal`. Terminal là
+- `Ctrl+\`` hoặc action terminal mở/focus `cams-terminal`. Terminal là
   process riêng, SSH tương tác riêng và không dùng session automation.
-- Nếu companion thiếu, đặt `NETWORKTOOLS_TERMINAL_BINARY` hoặc chạy
-  `./networktools.sh terminal-build`; integration vẫn partial.
+- Nếu companion thiếu, đặt `CAMS_TERMINAL_BINARY` hoặc chạy
+  `./cams.sh terminal-build`; integration vẫn partial.
 - External Tools chỉ mở executable đã xác thực; URL catalog không tự cài app và
   `{password}` bị cấm.
 - Device Logs/TShark chỉ dùng trên interface/mạng được cấp phép. Không dùng mã
@@ -173,7 +173,7 @@ uv run python -m unittest discover -s tests -v
 ```
 
 Nếu app không thấy DB, chạy app một lần để bootstrap hoặc kiểm tra
-`NETWORKTOOLS_DATA_DIR`. Nếu QML không tải trên Linux, kiểm tra Qt platform/QML
+`CAMS_DATA_DIR`. Nếu QML không tải trên Linux, kiểm tra Qt platform/QML
 libraries của đúng PyQt wheel. Nếu terminal thiếu, chạy `terminal-check`. Nếu
 thiết bị Cisco legacy lỗi SSH, chỉ bật đúng algorithm override cần thiết thay vì
 hạ crypto policy toàn hệ thống.

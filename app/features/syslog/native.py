@@ -44,10 +44,10 @@ class NativeSyslogCollector(QObject):
 
     @staticmethod
     def executable_path() -> Path:
-        override = os.environ.get("NETWORKTOOLS_SYSLOG_COLLECTOR", "").strip()
+        override = os.environ.get("CAMS_SYSLOG_COLLECTOR", "").strip()
         if override:
             return Path(override).expanduser().resolve()
-        return APP_DIR / "bin" / "networktools-syslog-collector"
+        return APP_DIR / "bin" / "cams-syslog-collector"
 
     def start(self, settings_path: Path, info_db: Path, device_db: Path) -> str:
         if self.is_running:

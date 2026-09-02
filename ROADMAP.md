@@ -1,15 +1,15 @@
-# Roadmap NetworkTools
+# Roadmap CAMS
 
 Cập nhật: **2026-08-16**.
 
-Roadmap này mô tả thứ tự ưu tiên kỹ thuật và điều kiện để NetworkTools tiến từ bản
+Roadmap này mô tả thứ tự ưu tiên kỹ thuật và điều kiện để CAMS tiến từ bản
 nghiên cứu sang một bản phát hành có thể tái lập. Mốc phiên bản là mục tiêu, không
 phải cam kết ngày; phạm vi được rà soát sau mỗi milestone dựa trên bằng chứng test,
 rủi ro và nguồn lực của nhóm.
 
 ## 1. Tầm nhìn
 
-NetworkTools hướng tới một ứng dụng desktop an toàn và có thể kiểm chứng để:
+CAMS hướng tới một ứng dụng desktop an toàn và có thể kiểm chứng để:
 
 - Quản lý inventory và phiên kết nối thiết bị mạng tập trung.
 - Mô hình hóa desired configuration trong SQLite có version/migration.

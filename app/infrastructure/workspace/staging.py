@@ -14,7 +14,7 @@ from .package import REQUIRED_DATABASES
 
 
 ContentSignature = tuple[tuple[str, int, int], ...]
-PACKAGE_GIT_METADATA_DIRECTORY = ".networktools-git"
+PACKAGE_GIT_METADATA_DIRECTORY = ".cams-git"
 
 
 def workspace_content_signature(root: str | Path) -> ContentSignature:

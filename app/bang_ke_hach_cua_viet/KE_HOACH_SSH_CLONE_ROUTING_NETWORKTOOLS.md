@@ -2,7 +2,7 @@
 
 ## 1. Thông tin đánh giá
 
-- Repository: `ntdatphu/NetworkTools`
+- Repository: `ntdatphu/CAMS`
 - Nhánh đánh giá: `main`
 - Commit được rà soát: `b5e88361cb2ecf72641bdfb3ab0f5dd19fb0bcd0`
 - Ngày lập kế hoạch: `2026-07-25`
@@ -311,7 +311,7 @@ Các worker dùng `nornir-netmiko` phải dùng cùng một connection factory.
 
 Phương án đề xuất:
 
-- Tạo Nornir connection plugin riêng, ví dụ `networktools_netmiko`.
+- Tạo Nornir connection plugin riêng, ví dụ `cams_netmiko`.
 - Plugin đọc SSH override theo host và mở connection qua `netmiko_factory.py`.
 - Đăng ký plugin một lần khi khởi tạo runtime.
 - Routing, DHCP, NAT, ACL và các module push dùng cùng plugin.
@@ -818,7 +818,7 @@ Có thể cần sửa thêm các worker đang tự tạo Netmiko/Nornir connecti
 - Nornir: `3.5.0`.
 - nornir-netmiko: `1.0.1`.
 - Inventory kết nối: Terminal qua `DeviceConnector`; Routing, DHCP và NAT
-  qua connection plugin `networktools_netmiko`; SFTP giữ facade Paramiko riêng.
+  qua connection plugin `cams_netmiko`; SFTP giữ facade Paramiko riêng.
 
 ## 11. Work package 0 — Baseline và inventory
 

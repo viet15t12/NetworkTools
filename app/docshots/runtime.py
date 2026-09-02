@@ -287,8 +287,8 @@ class DocumentationWelcomeController(QObject):
         {
             "id": "doc-core-lab",
             "name": "Core Lab",
-            "path": "/documentation/networktools/Core-Lab.ntp",
-            "url": "file:///documentation/networktools/Core-Lab.ntp",
+            "path": "/documentation/cams/Core-Lab.ntp",
+            "url": "file:///documentation/cams/Core-Lab.ntp",
             "openedAtDisplay": "20/08/2026 09:42:00",
             "lastOpened": "20 Aug 2026",
             "isMock": True,
@@ -296,8 +296,8 @@ class DocumentationWelcomeController(QObject):
         {
             "id": "doc-campus-network",
             "name": "Campus Network",
-            "path": "/documentation/networktools/Campus-Network.ntp",
-            "url": "file:///documentation/networktools/Campus-Network.ntp",
+            "path": "/documentation/cams/Campus-Network.ntp",
+            "url": "file:///documentation/cams/Campus-Network.ntp",
             "openedAtDisplay": "19/08/2026 16:10:00",
             "lastOpened": "19 Aug 2026",
             "isMock": True,
@@ -305,8 +305,8 @@ class DocumentationWelcomeController(QObject):
         {
             "id": "doc-branch-rollout",
             "name": "Branch Rollout",
-            "path": "/documentation/networktools/Branch-Rollout.ntp",
-            "url": "file:///documentation/networktools/Branch-Rollout.ntp",
+            "path": "/documentation/cams/Branch-Rollout.ntp",
+            "url": "file:///documentation/cams/Branch-Rollout.ntp",
             "openedAtDisplay": "18/08/2026 13:25:00",
             "lastOpened": "18 Aug 2026",
             "isMock": True,
@@ -319,7 +319,7 @@ class DocumentationWelcomeController(QObject):
 
     @pyqtProperty(str, notify=defaultProjectDirectoryChanged)
     def defaultProjectDirectory(self) -> str:
-        return "/documentation/networktools"
+        return "/documentation/cams"
 
     @pyqtSlot(str, result=QUrl)
     def folderUrlForPath(self, folder_path: str) -> QUrl:
@@ -444,7 +444,7 @@ class FixtureBundle:
     """Own every temporary backend made visible to one QML engine."""
 
     def __init__(self, request: RenderRequest) -> None:
-        self._temporary = tempfile.TemporaryDirectory(prefix="networktools-docshots-")
+        self._temporary = tempfile.TemporaryDirectory(prefix="cams-docshots-")
         self.root = Path(self._temporary.name)
         self._closed = False
         self._configure_settings(request)
@@ -609,7 +609,7 @@ class FixtureBundle:
 def _application() -> QApplication:
     app = QApplication.instance()
     if app is None:
-        app = QApplication(["networktools-docshots"])
+        app = QApplication(["cams-docshots"])
     app.setOrganizationName("CAMSDocumentation")
     app.setOrganizationDomain("documentation.invalid")
     app.setApplicationName("Docshots")
@@ -831,7 +831,7 @@ def _prepare_window(
     if shot.workspace_name:
         window.setProperty("workspaceDisplayName", shot.workspace_name)
         window.setProperty(
-            "workspacePath", "/documentation/networktools/Campus-Network.ntp"
+            "workspacePath", "/documentation/cams/Campus-Network.ntp"
         )
     window.show()
     _wait_until(

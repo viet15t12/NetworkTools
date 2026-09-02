@@ -2,9 +2,9 @@
 #import "../config/diagrams.typ": flow-diagram
 #import "../config/images.typ": insert-image
 
-= Cài đặt và Bắt đầu sử dụng NetworkTools
+= Cài đặt và Bắt đầu sử dụng CAMS
 
-Chương này hướng dẫn người dùng chạy NetworkTools từ mã nguồn, đi qua cửa sổ Welcome, tạo hoặc mở một project `.ntp`, rồi xác nhận Workspace đã sẵn sàng. Chương này chưa yêu cầu thiết bị mạng thật và chưa hướng dẫn cấu hình router, switch hoặc dịch vụ mạng.
+Chương này hướng dẫn người dùng chạy CAMS từ mã nguồn, đi qua cửa sổ Welcome, tạo hoặc mở một project `.ntp`, rồi xác nhận Workspace đã sẵn sàng. Chương này chưa yêu cầu thiết bị mạng thật và chưa hướng dẫn cấu hình router, switch hoặc dịch vụ mạng.
 
 == Yêu cầu trước khi cài đặt
 
@@ -17,7 +17,7 @@ Chương này hướng dẫn người dùng chạy NetworkTools từ mã nguồn
 - Git nếu lấy mã nguồn bằng lệnh `git clone`;
 - các thư viện hệ thống cần thiết để Qt/PyQt6 hiển thị giao diện.
 
-Windows là nền tảng phát triển chính. NetworkTools cũng được chạy và kiểm tra trên Linux; bản phân phối Linux phải có các thư viện đồ họa, font và thư viện Qt tương ứng với PyQt6.
+Windows là nền tảng phát triển chính. CAMS cũng được chạy và kiểm tra trên Linux; bản phân phối Linux phải có các thư viện đồ họa, font và thư viện Qt tương ứng với PyQt6.
 
 #report-note[*Ghi chú:* Người dùng không cần quyền truy cập router, switch hoặc thiết bị thật để hoàn thành chương này. Project trống vẫn có thể được tạo, mở, lưu và quản lý snapshot.]
 
@@ -26,24 +26,24 @@ Windows là nền tảng phát triển chính. NetworkTools cũng được chạ
 Các thành phần sau chỉ cần khi sử dụng chức năng liên quan:
 
 - TShark hoặc Wireshark: dùng cho Device Logs và thu thập gói tin trên mạng được cấp quyền;
-- Rust toolchain (`cargo`): chỉ cần khi phải tự biên dịch NetworkTools Terminal companion;
+- Rust toolchain (`cargo`): chỉ cần khi phải tự biên dịch CAMS Terminal companion;
 - CMake và compiler C++: chỉ cần khi phải tự biên dịch Syslog collector trên Linux;
 - quyền truy cập cùng credential của thiết bị: chỉ cần ở các chương thực hành kết nối và cấu hình thiết bị.
 
 #report-note[*Mẹo:* Nếu mục tiêu trước mắt chỉ là mở ứng dụng và tạo Workspace, hãy chuẩn bị Python và `uv` trước. Các thành phần tùy chọn có thể bổ sung sau.]
 
-== Lấy mã nguồn NetworkTools
+== Lấy mã nguồn CAMS
 
-Kho Git đang được sử dụng bởi project là `viet15t12/NetworkTools`. Từ Terminal, PowerShell hoặc Command Prompt, chạy:
+Kho Git đang được sử dụng bởi project là `viet15t12/CAMS`. Từ Terminal, PowerShell hoặc Command Prompt, chạy:
 
 ```sh
-git clone https://github.com/viet15t12/NetworkTools.git
-cd NetworkTools/app
+git clone https://github.com/viet15t12/CAMS.git
+cd CAMS/app
 ```
 
 Thư mục `app/` là thư mục làm việc của ứng dụng desktop. Các lệnh trong phần còn lại của chương được thực hiện tại thư mục này.
 
-Nếu nhận mã nguồn dưới dạng file nén thay vì Git, hãy giải nén toàn bộ repository, mở Terminal tại thư mục `NetworkTools/app`, rồi tiếp tục với bước kiểm tra môi trường. Bản mã nguồn phải giữ nguyên các thư mục `UI/`, `core/`, `features/`, `infrastructure/` và file khóa dependency.
+Nếu nhận mã nguồn dưới dạng file nén thay vì Git, hãy giải nén toàn bộ repository, mở Terminal tại thư mục `CAMS/app`, rồi tiếp tục với bước kiểm tra môi trường. Bản mã nguồn phải giữ nguyên các thư mục `UI/`, `core/`, `features/`, `infrastructure/` và file khóa dependency.
 
 == Chuẩn bị Python và uv
 
@@ -69,48 +69,48 @@ Kết quả phải là Python `3.11` hoặc mới hơn, ví dụ `Python 3.12.x`
 uv --version
 ```
 
-Nếu Terminal hiển thị số phiên bản của `uv`, có thể tiếp tục. Nếu hệ thống báo không nhận diện lệnh, hãy cài `uv`, mở lại Terminal và kiểm tra lại trước khi chạy NetworkTools.
+Nếu Terminal hiển thị số phiên bản của `uv`, có thể tiếp tục. Nếu hệ thống báo không nhận diện lệnh, hãy cài `uv`, mở lại Terminal và kiểm tra lại trước khi chạy CAMS.
 
-== Khởi chạy NetworkTools
+== Khởi chạy CAMS
 
-NetworkTools có launcher dành cho từng nền tảng và một lệnh chạy trực tiếp. Launcher phù hợp khi cần đồng bộ dependency, kiểm tra thành phần native hoặc chuẩn bị môi trường. Lệnh trực tiếp phù hợp khi môi trường đã sẵn sàng.
+CAMS có launcher dành cho từng nền tảng và một lệnh chạy trực tiếp. Launcher phù hợp khi cần đồng bộ dependency, kiểm tra thành phần native hoặc chuẩn bị môi trường. Lệnh trực tiếp phù hợp khi môi trường đã sẵn sàng.
 
 === Windows
 
-Từ `NetworkTools/app`, chạy:
+Từ `CAMS/app`, chạy:
 
 ```cmd
-networktools.bat
+cams.bat
 ```
 
 Launcher hiển thị menu. Ở lần chuẩn bị đầu tiên, chọn tác vụ setup hoặc *Full setup and run*. Khi môi trường đã sẵn sàng, có thể chạy trực tiếp chế độ run:
 
 ```cmd
-networktools.bat run
+cams.bat run
 ```
 
 === Linux
 
 ```sh
-./networktools.sh
+./cams.sh
 ```
 
 Nếu file chưa có quyền thực thi:
 
 ```sh
-chmod +x ./networktools.sh
+chmod +x ./cams.sh
 ```
 
 Launcher Linux cũng hiển thị menu. Có thể yêu cầu chuẩn bị đầy đủ và chạy bằng:
 
 ```sh
-./networktools.sh all
+./cams.sh all
 ```
 
 Khi các binary native đã được chuẩn bị, dùng:
 
 ```sh
-./networktools.sh run
+./cams.sh run
 ```
 
 === Chạy trực tiếp
@@ -125,7 +125,7 @@ Lệnh này bỏ qua bước kiểm tra/build terminal companion và Syslog coll
 
 == Màn hình Welcome
 
-NetworkTools luôn nạp cửa sổ Welcome trước Workspace. Ở trạng thái sạch, cửa sổ hiển thị ba lựa chọn chính:
+CAMS luôn nạp cửa sổ Welcome trước Workspace. Ở trạng thái sạch, cửa sổ hiển thị ba lựa chọn chính:
 
 - *Create New*: tạo project `.ntp` mới;
 - *Open*: chọn một project `.ntp` đã có;
@@ -135,15 +135,15 @@ Khi đã có lịch sử làm việc, khu vực giữa cửa sổ hiển thị *
 
 #insert-image(
   "figures/gui/chapter-02/01-welcome-window.png",
-  caption: [Màn hình Welcome của NetworkTools khi chưa có project gần đây.],
+  caption: [Màn hình Welcome của CAMS khi chưa có project gần đây.],
   width: 100%,
 ) <fig:ch02-welcome>
 
 Workspace chỉ mở sau khi controller tạo hoặc giải nén thành công một project hợp lệ. Ứng dụng không tự mở project gần đây ngay khi khởi động.
 
-== Project trong NetworkTools
+== Project trong CAMS
 
-Project NetworkTools là một package có phần mở rộng `.ntp`. Package chứa dữ liệu Workspace cần thiết, gồm các database, dữ liệu backup và lịch sử snapshot. Mỗi project là một không gian làm việc độc lập; vì vậy nên dùng project riêng cho từng bài lab hoặc hệ thống.
+Project CAMS là một package có phần mở rộng `.ntp`. Package chứa dữ liệu Workspace cần thiết, gồm các database, dữ liệu backup và lịch sử snapshot. Mỗi project là một không gian làm việc độc lập; vì vậy nên dùng project riêng cho từng bài lab hoặc hệ thống.
 
 Ví dụ tên project:
 
@@ -158,7 +158,7 @@ Nên chọn tên mô tả đúng mục đích. Tránh các tên khó phân biệ
 
 Thực hiện theo thứ tự sau:
 
-1. Khởi chạy NetworkTools.
+1. Khởi chạy CAMS.
 2. Trong cửa sổ Welcome, chọn *Create New*.
 3. Trong hộp thoại *Create New Project*, nhập *Project name*.
 4. Kiểm tra *Project location*. Có thể nhập đường dẫn thư mục hoặc chọn *Browse…* để dùng native folder picker.
@@ -167,11 +167,11 @@ Thực hiện theo thứ tự sau:
 7. Chọn *Create Project*.
 8. Chờ hộp thoại đóng và Workspace xuất hiện.
 
-Hộp thoại ban đầu được minh họa tại @fig:ch02-create-dialog. Trường vị trí trỏ tới một thư mục có thật; NetworkTools tự tạo tên file `.ntp` an toàn từ tên project.
+Hộp thoại ban đầu được minh họa tại @fig:ch02-create-dialog. Trường vị trí trỏ tới một thư mục có thật; CAMS tự tạo tên file `.ntp` an toàn từ tên project.
 
 #insert-image(
   "figures/gui/chapter-02/02-create-project.png",
-  caption: [Hộp thoại tạo một project NetworkTools mới.],
+  caption: [Hộp thoại tạo một project CAMS mới.],
   width: 100%,
 ) <fig:ch02-create-dialog>
 
@@ -183,7 +183,7 @@ Trong ví dụ tại @fig:ch02-project-details, project có tên `Network-Lab`, 
   width: 100%,
 ) <fig:ch02-project-details>
 
-Sau khi package đầu tiên được tạo thành công, NetworkTools chuyển sang Workspace. Tên project xuất hiện trên thanh tiêu đề như trong @fig:ch02-created-workspace. Project mới chưa có thiết bị; đây là trạng thái đúng ở cuối workflow tạo project.
+Sau khi package đầu tiên được tạo thành công, CAMS chuyển sang Workspace. Tên project xuất hiện trên thanh tiêu đề như trong @fig:ch02-created-workspace. Project mới chưa có thiết bị; đây là trạng thái đúng ở cuối workflow tạo project.
 
 #insert-image(
   "figures/gui/chapter-02/04-workspace-opened.png",
@@ -195,7 +195,7 @@ Sau khi package đầu tiên được tạo thành công, NetworkTools chuyển 
 
 Tùy chọn *Protect project with a password* bảo vệ toàn bộ package `.ntp`. Khi mở lại project được bảo vệ, ứng dụng yêu cầu mật khẩu trước khi giải nén Workspace.
 
-#report-note[*Quan trọng:* NetworkTools không lưu mật khẩu project trong Recent Projects và không có cơ chế khôi phục mật khẩu đã quên. Hãy lưu mật khẩu ở trình quản lý mật khẩu an toàn; không dùng lại credential của thiết bị mạng.]
+#report-note[*Quan trọng:* CAMS không lưu mật khẩu project trong Recent Projects và không có cơ chế khôi phục mật khẩu đã quên. Hãy lưu mật khẩu ở trình quản lý mật khẩu an toàn; không dùng lại credential của thiết bị mạng.]
 
 #report-note[*Cảnh báo:* Khi project đang mở, dữ liệu phải được giải nén để ứng dụng làm việc. Mật khẩu bảo vệ file `.ntp` không thay thế việc bảo vệ tài khoản hệ điều hành, thư mục tạm và bản backup bên ngoài.]
 
@@ -209,7 +209,7 @@ Các ảnh của chương này dùng project không có mật khẩu. Không có
 2. Chọn *Open* ở phần đầu cửa sổ như vị trí minh họa tại @fig:ch02-open-choice.
 3. Trong native file picker của hệ điều hành, chọn file `.ntp`.
 4. Nếu project được bảo vệ, nhập mật khẩu và xác nhận.
-5. Chờ NetworkTools kiểm tra package, giải nén dữ liệu và mở Workspace.
+5. Chờ CAMS kiểm tra package, giải nén dữ liệu và mở Workspace.
 
 #insert-image(
   "figures/gui/chapter-02/05-open-project-choice.png",
@@ -227,7 +227,7 @@ Nếu package hợp lệ, thanh tiêu đề hiển thị tên project đã mở.
 
 == Recent Projects
 
-Mỗi lần tạo hoặc mở project thành công, NetworkTools ghi project vào *Recent Projects*. Danh sách lưu tên, URL file và thời điểm mở gần nhất; mật khẩu không được lưu. Chọn trực tiếp một dòng để mở lại project bằng cùng cơ chế kiểm tra package như lệnh *Open*.
+Mỗi lần tạo hoặc mở project thành công, CAMS ghi project vào *Recent Projects*. Danh sách lưu tên, URL file và thời điểm mở gần nhất; mật khẩu không được lưu. Chọn trực tiếp một dòng để mở lại project bằng cùng cơ chế kiểm tra package như lệnh *Open*.
 
 @fig:ch02-recents sử dụng hai package fixture hợp lệ và đường dẫn tạm an toàn. Nếu một file đã bị di chuyển hoặc xóa, mục không còn tồn tại sẽ được loại khỏi danh sách khi ứng dụng nạp lịch sử.
 
@@ -247,9 +247,9 @@ Trong Workspace, mở menu *File* và chọn *Save Workspace*, hoặc nhấn `Ct
   width: 100%,
 ) <fig:ch02-save>
 
-Phiên bản giao diện hiện tại không cung cấp action *Save As*. Vì vậy, không nên tìm một lệnh *Save As* trong menu hoặc dựa vào mô tả cũ. Nếu cần một bản sao độc lập, hãy lưu và đóng Workspace trước, rồi sao chép file `.ntp` bằng công cụ của hệ điều hành; bản sao ngoài ứng dụng là backup, không phải một thao tác Save As trong NetworkTools.
+Phiên bản giao diện hiện tại không cung cấp action *Save As*. Vì vậy, không nên tìm một lệnh *Save As* trong menu hoặc dựa vào mô tả cũ. Nếu cần một bản sao độc lập, hãy lưu và đóng Workspace trước, rồi sao chép file `.ntp` bằng công cụ của hệ điều hành; bản sao ngoài ứng dụng là backup, không phải một thao tác Save As trong CAMS.
 
-#report-note[*Mẹo:* NetworkTools có cơ chế auto-save theo chu kỳ, nhưng nên chủ động dùng `Ctrl+S` trước khi đóng ứng dụng hoặc trước một thay đổi quan trọng.]
+#report-note[*Mẹo:* CAMS có cơ chế auto-save theo chu kỳ, nhưng nên chủ động dùng `Ctrl+S` trước khi đóng ứng dụng hoặc trước một thay đổi quan trọng.]
 
 == Snapshot và khôi phục
 
@@ -277,12 +277,12 @@ Khi rollback, implementation hiện tại tạo một safety snapshot được g
 Khi chạy từ mã nguồn, dữ liệu runtime toàn cục mặc định nằm trong:
 
 ```text
-NetworkTools/app/data/
+CAMS/app/data/
 ```
 
-Thư mục này chứa database mặc định và trạng thái ứng dụng như Recent Projects. File project `.ntp` nằm tại vị trí người dùng chọn trong Create/Open workflow. Khi project được mở, NetworkTools làm việc trên một Workspace tạm được giải nén và đóng gói lại khi lưu.
+Thư mục này chứa database mặc định và trạng thái ứng dụng như Recent Projects. File project `.ntp` nằm tại vị trí người dùng chọn trong Create/Open workflow. Khi project được mở, CAMS làm việc trên một Workspace tạm được giải nén và đóng gói lại khi lưu.
 
-Người dùng thông thường không cần đổi thư mục runtime. Trường hợp nâng cao có thể đặt biến môi trường `NETWORKTOOLS_DATA_DIR` trước khi khởi chạy để dùng một vị trí khác. Hãy bảo đảm thư mục đích tồn tại trên ổ đĩa tin cậy và tài khoản hiện tại có quyền đọc/ghi.
+Người dùng thông thường không cần đổi thư mục runtime. Trường hợp nâng cao có thể đặt biến môi trường `CAMS_DATA_DIR` trước khi khởi chạy để dùng một vị trí khác. Hãy bảo đảm thư mục đích tồn tại trên ổ đĩa tin cậy và tài khoản hiện tại có quyền đọc/ghi.
 
 == Kiểm tra ứng dụng sau khi khởi chạy
 
@@ -303,7 +303,7 @@ Trạng thái sẵn sàng được minh họa tại @fig:ch02-ready. Không cầ
   width: 100%,
 ) <fig:ch02-ready>
 
-Sau khi project được tạo hoặc mở thành công, NetworkTools chuyển sang Workspace. Người dùng có thể tiếp tục làm quen với giao diện và các khu vực chức năng ở chương tiếp theo.
+Sau khi project được tạo hoặc mở thành công, CAMS chuyển sang Workspace. Người dùng có thể tiếp tục làm quen với giao diện và các khu vực chức năng ở chương tiếp theo.
 
 == Một số lỗi khởi chạy thường gặp
 
@@ -321,7 +321,7 @@ Kiểm tra thư viện hệ thống đồ họa, font, plugin platform và QML l
 
 === Không tạo được database hoặc thư mục runtime
 
-Kiểm tra quyền ghi đối với `app/data/` hoặc thư mục do `NETWORKTOOLS_DATA_DIR` chỉ định. Không chạy nhiều instance cùng ghi một Workspace. Không xóa file `-wal`, `-shm` hoặc journal khi ứng dụng còn chạy.
+Kiểm tra quyền ghi đối với `app/data/` hoặc thư mục do `CAMS_DATA_DIR` chỉ định. Không chạy nhiều instance cùng ghi một Workspace. Không xóa file `-wal`, `-shm` hoặc journal khi ứng dụng còn chạy.
 
 === Terminal companion hoặc Syslog collector còn thiếu
 
@@ -339,7 +339,7 @@ Chương này đã hoàn thành workflow từ môi trường chưa chạy ứng 
 
 #flow-diagram(
   [Chuẩn bị môi trường],
-  [Lấy NetworkTools],
+  [Lấy CAMS],
   [Kiểm tra Python và uv],
   [Khởi chạy ứng dụng],
   [Welcome],

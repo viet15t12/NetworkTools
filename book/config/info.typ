@@ -6,7 +6,7 @@
 #let faculty = [KHOA CÔNG NGHỆ THÔNG TIN]
 #let report-type = [BÁO CÁO NGHIÊN CỨU KHOA HỌC SINH VIÊN]
 #let project-title = [XÂY DỰNG PHẦN MỀM QUẢN LÝ TẬP TRUNG VÀ TỰ ĐỘNG HÓA CẤU HÌNH THIẾT BỊ MẠNG]
-#let product-name = [NetworkTools]
+#let product-name = [CAMS]
 #let field = [Mạng máy tính, tự động hóa mạng, phần mềm desktop]
 
 #let advisor = [TODO: Giảng viên hướng dẫn]

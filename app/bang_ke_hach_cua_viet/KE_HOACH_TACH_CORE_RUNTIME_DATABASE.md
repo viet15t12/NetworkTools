@@ -4,8 +4,8 @@
 
 ## 1. Thông tin cơ sở
 
-- Repository: `ntdatphu/NetworkTools`
-- Commit dùng để khảo sát: [`bd8a23f72701ee2f34893f705c05e1f22c59b212`](https://github.com/ntdatphu/NetworkTools/commit/bd8a23f72701ee2f34893f705c05e1f22c59b212)
+- Repository: `ntdatphu/CAMS`
+- Commit dùng để khảo sát: [`bd8a23f72701ee2f34893f705c05e1f22c59b212`](https://github.com/ntdatphu/CAMS/commit/bd8a23f72701ee2f34893f705c05e1f22c59b212)
 - Phạm vi: thư mục `app/`, tập trung vào:
   - `app/core/runtime.py`: khoảng 2.387 dòng.
   - `app/core/database.py`: khoảng 1.077 dòng.

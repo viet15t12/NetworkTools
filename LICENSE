@@ -1,19 +1,19 @@
-# NetworkTools Research Source License
+# CAMS Research Source License
 
 **Version 1.0 — 2026**
 
-Copyright © 2026 NetworkTools Research Team.  
+Copyright © 2026 CAMS Research Team.  
 All rights reserved except for the permissions expressly granted below.
 
 The authors and contributors of this project are identified in [`AUTHORS.md`](./AUTHORS.md).
 
-Official repository: [https://github.com/viet15t12/NetworkTools.git](https://github.com/viet15t12/NetworkTools.git)
+Official repository: [https://github.com/viet15t12/CAMS.git](https://github.com/viet15t12/CAMS.git)
 
 ---
 
 ## 1. Purpose
 
-NetworkTools is developed as a **student scientific research project** at the Posts and Telecommunications Institute of Technology — Ho Chi Minh City campus (PTIT HCM).
+CAMS is developed as a **student scientific research project** at the Posts and Telecommunications Institute of Technology — Ho Chi Minh City campus (PTIT HCM).
 
 The source code is publicly available for the purposes of:
 
@@ -39,7 +39,7 @@ You may:
 - modify the software privately for experimentation or educational purposes;
 - study the architecture, algorithms, database design, network automation mechanisms, user interface, and implementation techniques;
 - reference ideas or techniques from the project in accordance with normal academic citation practices;
-- cite NetworkTools as prior work or as a technical reference.
+- cite CAMS as prior work or as a technical reference.
 
 These permissions are granted only when the use complies with all restrictions in this License.
 
@@ -47,7 +47,7 @@ These permissions are granted only when the use complies with all restrictions i
 
 ## 3. Scientific Research Restriction
 
-Without prior written permission from the relevant copyright holder(s), you may **NOT** use NetworkTools, substantial portions of its source code, or a substantially derived implementation as part of another:
+Without prior written permission from the relevant copyright holder(s), you may **NOT** use CAMS, substantial portions of its source code, or a substantially derived implementation as part of another:
 
 - student scientific research project;
 - scientific research submission;
@@ -62,7 +62,7 @@ Without prior written permission from the relevant copyright holder(s), you may 
 - research prototype submitted for assessment;
 - software project presented as independently developed work.
 
-This restriction applies whether NetworkTools is:
+This restriction applies whether CAMS is:
 
 - copied directly;
 - partially copied;
@@ -74,7 +74,7 @@ This restriction applies whether NetworkTools is:
 - combined with other software;
 - or otherwise adapted.
 
-NetworkTools may still be used as a **reference or comparison project**, provided that proper attribution is given and its source code is not incorporated into the submitted work in violation of this License.
+CAMS may still be used as a **reference or comparison project**, provided that proper attribution is given and its source code is not incorporated into the submitted work in violation of this License.
 
 ---
 
@@ -82,10 +82,10 @@ NetworkTools may still be used as a **reference or comparison project**, provide
 
 You may **NOT**:
 
-- claim NetworkTools or substantial portions of it as your own original work;
+- claim CAMS or substantial portions of it as your own original work;
 - remove or conceal copyright notices, author information, attribution, or licensing information;
-- present a modified or renamed version of NetworkTools as an independently developed project;
-- intentionally obscure the origin of source code derived from NetworkTools;
+- present a modified or renamed version of CAMS as an independently developed project;
+- intentionally obscure the origin of source code derived from CAMS;
 - use superficial changes to evade the restrictions of this License.
 
 Changes such as renaming variables, functions, classes, files, directories, comments, UI elements, or converting code to another programming language do not automatically create an independent work.
@@ -105,8 +105,8 @@ Without prior written permission, you may not:
 - publicly distribute modified versions;
 - incorporate substantial portions into another publicly distributed software project.
 
-Linking to the official NetworkTools repository is permitted:
-[https://github.com/viet15t12/NetworkTools.git](https://github.com/viet15t12/NetworkTools.git).
+Linking to the official CAMS repository is permitted:
+[https://github.com/viet15t12/CAMS.git](https://github.com/viet15t12/CAMS.git).
 
 ---
 
@@ -116,8 +116,8 @@ Commercial use is not permitted without prior written permission from the releva
 
 This includes, but is not limited to:
 
-- selling NetworkTools;
-- licensing NetworkTools for a fee;
+- selling CAMS;
+- licensing CAMS for a fee;
 - incorporating substantial portions into a commercial software product;
 - providing a paid service substantially based on this source code;
 - commercially redistributing modified versions.
@@ -126,15 +126,15 @@ This includes, but is not limited to:
 
 ## 7. Attribution
 
-When NetworkTools is referenced in educational, technical, research, or academic material, appropriate attribution must be provided.
+When CAMS is referenced in educational, technical, research, or academic material, appropriate attribution must be provided.
 
 Recommended attribution:
 
-> **NetworkTools — Student Scientific Research Project, 2026.**  
+> **CAMS — Student Scientific Research Project, 2026.**  
 > Authors and research members are listed in `AUTHORS.md`.
 
 Where practical, include the official repository link:
-[https://github.com/viet15t12/NetworkTools.git](https://github.com/viet15t12/NetworkTools.git).
+[https://github.com/viet15t12/CAMS.git](https://github.com/viet15t12/CAMS.git).
 
 The detailed authorship and contribution record is maintained in:
 
@@ -144,11 +144,11 @@ The detailed authorship and contribution record is maintained in:
 
 ## 8. Third-Party Software
 
-NetworkTools may contain, use, or depend on third-party libraries, frameworks, assets, code, or other components.
+CAMS may contain, use, or depend on third-party libraries, frameworks, assets, code, or other components.
 
 Those components remain governed by their respective licenses and copyright notices.
 
-This License applies only to portions of the project for which the NetworkTools authors have the legal authority to grant these permissions.
+This License applies only to portions of the project for which the CAMS authors have the legal authority to grant these permissions.
 
 Nothing in this License overrides the terms of a third-party license.
 
@@ -156,7 +156,7 @@ Nothing in this License overrides the terms of a third-party license.
 
 ## 9. Copyright and Ownership
 
-Publication of the repository does not transfer copyright or ownership of NetworkTools.
+Publication of the repository does not transfer copyright or ownership of CAMS.
 
 All copyright and other applicable rights remain with their respective copyright holders.
 
@@ -174,7 +174,7 @@ Permission requests should describe:
 
 - who is requesting permission;
 - the intended use;
-- which parts of NetworkTools will be used;
+- which parts of CAMS will be used;
 - whether the resulting work is educational, research, academic, commercial, or otherwise publicly distributed.
 
 Contact information for project members is available in `AUTHORS.md`.
@@ -195,7 +195,7 @@ Users are responsible for reviewing and validating generated configurations befo
 
 ## 12. Acceptance
 
-By downloading, cloning, copying, running, modifying, or otherwise using NetworkTools, you agree to comply with this License.
+By downloading, cloning, copying, running, modifying, or otherwise using CAMS, you agree to comply with this License.
 
 If you do not agree with these terms, you are not granted permission to use the source code except for rights that may independently exist under applicable law.
 
@@ -216,7 +216,7 @@ If you do not agree with these terms, you are not granted permission to use the 
 ### You may not without permission
 
 - reuse substantial source code in another scientific research project;
-- submit NetworkTools or a derived version as another NCKH project;
+- submit CAMS or a derived version as another NCKH project;
 - submit it as a thesis, capstone, competition project, or equivalent academic work;
 - claim the project or substantial portions as your own;
 - publicly redistribute substantial portions of the source code;
@@ -224,6 +224,6 @@ If you do not agree with these terms, you are not granted permission to use the 
 
 ---
 
-**NetworkTools is source-available for education, evaluation, and research reference. It is not released for unrestricted reuse in other scientific research or academic submissions.**
+**CAMS is source-available for education, evaluation, and research reference. It is not released for unrestricted reuse in other scientific research or academic submissions.**
 
-Copyright © 2026 NetworkTools Research Team.
+Copyright © 2026 CAMS Research Team.

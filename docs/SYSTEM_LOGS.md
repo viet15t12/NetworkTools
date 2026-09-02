@@ -80,7 +80,7 @@ validate theo allowlist tên interface.
 
 `bindIp` chỉ là địa chỉ socket local; lệnh thiết bị dùng `advertisedIp`. OS không
 hỗ trợ, host mất session hoặc command thất bại phải trả lỗi và không ghi trạng
-thái configured giả. Lệnh gỡ chỉ xóa destination do NetworkTools quản lý, không
+thái configured giả. Lệnh gỡ chỉ xóa destination do CAMS quản lý, không
 xóa toàn bộ cấu hình logging khác của thiết bị.
 
 ## 5. UI và filter

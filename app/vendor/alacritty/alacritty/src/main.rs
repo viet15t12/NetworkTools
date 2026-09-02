@@ -1,6 +1,6 @@
 //! Alacritty - The GPU Enhanced Terminal.
 //! Modified by CAMS from upstream commit
-//! 1b2b36a64e88068ad02c95fad00ee2fad31c00bf; see ../../NETWORKTOOLS-CHANGES.md.
+//! 1b2b36a64e88068ad02c95fad00ee2fad31c00bf; see ../../CAMS-CHANGES.md.
 
 #![warn(rust_2018_idioms, future_incompatible)]
 #![deny(clippy::all, clippy::if_not_else, clippy::enum_glob_use)]
@@ -42,7 +42,7 @@ mod macos;
 mod message_bar;
 mod migrate;
 #[cfg(unix)]
-mod networktools;
+mod cams;
 #[cfg(windows)]
 mod panic;
 #[cfg(unix)]
@@ -149,7 +149,7 @@ fn alacritty(mut options: Options) -> Result<(), Box<dyn Error>> {
 
     #[cfg(unix)]
     let managed_options = if options.nt_managed {
-        Some(networktools::ManagedOptions {
+        Some(cams::ManagedOptions {
             session_id: options.nt_session_id.clone().ok_or("--nt-session-id is required")?,
             device_id: options.nt_device_id.clone().ok_or("--nt-device-id is required")?,
             device_name: options.nt_device_name.clone().ok_or("--nt-device-name is required")?,
@@ -162,7 +162,7 @@ fn alacritty(mut options: Options) -> Result<(), Box<dyn Error>> {
 
     #[cfg(unix)]
     let nttp_client = managed_options
-        .map(|options| networktools::NttpClient::spawn(options, window_event_loop.create_proxy()));
+        .map(|options| cams::NttpClient::spawn(options, window_event_loop.create_proxy()));
 
     // Initialize the logger as soon as possible as to capture output from other subsystems.
     let log_file = logging::initialize(&options, window_event_loop.create_proxy())

@@ -11,7 +11,7 @@ if not env_path:
 
 load_dotenv(env_path)
 
-# PROJECT_ROOT đang là thư mục NetworkTools (chứa file .env)
+# PROJECT_ROOT đang là thư mục CAMS (chứa file .env)
 PROJECT_ROOT = os.path.dirname(env_path)
 
 # Gán các thư mục gốc để code bên dưới ngắn gọn và đồng bộ hơn

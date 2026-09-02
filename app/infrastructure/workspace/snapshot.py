@@ -206,7 +206,7 @@ class SnapshotService:
         # failure there would otherwise leave forbidden files that make every
         # later package save fail validation.
         with tempfile.TemporaryDirectory(
-            prefix="networktools-snapshot-rollback-",
+            prefix="cams-snapshot-rollback-",
             dir=session.working_directory.parent,
         ) as temporary:
             rollback_root = Path(temporary)

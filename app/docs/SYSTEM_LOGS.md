@@ -81,7 +81,7 @@ tiến trình C++ riêng và `info_collected.db`, không giữ session CLI của
 native/syslog_collector/build.sh
 ```
 
-Script dùng CMake, cài binary vào `bin/networktools-syslog-collector`. Listener
+Script dùng CMake, cài binary vào `bin/cams-syslog-collector`. Listener
 đọc `syslog.json` trong thư mục cấu hình ứng dụng. `SyslogSettings` tự migration
 một lần các khóa Syslog cũ từ QSettings sang JSON. Thay đổi bind IP/port có hiệu
 lực sau khi restart listener.

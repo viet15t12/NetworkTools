@@ -94,7 +94,7 @@ def encrypt_zip_payload(
         "cipher": "AES-256-GCM",
         "ciphertextLength": source_path.stat().st_size,
         "envelopeVersion": ENVELOPE_VERSION,
-        "format": "networktools-encrypted-project",
+        "format": "cams-encrypted-project",
         "kdf": "Argon2id",
         "kdfParameters": {
             "iterations": costs.iterations,
@@ -216,7 +216,7 @@ def _read_envelope(
     header = json.loads(header_bytes.decode("utf-8"))
     if not isinstance(header, dict):
         raise InvalidWorkspacePackage("The encrypted project header is invalid.")
-    if header.get("format") != "networktools-encrypted-project":
+    if header.get("format") != "cams-encrypted-project":
         raise InvalidWorkspacePackage("Unknown encrypted project format.")
     envelope_version = header.get("envelopeVersion")
     if isinstance(envelope_version, bool) or envelope_version != ENVELOPE_VERSION:

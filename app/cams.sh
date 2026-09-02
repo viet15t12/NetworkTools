@@ -3,9 +3,9 @@ set -eu
 
 APP_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 TERMINAL_SOURCE="$APP_ROOT/vendor/alacritty"
-TERMINAL_BINARY="$TERMINAL_SOURCE/target/release/networktools-terminal"
+TERMINAL_BINARY="$TERMINAL_SOURCE/target/release/cams-terminal"
 SYSLOG_SOURCE="$APP_ROOT/native/syslog_collector"
-SYSLOG_BINARY="$APP_ROOT/bin/networktools-syslog-collector"
+SYSLOG_BINARY="$APP_ROOT/bin/cams-syslog-collector"
 cd "$APP_ROOT"
 
 prepare_environment() {
@@ -101,10 +101,10 @@ check_cython() {
 }
 
 check_terminal() {
-    configured=${NETWORKTOOLS_TERMINAL_BINARY:-}
+    configured=${CAMS_TERMINAL_BINARY:-}
     if [ -n "$configured" ]; then
         if [ ! -f "$configured" ]; then
-            echo "ERROR: NETWORKTOOLS_TERMINAL_BINARY does not point to a file: $configured" >&2
+            echo "ERROR: CAMS_TERMINAL_BINARY does not point to a file: $configured" >&2
             return 1
         fi
         if [ ! -x "$configured" ]; then
@@ -115,7 +115,7 @@ check_terminal() {
         return 0
     fi
 
-    discovered=$(command -v networktools-terminal 2>/dev/null || true)
+    discovered=$(command -v cams-terminal 2>/dev/null || true)
     if [ -n "$discovered" ]; then
         echo "CAMS Terminal: $discovered"
         return 0
@@ -127,8 +127,8 @@ check_terminal() {
     fi
 
     echo "ERROR: CAMS Terminal companion was not found." >&2
-    echo "Build/install the Alacritty fork as 'networktools-terminal', or set:" >&2
-    echo "  NETWORKTOOLS_TERMINAL_BINARY=/absolute/path/to/the/binary" >&2
+    echo "Build/install the Alacritty fork as 'cams-terminal', or set:" >&2
+    echo "  CAMS_TERMINAL_BINARY=/absolute/path/to/the/binary" >&2
     return 1
 }
 
@@ -141,11 +141,11 @@ terminal_sources_are_newer() {
 }
 
 ensure_terminal() {
-    if [ -n "${NETWORKTOOLS_TERMINAL_BINARY:-}" ]; then
+    if [ -n "${CAMS_TERMINAL_BINARY:-}" ]; then
         check_terminal
         return
     fi
-    discovered=$(command -v networktools-terminal 2>/dev/null || true)
+    discovered=$(command -v cams-terminal 2>/dev/null || true)
     if [ -n "$discovered" ] && [ "$discovered" != "$TERMINAL_BINARY" ]; then
         check_terminal
         return
@@ -162,7 +162,7 @@ ensure_terminal() {
 }
 
 check_syslog_collector() {
-    configured=${NETWORKTOOLS_SYSLOG_COLLECTOR:-}
+    configured=${CAMS_SYSLOG_COLLECTOR:-}
     target=${configured:-$SYSLOG_BINARY}
     if [ ! -f "$target" ]; then
         echo "ERROR: Native C++ Syslog collector was not found: $target" >&2
@@ -198,7 +198,7 @@ syslog_sources_are_newer() {
 }
 
 ensure_syslog_collector() {
-    if [ -n "${NETWORKTOOLS_SYSLOG_COLLECTOR:-}" ]; then
+    if [ -n "${CAMS_SYSLOG_COLLECTOR:-}" ]; then
         check_syslog_collector
         return
     fi
@@ -240,7 +240,7 @@ build_terminal() {
     cargo build \
         --release \
         --manifest-path "$TERMINAL_SOURCE/Cargo.toml" \
-        --bin networktools-terminal
+        --bin cams-terminal
     check_terminal
 }
 

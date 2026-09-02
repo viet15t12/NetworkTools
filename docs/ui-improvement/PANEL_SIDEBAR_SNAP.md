@@ -19,7 +19,7 @@ Primary references:
 - [VS Code SidebarPart](https://github.com/microsoft/vscode/blob/main/src/vs/workbench/browser/parts/sidebar/sidebarPart.ts)
 - [VS Code SplitView](https://github.com/microsoft/vscode/blob/main/src/vs/base/browser/ui/splitview/splitview.ts)
 
-## NetworkTools contract
+## CAMS contract
 
 `Main.qml` uses the same constants:
 

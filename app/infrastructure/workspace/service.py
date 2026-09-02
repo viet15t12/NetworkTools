@@ -174,7 +174,7 @@ class WorkspaceService:
         try:
             if save_as and destination.exists():
                 raise FileExistsError(f"A project already exists at {destination}.")
-            with tempfile.TemporaryDirectory(prefix="networktools-save-") as temporary:
+            with tempfile.TemporaryDirectory(prefix="cams-save-") as temporary:
                 staged = Path(temporary) / "workspace"
                 self._stage_workspace(session, staged)
                 snapshot = None
@@ -254,7 +254,7 @@ class WorkspaceService:
         operation = nullcontext(session) if _session_lease else session.operation()
         with operation, session.io_lock:
             effective_password = self._effective_password(session, password)
-            with tempfile.TemporaryDirectory(prefix="networktools-rollback-") as temporary:
+            with tempfile.TemporaryDirectory(prefix="cams-rollback-") as temporary:
                 current_stage = Path(temporary) / "current"
                 self._stage_workspace(session, current_stage)
                 safety = self.snapshot_service.create_from_staged_workspace(

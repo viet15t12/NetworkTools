@@ -1,5 +1,5 @@
 // ==========================================================
-// NetworkTools MANUAL BOOK
+// CAMS MANUAL BOOK
 // ==========================================================
 
 #import "config/settings.typ": report-style, report-figure-outline-entry

@@ -42,7 +42,7 @@ class TerminalLauncher:
     def resolve_binary(self) -> str:
         """Return an executable companion path or raise an actionable error."""
         configured = self._configured_binary or os.environ.get(
-            "NETWORKTOOLS_TERMINAL_BINARY", ""
+            "CAMS_TERMINAL_BINARY", ""
         ).strip()
         if configured:
             candidate = Path(configured).expanduser()
@@ -51,7 +51,7 @@ class TerminalLauncher:
             raise TerminalLaunchError(
                 "Configured CAMS Terminal binary is missing or not executable."
             )
-        discovered = shutil.which("networktools-terminal")
+        discovered = shutil.which("cams-terminal")
         if discovered:
             return discovered
         bundled = (
@@ -60,7 +60,7 @@ class TerminalLauncher:
             / "alacritty"
             / "target"
             / "release"
-            / ("networktools-terminal.exe" if os.name == "nt" else "networktools-terminal")
+            / ("cams-terminal.exe" if os.name == "nt" else "cams-terminal")
         )
         if bundled.is_file() and os.access(bundled, os.X_OK):
             return str(bundled)

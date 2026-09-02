@@ -1,9 +1,9 @@
 <!-- markdownlint-disable MD033 MD041 -->
 [English](README.en.md) | [Tiếng Việt](README.md)
 <div align="center">
-  <img src="app/UI/resources/brand/logo_readme.svg" alt="NetworkTools logo" width="144">
+  <img src="app/UI/resources/brand/logo_readme.svg" alt="CAMS logo" width="144">
 
-  <img src="app/UI/resources/brand/name.svg" alt="NetworkTools name">
+  <img src="app/UI/resources/brand/name.svg" alt="CAMS name">
 
   <p><strong>A desktop platform for centralized network device management, configuration, and monitoring.</strong></p>
 
@@ -19,7 +19,7 @@
 
 ## Overview
 
-NetworkTools provides a unified interface for managing device inventory, tracking status, and building configurations for routers, switches, and network services. The application combines a Qt Quick/QML interface with a Python backend, stores data locally in SQLite, and communicates with devices over SSH/Telnet.
+CAMS provides a unified interface for managing device inventory, tracking status, and building configurations for routers, switches, and network services. The application combines a Qt Quick/QML interface with a Python backend, stores data locally in SQLite, and communicates with devices over SSH/Telnet.
 
 The project is developed as part of a research initiative:
 
@@ -55,8 +55,8 @@ The project is developed as part of a research initiative:
 ### 1. Get the source code
 
 ```bash
-git clone https://github.com/ntdatphu/NetworkTools.git
-cd NetworkTools/app
+git clone https://github.com/ntdatphu/CAMS.git
+cd CAMS/app
 ```
 
 ### 2. Run the application
@@ -65,7 +65,7 @@ cd NetworkTools/app
 uv run main.py
 ```
 
-This is the only command required. `uv` creates the environment from `app/pyproject.toml` and `app/uv.lock`; the application creates new databases or restores missing schema objects without deleting existing data. Runtime data is stored by default in `app/data/`; you can set `NETWORKTOOLS_DATA_DIR` to use a different location.
+This is the only command required. `uv` creates the environment from `app/pyproject.toml` and `app/uv.lock`; the application creates new databases or restores missing schema objects without deleting existing data. Runtime data is stored by default in `app/data/`; you can set `CAMS_DATA_DIR` to use a different location.
 
 ## Usage Guide
 
@@ -113,7 +113,7 @@ STP, VTP, and Layer 2 security over SSH/Telnet. Each module is marked synchroniz
 only after the device accepts its commands. See
 [`app/features/switching/INTEGRATION_LIMITATIONS.md`](app/features/switching/INTEGRATION_LIMITATIONS.md).
 
-Configuration Backup stores per-host Dulwich history in `.networktools-git`.
+Configuration Backup stores per-host Dulwich history in `.cams-git`.
 When a workspace is saved, the staging process migrates the former `.git` layout
 so `.ntp` packages can continue rejecting standard Git metadata without losing
 the saved configuration history.
@@ -198,4 +198,4 @@ Runtime databases, logs, caches, credentials, private keys, and local backups mu
 
 ## Project Status
 
-NetworkTools is currently in development and undergoing verification in a research/lab environment. The API, some backend workers, and some View & Push flows are still being finalized; it should not be used as a production system without integration testing on the target infrastructure.
+CAMS is currently in development and undergoing verification in a research/lab environment. The API, some backend workers, and some View & Push flows are still being finalized; it should not be used as a production system without integration testing on the target infrastructure.

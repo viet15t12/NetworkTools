@@ -1,19 +1,19 @@
-# Kế hoạch hoàn tất NetworkTools Terminal
+# Kế hoạch hoàn tất CAMS Terminal
 
-Cập nhật: **2026-08-16**. NetworkTools manager, NTTP/1 server và source companion
+Cập nhật: **2026-08-16**. CAMS manager, NTTP/1 server và source companion
 Alacritty đã có trong repository. Tài liệu này chỉ giữ các gate còn mở; kiến trúc
 đã quyết định nằm ở
-[`../decisions/0001-external-networktools-terminal.md`](../decisions/0001-external-networktools-terminal.md).
+[`../decisions/0001-external-cams-terminal.md`](../decisions/0001-external-cams-terminal.md).
 
 ## 1. Baseline đã có
 
 - `features/terminal/`: UUID session, safe launch spec, QProcess lifecycle,
   NTTP/1 validation/server, focus/close/restart và crash cleanup.
-- `vendor/alacritty/`: binary `networktools-terminal`, managed `--nt-*` CLI,
+- `vendor/alacritty/`: binary `cams-terminal`, managed `--nt-*` CLI,
   Unix NTTP/1 client/dispatcher và hold behavior.
 - OpenSSH child cho thiết bị hiện đại; Paramiko PTY riêng cho Cisco IOS legacy,
   không truyền password qua argv/environment/IPC/log.
-- `networktools.sh terminal-build` và `terminal-check`; launcher tìm binary qua
+- `cams.sh terminal-build` và `terminal-check`; launcher tìm binary qua
   env/PATH/vendored release path.
 - Fake/contract test cho protocol, permission, duplicate session, lifecycle và
   launcher.
@@ -60,7 +60,7 @@ Không đưa host thật hoặc credential vào ảnh/log/fixture công khai.
 
 - Ghi commit/tag upstream trong release metadata.
 - Build từ clean checkout bằng Rust toolchain được pin/ghi phiên bản.
-- Giữ Apache-2.0/MIT notice và công bố NetworkTools delta.
+- Giữ Apache-2.0/MIT notice và công bố CAMS delta.
 - Không đóng gói `target/`; phát hành binary/checksum riêng.
 - Rebase upstream phải chạy Cargo test phù hợp, terminal contract Python và ma
   trận manual tối thiểu.
@@ -80,8 +80,8 @@ Chỉ xóa `features/terminal/manager.py`, `window.py`, `worker.py`, `stream.py`
 
 ```bash
 cd app
-./networktools.sh terminal-build
-./networktools.sh terminal-check
+./cams.sh terminal-build
+./cams.sh terminal-check
 uv run python -m unittest tests.unit.test_managed_terminal tests.test_launcher_contracts -v
 ```
 

@@ -31,8 +31,8 @@ The native build is optional and the Python source remains the fallback.
 
 ## Operational entry points
 
-- Linux/macOS: `./networktools.sh`
-- Windows: `networktools.bat`
+- Linux/macOS: `./cams.sh`
+- Windows: `cams.bat`
 
 Both launchers check `uv`, synchronize the `speed` extra, attempt to build and
 verify the native extension, and run the application through `uv run`. The

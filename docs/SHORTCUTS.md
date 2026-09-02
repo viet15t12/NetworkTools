@@ -1,4 +1,4 @@
-# Phím tắt NetworkTools
+# Phím tắt CAMS
 
 Danh sách này phản ánh các `Shortcut` đang hoạt động trong QML ngày **2026-08-16**.
 Phím tắt toàn cục được điều phối bởi `CommandRegistry.qml`; phím tắt theo ngữ
@@ -10,7 +10,7 @@ Quy ước tab bám theo Google Chrome: `Ctrl+1` đến `Ctrl+8` chọn tab theo
 
 | Phím | Hành vi |
 |---|---|
-| `Alt+F4` | Thoát NetworkTools khi cửa sổ chính đang hoạt động. |
+| `Alt+F4` | Thoát CAMS khi cửa sổ chính đang hoạt động. |
 | `Ctrl+O` | Mở project. |
 | `Ctrl+S` | Lưu workspace hiện tại. |
 | `Ctrl+K`, `Ctrl+S` | Mở bảng tham chiếu phím tắt. |
@@ -47,7 +47,7 @@ Các tổ hợp này dùng chữ cái trong tên chức năng và không chiếm
 | `Ctrl+Shift+D` | Ngắt kết nối các device đang chọn. |
 | `Ctrl+A` | Chọn toàn bộ device đang hiển thị khi ở chế độ multi-select. |
 | `Esc` | Xóa selection hiện tại. |
-| `Ctrl+\`` | Mở NetworkTools CLI cho device có tab active. |
+| `Ctrl+\`` | Mở CAMS CLI cho device có tab active. |
 
 ## 4. Device tabs
 

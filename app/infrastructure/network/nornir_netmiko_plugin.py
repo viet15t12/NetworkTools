@@ -42,8 +42,8 @@ class CAMSNetmiko:
         self.connection.disconnect()
 
 
-def register_networktools_netmiko() -> None:
+def register_cams_netmiko() -> None:
     """Register the application's isolated Nornir connection plugin once."""
-    name = "networktools_netmiko"
+    name = "cams_netmiko"
     if name not in ConnectionPluginRegister.available:
         ConnectionPluginRegister.register(name, CAMSNetmiko)

@@ -1,6 +1,6 @@
-# Đóng góp cho NetworkTools
+# Đóng góp cho CAMS
 
-Cảm ơn bạn đã đóng góp cho NetworkTools. Tài liệu này quy định cách đề xuất thay
+Cảm ơn bạn đã đóng góp cho CAMS. Tài liệu này quy định cách đề xuất thay
 đổi, chuẩn bị nhánh, viết commit, mở pull request và chứng minh chất lượng. Quy tắc
 chi tiết cho Python, QML, database và worker mạng nằm trong
 [Quy tắc lập trình](docs/CODING_STANDARDS.md); chọn đúng tài liệu qua

@@ -1421,7 +1421,7 @@ class QmlModuleContractTests(unittest.TestCase):
             self.ui_root / "qml" / "app" / "AboutWindow.qml"
         ).read_text(encoding="utf-8")
         self.assertIn(
-            'repositoryUrl: "https://github.com/viet15t12/NetworkTools.git"',
+            'repositoryUrl: "https://github.com/viet15t12/CAMS.git"',
             about,
         )
         self.assertIn("Qt.openUrlExternally(link)", about)

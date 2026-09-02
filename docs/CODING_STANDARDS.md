@@ -1,4 +1,4 @@
-# Quy tắc lập trình NetworkTools
+# Quy tắc lập trình CAMS
 
 Tài liệu này là chuẩn bắt buộc cho code mới và phần code được sửa. Code legacy
 không cần được format hoặc refactor hàng loạt nếu không thuộc phạm vi thay đổi.

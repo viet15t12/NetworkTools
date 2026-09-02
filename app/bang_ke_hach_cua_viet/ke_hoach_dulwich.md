@@ -35,26 +35,26 @@ Trong đó:
 
 Tại snapshot này:
 
-* [InformationView.qml](https://github.com/ntdatphu/NetworkTools/blob/4197c1709be02fac978478c6eb71c437fd8140aa/app/UI/qml/content/InformationView.qml) đang:
+* [InformationView.qml](https://github.com/ntdatphu/CAMS/blob/4197c1709be02fac978478c6eb71c437fd8140aa/app/UI/qml/content/InformationView.qml) đang:
 
   * Chạy `show running-config` từ session đang mở.
   * Nếu không có session thì gọi `dbManager.getRunningConfigBackup(host)`.
   * Mới chỉ xem cấu hình hiện tại, chưa có danh sách lịch sử commit.
 
-* [runtime.py](https://github.com/ntdatphu/NetworkTools/blob/4197c1709be02fac978478c6eb71c437fd8140aa/app/core/runtime.py) đang:
+* [runtime.py](https://github.com/ntdatphu/CAMS/blob/4197c1709be02fac978478c6eb71c437fd8140aa/app/core/runtime.py) đang:
 
   * Dùng `saveRunningConfigBackup(host)`.
   * Tạo thư mục `backup/<host>`.
   * Gọi `connector.save_running_config(str(backup_dir))`.
   * Có sẵn worker bất đồng bộ `saveRunningConfigBackupAsync()`.
 
-* [device_connector.py](https://github.com/ntdatphu/NetworkTools/blob/4197c1709be02fac978478c6eb71c437fd8140aa/app/infrastructure/network/device_connector.py) đang:
+* [device_connector.py](https://github.com/ntdatphu/CAMS/blob/4197c1709be02fac978478c6eb71c437fd8140aa/app/infrastructure/network/device_connector.py) đang:
 
   * Chạy `show running-config`.
   * Ghi trực tiếp thành `<host>_running-config.txt`.
   * Sau đó đồng bộ interface và OSPF vào database.
 
-* [pyproject.toml](https://github.com/ntdatphu/NetworkTools/blob/4197c1709be02fac978478c6eb71c437fd8140aa/app/pyproject.toml) chưa có dependency `dulwich`.
+* [pyproject.toml](https://github.com/ntdatphu/CAMS/blob/4197c1709be02fac978478c6eb71c437fd8140aa/app/pyproject.toml) chưa có dependency `dulwich`.
 
 Điểm quan trọng: việc mở tab Information để xem trực tiếp không nên tự tạo commit. Commit chỉ nên sinh khi người dùng thực hiện chức năng Backup/Get running-config hoặc một tác vụ backup tự động sau này.
 
@@ -206,7 +206,7 @@ Nên dùng múi giờ máy đang chạy ứng dụng và ghi timezone vào metad
 ### Author/committer
 
 ```text
-CAMS <networktools@localhost>
+CAMS <cams@localhost>
 ```
 
 Có thể bổ sung hostname thiết bị vào message:
@@ -288,7 +288,7 @@ Nếu commit thất bại, không báo backup thành công hoàn toàn.
 
 ## 7. Thiết kế tab Information
 
-Giữ nguyên toàn bộ bố cục và thiết kế hiện tại của [InformationView.qml](https://github.com/ntdatphu/NetworkTools/blob/4197c1709be02fac978478c6eb71c437fd8140aa/app/UI/qml/content/InformationView.qml). Không thêm panel lịch sử và không chia lại vùng hiển thị.
+Giữ nguyên toàn bộ bố cục và thiết kế hiện tại của [InformationView.qml](https://github.com/ntdatphu/CAMS/blob/4197c1709be02fac978478c6eb71c437fd8140aa/app/UI/qml/content/InformationView.qml). Không thêm panel lịch sử và không chia lại vùng hiển thị.
 
 Chỉ bổ sung một `ComboBox` cạnh nút `Reload`:
 

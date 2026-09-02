@@ -21,7 +21,7 @@ Window {
     flags: Qt.Dialog | Qt.FramelessWindowHint
 
     property bool ownsWindowLock: false
-    readonly property string repositoryUrl: "https://github.com/viet15t12/NetworkTools.git"
+    readonly property string repositoryUrl: "https://github.com/viet15t12/CAMS.git"
 
     function open() {
         if (!root.visible) {
@@ -110,7 +110,7 @@ Window {
 
                     Text {
                         Layout.fillWidth: true
-                        text: qsTr("Developed by the 3TM Research Team\n"
+                        text: qsTr("Developed by the NetCamsTeam Research Team\n"
                                    + "PTIT – Ho Chi Minh City Campus")
                         color: Theme.textSecondary
                         font.family: Theme.fontFamily

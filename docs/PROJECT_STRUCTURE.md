@@ -1,4 +1,4 @@
-# Cấu trúc dự án NetworkTools
+# Cấu trúc dự án CAMS
 
 Cập nhật: **2026-08-16**. Runtime desktop nằm trong `app/`; `backend/` và
 `api_server.py` là subsystem kế thừa, còn `app/vendor/` là mã bên thứ ba/fork.
@@ -6,7 +6,7 @@ Cập nhật: **2026-08-16**. Runtime desktop nằm trong `app/`; `backend/` và
 ## 1. Cây repository
 
 ```text
-NetworkTools-main/
+CAMS-main/
 ├── README.md / README.en.md
 ├── api_server.py                 # FastAPI kế thừa, không thuộc desktop runtime
 ├── app/                          # Desktop application chuẩn

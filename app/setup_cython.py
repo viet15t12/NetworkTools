@@ -12,7 +12,7 @@ from setuptools import Extension, setup
 
 
 setup(
-    name="networktools-sync-accelerator",
+    name="cams-sync-accelerator",
     packages=[],
     py_modules=[],
     ext_modules=cythonize(

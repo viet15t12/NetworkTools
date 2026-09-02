@@ -8,7 +8,7 @@ transfer. Không còn thư mục `_unused`.
 
 Các icon loại file được tuyển chọn từ Material Icon Theme. Notice được giữ tại
 `licenses/material-icons.txt`; icon không được đổi giấy phép chỉ vì đã được chép
-vào resource NetworkTools. `licenses/lucide-icon.txt` và các notice khác áp dụng
+vào resource CAMS. `licenses/lucide-icon.txt` và các notice khác áp dụng
 cho asset tương ứng ngoài bộ loại file.
 
 ## Runtime mapping

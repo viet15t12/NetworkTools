@@ -1,4 +1,4 @@
-# Chức năng hiện có của NetworkTools App
+# Chức năng hiện có của CAMS App
 
 Cập nhật: **2026-08-16**. Tài liệu này chỉ ghi những gì composition root
 `app/main.py` thực sự đưa vào desktop. `implemented` nghĩa là có UI/service/test
@@ -91,7 +91,7 @@ NETCONF/RESTCONF, verify và rollback tự động chưa hoàn chỉnh. Xem
 
 ## 6. Terminal
 
-NetworkTools mở/focus terminal companion `networktools-terminal` (fork Alacritty)
+CAMS mở/focus terminal companion `cams-terminal` (fork Alacritty)
 qua `QProcess` và NTTP/1 local IPC. Password không đi qua argv/environment/IPC;
 Cisco IOS legacy có Paramiko PTY child riêng. Terminal tương tác không dùng chung
 Netmiko session automation.

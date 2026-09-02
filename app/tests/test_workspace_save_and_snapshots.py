@@ -115,7 +115,7 @@ class WorkspaceSaveServiceTests(unittest.TestCase):
         repository.commit_snapshot("10.2.3.1", "hostname packaged")
         repository_root = self.session.backup_directory / "10.2.3.1" / "cfg"
         # Reproduce a workspace created by the former repository layout.
-        (repository_root / ".networktools-git").rename(repository_root / ".git")
+        (repository_root / ".cams-git").rename(repository_root / ".git")
 
         result = self.service.save_project(self.session, reason="shutdown", force=False)
 
@@ -123,7 +123,7 @@ class WorkspaceSaveServiceTests(unittest.TestCase):
         with zipfile.ZipFile(self.project) as archive:
             names = archive.namelist()
         self.assertFalse(any(".git" in Path(name).parts for name in names))
-        self.assertTrue(any(".networktools-git" in Path(name).parts for name in names))
+        self.assertTrue(any(".cams-git" in Path(name).parts for name in names))
 
         self.session.close()
         with self.service.open_project(self.project) as reopened:

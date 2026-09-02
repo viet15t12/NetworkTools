@@ -4,7 +4,7 @@ set -euo pipefail
 source_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 app_dir="$(cd "${source_dir}/../.." && pwd)"
 build_dir="${app_dir}/build/syslog_collector"
-cache_dir="${TMPDIR:-/tmp}/networktools-ccache"
+cache_dir="${TMPDIR:-/tmp}/cams-ccache"
 mkdir -p "${cache_dir}"
 export CCACHE_DIR="${cache_dir}"
 

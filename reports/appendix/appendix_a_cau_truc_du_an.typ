@@ -42,7 +42,7 @@ Bảng dưới đây mô tả chi tiết chuỗi liên kết từ thành phần 
     ([#table-code("VtpEditor.qml")], [#table-code("dbManager")], [#table-code("SwitchingRepository")], [#table-code("t09_vtp_*")], [#table-code("vtp.j2")]),
     ([#table-code("SyslogView.qml")], [#table-code("syslogManager")], [#table-code("SyslogRepository")], [#table-code("t12_syslog_*")], [#table-code("SyslogListener (UDP/TCP)")]),
     ([#table-code("SftpView.qml")], [#table-code("sftpController")], [#table-code("SftpClientService")], [Hàng đợi bộ nhớ], [#table-code("ParamikoSFTPWorker")]),
-    ([#table-code("TerminalHost.qml")], [#table-code("cli")], [#table-code("TerminalManager")], [Socket IPC NTTP/1], [#table-code("networktools-terminal")]),
+    ([#table-code("TerminalHost.qml")], [#table-code("cli")], [#table-code("TerminalManager")], [Socket IPC NTTP/1], [#table-code("cams-terminal")]),
     ([#table-code("DatabaseBrowser.qml")], [#table-code("dbManager")], [#table-code("DatabaseBrowserService")], [Tất cả 93 bảng], [#table-code("sqlite3 query engine")]),
   ),
   caption: [Bảng ánh xạ luồng thành phần từ Giao diện QML đến Cơ sở dữ liệu và Worker],

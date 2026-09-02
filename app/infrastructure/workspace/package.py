@@ -38,7 +38,7 @@ from .errors import (
 from .locking import ProjectFileLock
 
 
-PACKAGE_FORMAT = "networktools-project"
+PACKAGE_FORMAT = "cams-project"
 PACKAGE_VERSION = 1
 REQUIRED_DATABASES = ("device_network.db", "info_collected.db")
 MANIFEST_NAME = "manifest.json"
@@ -577,7 +577,7 @@ class WorkspacePackageCodec:
         try:
             if password:
                 staging_directory = tempfile.TemporaryDirectory(
-                    prefix="networktools-pack-"
+                    prefix="cams-pack-"
                 )
                 zip_payload = Path(staging_directory.name) / "payload.zip"
                 self._write_zip(root, zip_payload, manifest)
@@ -682,7 +682,7 @@ class WorkspacePackageCodec:
     def _make_temporary_workspace(
         self,
     ) -> tuple[tempfile.TemporaryDirectory[str], Path]:
-        temporary = tempfile.TemporaryDirectory(prefix="networktools-workspace-")
+        temporary = tempfile.TemporaryDirectory(prefix="cams-workspace-")
         root = Path(temporary.name)
         working = root / "workspace"
         working.mkdir(mode=0o700)
@@ -1192,7 +1192,7 @@ class WorkspacePackageCodec:
         archive.writestr(_zip_info(name, timestamp, is_directory=True), b"")
 
     def _verify_package(self, path: Path, password: str | None) -> None:
-        with tempfile.TemporaryDirectory(prefix="networktools-verify-") as temp:
+        with tempfile.TemporaryDirectory(prefix="cams-verify-") as temp:
             if is_encrypted_package(path):
                 payload = Path(temp) / "payload.zip"
                 decrypt_zip_payload(

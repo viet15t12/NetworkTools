@@ -20,7 +20,7 @@ from features.devices.login_service import DeviceLoginService
 from features.devices.repository import DeviceRepository
 from infrastructure.network.netmiko_factory import connect_device
 from infrastructure.network.nornir_netmiko_plugin import CAMSNetmiko
-from infrastructure.network.nornir_netmiko_plugin import register_networktools_netmiko
+from infrastructure.network.nornir_netmiko_plugin import register_cams_netmiko
 from infrastructure.network.nornir_netmiko_tasks import netmiko_send_config
 from infrastructure.network.ssh_algorithms import (
     SshAlgorithmOverride,
@@ -275,7 +275,7 @@ class SshAlgorithmOverrideTests(unittest.TestCase):
                 port=22,
                 platform="cisco_ios",
                 connection_options={
-                    "networktools_netmiko": ConnectionOptions(
+                    "cams_netmiko": ConnectionOptions(
                         extras={"ssh_algorithm_db_path": str(self.db_path)}
                     )
                 },
@@ -286,7 +286,7 @@ class SshAlgorithmOverrideTests(unittest.TestCase):
             runner={"plugin": "threaded", "options": {"num_workers": 2}},
             logging={"enabled": False},
         )
-        register_networktools_netmiko()
+        register_cams_netmiko()
         nornir = Nornir(
             inventory=Inventory(hosts=Hosts(hosts)),
             runner=load_runner(config),

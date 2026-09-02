@@ -1,5 +1,5 @@
 # Modified by CAMS from Alacritty upstream commit 1b2b36a64e88068ad02c95fad00ee2fad31c00bf.
-# See ../NETWORKTOOLS-CHANGES.md for provenance and the modification summary.
+# See ../CAMS-CHANGES.md for provenance and the modification summary.
 [package]
 name = "alacritty"
 version = "0.18.0-dev"
@@ -13,7 +13,7 @@ edition.workspace = true
 rust-version.workspace = true
 
 [[bin]]
-name = "networktools-terminal"
+name = "cams-terminal"
 path = "src/main.rs"
 
 [dependencies.alacritty_terminal]

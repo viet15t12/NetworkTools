@@ -7,7 +7,7 @@ from typing import Any
 from nornir.core.task import Result, Task
 
 
-CONNECTION_NAME = "networktools_netmiko"
+CONNECTION_NAME = "cams_netmiko"
 
 
 def netmiko_send_config(

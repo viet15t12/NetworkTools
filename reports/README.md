@@ -68,7 +68,7 @@ Typst đọc trực tiếp BibLaTeX/BibTeX `.bib`:
 Theo @tanenbaum2021computer, ...
 ```
 
-Nếu project LaTeX gốc đã có `networktools_references.bib`, hãy chép đè file mẫu trong project này để giữ toàn bộ nguồn cũ.
+Nếu project LaTeX gốc đã có `cams_references.bib`, hãy chép đè file mẫu trong project này để giữ toàn bộ nguồn cũ.
 
 ## Lưu ý
 

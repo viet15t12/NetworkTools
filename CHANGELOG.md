@@ -1,6 +1,6 @@
 # Changelog
 
-Mọi thay đổi đáng chú ý của NetworkTools được ghi lại trong tài liệu này.
+Mọi thay đổi đáng chú ý của CAMS được ghi lại trong tài liệu này.
 
 Định dạng dựa trên [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 và dự án sử dụng [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -13,7 +13,7 @@ nhận là baseline phát triển đầu tiên, không phải tuyên bố sẵn 
 
 - Bổ sung bản đồ tài liệu `docs/README.md`, hướng dẫn SFTP chuyên sâu, README cho
   runtime data/templates và README phân định backend kế thừa.
-- Bổ sung NetworkTools-side MVP cho NetworkTools Terminal fork Alacritty: session
+- Bổ sung CAMS-side MVP cho CAMS Terminal fork Alacritty: session
   UUID, `QProcess` lifecycle, OpenSSH argv validation không chứa password,
   NTTP/1 JSON Lines user-local, duplicate focus, state/error QML và test fake/socket.
 - Bổ sung kế hoạch triển khai liên repository và ADR cho ranh giới terminal ngoài
@@ -50,7 +50,7 @@ nhận là baseline phát triển đầu tiên, không phải tuyên bố sẵn 
   `Python.h`, giữ lỗi nghiêm ngặt cho lệnh `build`, và lọc riêng diagnostic
   text-input Wayland đã biết của Qt mà không ẩn các category Qt khác.
 - Chuyển active CLI composition khỏi widget qtpyTerminal/Netmiko embedded sang
-  companion `networktools-terminal`; compatibility code cũ tạm giữ nhưng không
+  companion `cams-terminal`; compatibility code cũ tạm giữ nhưng không
   còn được `TerminalHelper` khởi tạo.
 - Router Interface dùng session registry của app thay cho inventory/output tạm từ
   backend cũ; chỉ commit pending state sau khi thiết bị chấp nhận lệnh.
@@ -64,7 +64,7 @@ nhận là baseline phát triển đầu tiên, không phải tuyên bố sẵn 
   Suggestion dùng cùng layout và phân nhóm In use/Installed/Not installed.
 - Mỗi loại external tool chỉ có một app active; danh sách Terminal trên Windows
   chỉ còn terminal host, không tách PowerShell 7/Windows PowerShell. Category
-  hiển thị trực tiếp ứng dụng đang dùng hoặc hỗ trợ tích hợp của NetworkTools;
+  hiển thị trực tiếp ứng dụng đang dùng hoặc hỗ trợ tích hợp của CAMS;
   action disclosure/link dùng nút TextIcon.
 
 ## [0.1.0] - 2026-07-20

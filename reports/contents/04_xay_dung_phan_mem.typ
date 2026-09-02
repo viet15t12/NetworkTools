@@ -288,7 +288,7 @@ Phân hệ `features/sftp` tích hợp trình duyệt và truyền tệp bảo m
 
 === Trình dòng lệnh nhúng đồng hành (Terminal Companion)
 
-Để phục vụ nhu cầu can thiệp dòng lệnh thủ công của kỹ sư, CAMS tích hợp phân hệ `networktools-terminal` (dựa trên bản fork mã nguồn mở Alacritty):
+Để phục vụ nhu cầu can thiệp dòng lệnh thủ công của kỹ sư, CAMS tích hợp phân hệ `cams-terminal` (dựa trên bản fork mã nguồn mở Alacritty):
 - Ứng dụng desktop giao tiếp với cửa sổ Terminal thông qua socket IPC cục bộ bằng giao thức nội bộ NTTP/1 (CAMS Terminal Protocol Version 1).
 - Thông tin đăng nhập không bị lộ qua tham số dòng lệnh (`argv`) hay biến môi trường. Đối với thiết bị Cisco IOS legacy, hệ thống sử dụng tiến trình con Paramiko PTY độc lập.
 - Phiên Terminal tương tác được tách biệt hoàn toàn khỏi phiên tự động hóa Netmiko, bảo đảm không gây tranh chấp luồng lệnh.

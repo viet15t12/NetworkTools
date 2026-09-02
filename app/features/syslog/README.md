@@ -58,9 +58,9 @@ Build listener native trước khi chạy ứng dụng:
 native/syslog_collector/build.sh
 ```
 
-Binary được cài cục bộ vào `bin/networktools-syslog-collector`. Có thể override
-bằng biến môi trường `NETWORKTOOLS_SYSLOG_COLLECTOR`; đường dẫn JSON có thể
-override bằng `NETWORKTOOLS_SYSLOG_SETTINGS`.
+Binary được cài cục bộ vào `bin/cams-syslog-collector`. Có thể override
+bằng biến môi trường `CAMS_SYSLOG_COLLECTOR`; đường dẫn JSON có thể
+override bằng `CAMS_SYSLOG_SETTINGS`.
 
 Cấu hình Cisco chạy như transaction: kiểm tra source-interface, apply, verify
 running-config, lưu startup-config, verify persistence rồi mới ghi trạng thái DB.

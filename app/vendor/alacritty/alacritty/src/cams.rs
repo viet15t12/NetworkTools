@@ -1,6 +1,6 @@
 //! CAMS-managed terminal integration over the local NTTP/1 socket.
 //! Added by CAMS to Alacritty upstream baseline
-//! 1b2b36a64e88068ad02c95fad00ee2fad31c00bf; see ../../NETWORKTOOLS-CHANGES.md.
+//! 1b2b36a64e88068ad02c95fad00ee2fad31c00bf; see ../../CAMS-CHANGES.md.
 
 use std::io::{BufRead, BufReader, Write};
 use std::os::unix::net::UnixStream;
@@ -41,7 +41,7 @@ impl NttpClient {
     pub fn spawn(options: ManagedOptions, proxy: EventLoopProxy<Event>) -> Self {
         let (sender, receiver) = mpsc::channel();
         thread::Builder::new()
-            .name(String::from("networktools-nttp"))
+            .name(String::from("cams-nttp"))
             .spawn(move || {
                 let mut stream = match UnixStream::connect(&options.ipc_path) {
                     Ok(stream) => stream,

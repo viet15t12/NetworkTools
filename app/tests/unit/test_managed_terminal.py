@@ -77,7 +77,7 @@ class _FakeIpc(QObject):
         self.stopped = False
 
     def start(self) -> str:
-        return "/run/user/1000/networktools/manager.sock"
+        return "/run/user/1000/cams/manager.sock"
 
     def stop(self) -> None:
         self.stopped = True
@@ -430,7 +430,7 @@ class NttpServerIntegrationTests(unittest.TestCase):
 
     def setUp(self) -> None:
         self.tempdir = tempfile.TemporaryDirectory()
-        self.socket_path = Path(self.tempdir.name) / "networktools" / "manager.sock"
+        self.socket_path = Path(self.tempdir.name) / "cams" / "manager.sock"
         self.server = NttpServer(socket_path=self.socket_path)
         self.server.start()
 

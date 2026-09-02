@@ -71,7 +71,7 @@ class SyslogSettings(QObject):
     ) -> None:
         super().__init__(parent)
         self._available_advertised_ips = _local_ipv4_addresses()
-        override = os.environ.get("NETWORKTOOLS_SYSLOG_SETTINGS", "").strip()
+        override = os.environ.get("CAMS_SYSLOG_SETTINGS", "").strip()
         default_root = Path(QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppConfigLocation))
         self._path = Path(settings_path or override or (default_root / "syslog.json")).expanduser()
         self._values = self._load()

@@ -458,7 +458,7 @@ class WelcomeController(QObject):
 
         # Notify database managers/watchers first so they release handles into
         # the disposable workspace. Deleting before this signal is unreliable
-        # on Windows and can leave networktools-workspace-* folders behind.
+        # on Windows and can leave cams-workspace-* folders behind.
         self.activeWorkspaceChanged.emit()
         return self._cleanup_session(session, "Close Workspace")
 

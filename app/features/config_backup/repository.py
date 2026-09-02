@@ -21,8 +21,8 @@ from .paths import repository_path, validate_host
 
 
 CONFIG_FILENAME = "running-config.txt"
-METADATA_DIRECTORY = ".networktools-git"
-AUTHOR = b"CAMS <networktools@localhost>"
+METADATA_DIRECTORY = ".cams-git"
+AUTHOR = b"CAMS <cams@localhost>"
 _COMMIT_ID = re.compile(r"^[0-9a-fA-F]{40}$")
 
 

@@ -1,4 +1,4 @@
-# Kiến trúc kỹ thuật NetworkTools
+# Kiến trúc kỹ thuật CAMS
 
 Ngày đối chiếu: **2026-08-16**.
 
@@ -12,7 +12,7 @@ các thành phần cũ ở root repository vào đúng ranh giới. Mọi khẳn
 ~~~text
 Người dùng
   │
-  ├─ NetworkTools Desktop
+  ├─ CAMS Desktop
   │    ├─ Welcome (tạo/mở project .ntp)
   │    └─ Workspace UI (PyQt6 + QML module UI)
   │          │ QObject, signal/slot
@@ -25,7 +25,7 @@ Người dùng
   │          ├─ worker → session registry → SSH/Telnet/RESTCONF → thiết bị
   │          ├─ Syslog listener ──────────→ info_collected.db
   │          ├─ SFTP client ──────────────→ SFTP server
-  │          └─ terminal manager ─────────→ networktools-terminal
+  │          └─ terminal manager ─────────→ cams-terminal
   │
   └─ API/backend cũ
        api_server.py → backend/PyCode
@@ -160,7 +160,7 @@ Schema hiện hành gồm 73 bảng trong `device_network.db` và 20 bảng tron
 `info_collected.db`; số object lớn hơn vì còn index và trigger. Không dùng số
 object SQLite để suy ra số bảng.
 
-`NETWORKTOOLS_DATA_DIR` có thể đổi thư mục dữ liệu mặc định. Schema authority là
+`CAMS_DATA_DIR` có thể đổi thư mục dữ liệu mặc định. Schema authority là
 các file có thứ tự trong:
 
 - `infrastructure/database/schemas/device_network/`;
@@ -212,7 +212,7 @@ SSH/Telnet là đường automation chính cho các worker Cisco IOS. Routing v�
 một số nhánh RESTCONF. Không được suy luận hỗ trợ đầy đủ NETCONF/RESTCONF hoặc đa
 vendor chỉ từ dependency trong `pyproject.toml`.
 
-NetworkTools Terminal là ứng dụng đồng hành tách tiến trình. Feature
+CAMS Terminal là ứng dụng đồng hành tách tiến trình. Feature
 `terminal/` quản lý UUID, `QProcess` và IPC NTTP/1; terminal tương tác không
 render trong main QML và không dùng chung session Netmiko automation. Source fork
 Alacritty nằm trong `vendor/alacritty`; adapter `qtpyTerminal-main` chỉ còn là

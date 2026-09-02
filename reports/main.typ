@@ -62,7 +62,7 @@
 // ----------------------------------------------------------
 #pagebreak()
 #bibliography(
-  "bibliography/networktools_references.bib",
+  "bibliography/cams_references.bib",
   title: [Tài liệu tham khảo],
   style: "ieee",
 )

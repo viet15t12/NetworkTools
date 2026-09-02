@@ -16,7 +16,7 @@ Desktop dùng ba database:
 | `app_state.db` | Danh sách project gần đây | Không |
 
 Path mặc định do `infrastructure/database/paths.py` định nghĩa và có thể đổi bằng
-`NETWORKTOOLS_DATA_DIR`. `scripts/build_databases.py` đọc các file SQL theo thứ
+`CAMS_DATA_DIR`. `scripts/build_databases.py` đọc các file SQL theo thứ
 tự tên, build qua file tạm, bật foreign key, kiểm tra integrity/foreign key rồi
 thay đích atomically. Khi khởi động, app tạo database còn thiếu, bổ sung object
 schema còn thiếu và migrate trạng thái số cũ; app không rebuild phá hủy dữ liệu.

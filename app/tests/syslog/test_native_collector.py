@@ -21,7 +21,7 @@ from infrastructure.database.paths import DEVICE_NETWORK_DB, INFO_COLLECTED_DB
 
 
 APP_DIR = Path(__file__).resolve().parents[2]
-COLLECTOR = APP_DIR / "bin" / "networktools-syslog-collector"
+COLLECTOR = APP_DIR / "bin" / "cams-syslog-collector"
 
 
 class NativeCollectorTests(unittest.TestCase):
@@ -163,7 +163,7 @@ class NativeCollectorTests(unittest.TestCase):
                 "max_tcp_clients": 8,
             }), encoding="utf-8")
 
-            with patch.dict("os.environ", {"NETWORKTOOLS_SYSLOG_SETTINGS": str(settings)}):
+            with patch.dict("os.environ", {"CAMS_SYSLOG_SETTINGS": str(settings)}):
                 manager = SyslogManager()
             rows: list[dict] = []
             manager.messagesInserted.connect(

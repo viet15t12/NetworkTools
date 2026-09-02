@@ -11,7 +11,7 @@ dùng package hệ thống.
 
 `vendor/alacritty` là snapshot từ repository upstream
 <https://github.com/alacritty/alacritty>. CAMS giữ source trong cùng
-repository để `networktools.sh setup` có thể build terminal companion đồng bộ
+repository để `cams.sh setup` có thể build terminal companion đồng bộ
 với contract Python/QML hiện tại, không phụ thuộc một binary cài sẵn trên máy.
 
 Đường dẫn canonical là `app/vendor/alacritty`, không có
@@ -31,11 +31,11 @@ imported:   aeff1063ac77f0a1a731d98224de1d45b23f392e
 ```
 
 Danh sách file thay đổi và notice giấy phép nằm tại
-[`alacritty/NETWORKTOOLS-CHANGES.md`](alacritty/NETWORKTOOLS-CHANGES.md).
+[`alacritty/CAMS-CHANGES.md`](alacritty/CAMS-CHANGES.md).
 
 Fork cục bộ này khác Alacritty upstream ở các điểm chính:
 
-- binary release có tên `networktools-terminal`;
+- binary release có tên `cams-terminal`;
 - nhận các tham số managed `--nt-*`;
 - kết nối NTTP/1 qua Unix local socket;
 - xử lý focus, close, title, ping và session info từ CAMS;
@@ -52,14 +52,14 @@ environment hay NTTP.
 Từ thư mục `app/`:
 
 ```bash
-./networktools.sh terminal-build
-./networktools.sh terminal-check
+./cams.sh terminal-build
+./cams.sh terminal-check
 ```
 
 Binary sinh ra tại:
 
 ```text
-vendor/alacritty/target/release/networktools-terminal
+vendor/alacritty/target/release/cams-terminal
 ```
 
 Toàn bộ `vendor/alacritty/target/` là build artifact và đã được ignore bởi
@@ -69,7 +69,7 @@ khi push, nên kiểm tra:
 
 ```bash
 git status --short
-git check-ignore -v vendor/alacritty/target/release/networktools-terminal
+git check-ignore -v vendor/alacritty/target/release/cams-terminal
 ```
 
 Tại thời điểm audit, `target/` local làm thư mục vendor chiếm khoảng 1,1 GB,
@@ -104,7 +104,7 @@ Việc giữ fork trong repository phù hợp với policy hiện tại vì:
 - Alacritty cho phép dùng, sửa và phân phối source theo Apache-2.0/MIT;
 - hai license upstream được giữ nguyên;
 - baseline upstream và các file đã sửa được ghi rõ;
-- file sửa có notice trỏ đến `NETWORKTOOLS-CHANGES.md`;
+- file sửa có notice trỏ đến `CAMS-CHANGES.md`;
 - build artifact, database, credential và key không được Git track.
 
 Kết luận này là audit kỹ thuật đối với repository, không phải tư vấn pháp lý.
@@ -115,10 +115,10 @@ thay thế nghĩa vụ tạo third-party notices/SBOM cho bản phân phối.
 Khi cập nhật upstream:
 
 1. ghi lại commit/tag Alacritty nguồn trong pull request và cập nhật
-   `NETWORKTOOLS-CHANGES.md`;
+   `CAMS-CHANGES.md`;
 2. cập nhật source nhưng không chép `.git/` của repository lồng vào đây;
 3. áp dụng lại các thay đổi CAMS trong CLI, event loop và NTTP client;
-4. chạy `./networktools.sh terminal-build` và test terminal contract;
+4. chạy `./cams.sh terminal-build` và test terminal contract;
 5. kiểm tra chắc chắn `target/` không được Git track.
 
 Nếu fork ngày càng khác upstream hoặc cần phát hành độc lập, nên chuyển nó sang

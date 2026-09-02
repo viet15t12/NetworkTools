@@ -1,6 +1,6 @@
 import re
 
-with open('e:/NetworkTools/backend/sql/database.md', 'r', encoding='utf-8') as f:
+with open('e:/CAMS/backend/sql/database.md', 'r', encoding='utf-8') as f:
     content = f.read()
 
 # Fix Line 1
@@ -136,7 +136,7 @@ content = content.replace(line736_old, line736_new)
 # Add closing code fence at the end
 content = content.strip() + '\n```\n'
 
-with open('e:/NetworkTools/backend/sql/database.md', 'w', encoding='utf-8') as f:
+with open('e:/CAMS/backend/sql/database.md', 'w', encoding='utf-8') as f:
     f.write(content)
 
 print("Format complete.")

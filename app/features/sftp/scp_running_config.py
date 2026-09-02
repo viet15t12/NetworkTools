@@ -83,7 +83,7 @@ class ScpRunningConfigService:
         self._pending_host_key = None
         ssh = self._open_ssh(options, accepted_fingerprint)
         cli = None
-        remote_path = f"flash:/networktools-running-{uuid4().hex[:10]}.cfg"
+        remote_path = f"flash:/cams-running-{uuid4().hex[:10]}.cfg"
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S-%f")
         destination = destination_dir / (
             f"{_safe_host(options.host)}_running-config_{timestamp}.cfg"

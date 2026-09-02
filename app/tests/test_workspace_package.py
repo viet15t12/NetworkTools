@@ -141,7 +141,7 @@ class WorkspacePackageTests(unittest.TestCase):
             package_module.ContentEntry(
                 path=(
                     "snapshots/00000000-0000-0000-0000-000000000000/backup/"
-                    f"router/cfg/.networktools-git/objects/{index:04x}/"
+                    f"router/cfg/.cams-git/objects/{index:04x}/"
                     "0123456789abcdef0123456789abcdef01234567"
                 ),
                 size=index,

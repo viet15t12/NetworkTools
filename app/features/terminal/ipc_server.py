@@ -180,7 +180,7 @@ class NttpServer(QObject):
             raise RuntimeError(
                 "XDG_RUNTIME_DIR is required for CAMS Terminal IPC on Linux."
             )
-        return Path(runtime) / "networktools" / "manager.sock"
+        return Path(runtime) / "cams" / "manager.sock"
 
     @staticmethod
     def _prepare_parent(parent: Path) -> None:

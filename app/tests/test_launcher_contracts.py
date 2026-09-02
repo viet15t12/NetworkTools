@@ -13,7 +13,7 @@ APP_ROOT = Path(__file__).resolve().parents[1]
 class LauncherContractTests(unittest.TestCase):
     @unittest.skipIf(os.name == "nt", "POSIX shell launcher test")
     def test_optional_setup_skips_native_build_without_python_headers(self) -> None:
-        shell_path = APP_ROOT / "networktools.sh"
+        shell_path = APP_ROOT / "cams.sh"
         with tempfile.TemporaryDirectory() as temp_dir:
             fake_uv = Path(temp_dir) / "uv"
             fake_uv.write_text(
@@ -52,8 +52,8 @@ class LauncherContractTests(unittest.TestCase):
         self.assertNotIn("Building optional Cython", output)
 
     def test_setup_treats_cython_acceleration_as_optional(self) -> None:
-        batch = (APP_ROOT / "networktools.bat").read_text(encoding="utf-8")
-        shell = (APP_ROOT / "networktools.sh").read_text(encoding="utf-8")
+        batch = (APP_ROOT / "cams.bat").read_text(encoding="utf-8")
+        shell = (APP_ROOT / "cams.sh").read_text(encoding="utf-8")
 
         self.assertIn('"%~f0" build', batch)
         self.assertIn("build_cython_optional", shell)
@@ -63,28 +63,28 @@ class LauncherContractTests(unittest.TestCase):
         self.assertIn("Skipping optional Cython acceleration", shell)
 
     def test_explicit_build_stays_strict(self) -> None:
-        batch = (APP_ROOT / "networktools.bat").read_text(encoding="utf-8")
-        shell = (APP_ROOT / "networktools.sh").read_text(encoding="utf-8")
+        batch = (APP_ROOT / "cams.bat").read_text(encoding="utf-8")
+        shell = (APP_ROOT / "cams.sh").read_text(encoding="utf-8")
 
         self.assertIn('if /I "%~1"=="build" goto build', batch)
         self.assertIn("build) build_cython ;;", shell)
         self.assertIn("require_python_headers", shell)
 
     def test_setup_checks_optional_terminal_companion(self) -> None:
-        shell = (APP_ROOT / "networktools.sh").read_text(encoding="utf-8")
+        shell = (APP_ROOT / "cams.sh").read_text(encoding="utf-8")
 
         self.assertIn("check_terminal_optional", shell)
         self.assertIn("build_terminal_optional", shell)
         self.assertIn("terminal-check) check_terminal", shell)
         self.assertIn("terminal-build) build_terminal", shell)
-        self.assertIn("NETWORKTOOLS_TERMINAL_BINARY", shell)
-        self.assertIn("--bin networktools-terminal", shell)
+        self.assertIn("CAMS_TERMINAL_BINARY", shell)
+        self.assertIn("--bin cams-terminal", shell)
         self.assertIn("prepare_environment", shell)
         self.assertIn("unset VIRTUAL_ENV", shell)
         self.assertIn('/.cargo}/env"', shell)
 
     def test_run_checks_cpp_and_rust_binaries_before_starting_python(self) -> None:
-        shell = (APP_ROOT / "networktools.sh").read_text(encoding="utf-8")
+        shell = (APP_ROOT / "cams.sh").read_text(encoding="utf-8")
 
         self.assertIn("ensure_runtime_binaries", shell)
         self.assertIn("ensure_syslog_collector", shell)
@@ -97,13 +97,13 @@ class LauncherContractTests(unittest.TestCase):
         )
 
     def test_terminal_check_accepts_configured_executable(self) -> None:
-        launcher = APP_ROOT / "networktools.sh"
+        launcher = APP_ROOT / "cams.sh"
         with tempfile.TemporaryDirectory() as temp_dir:
             terminal = Path(temp_dir) / "custom-terminal"
             terminal.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
             terminal.chmod(0o700)
             environment = os.environ.copy()
-            environment["NETWORKTOOLS_TERMINAL_BINARY"] = str(terminal)
+            environment["CAMS_TERMINAL_BINARY"] = str(terminal)
 
             completed = subprocess.run(
                 [str(launcher), "terminal-check"],
@@ -120,10 +120,10 @@ class LauncherContractTests(unittest.TestCase):
 
     def test_terminal_check_rejects_missing_configured_binary(self) -> None:
         environment = os.environ.copy()
-        environment["NETWORKTOOLS_TERMINAL_BINARY"] = "/missing/networktools-terminal"
+        environment["CAMS_TERMINAL_BINARY"] = "/missing/cams-terminal"
 
         completed = subprocess.run(
-            [str(APP_ROOT / "networktools.sh"), "terminal-check"],
+            [str(APP_ROOT / "cams.sh"), "terminal-check"],
             text=True,
             capture_output=True,
             cwd=APP_ROOT,
@@ -139,9 +139,9 @@ class LauncherContractTests(unittest.TestCase):
         terminal_root = APP_ROOT / "vendor" / "alacritty" / "alacritty"
         cargo = (terminal_root / "Cargo.toml").read_text(encoding="utf-8")
         cli = (terminal_root / "src" / "cli.rs").read_text(encoding="utf-8")
-        nttp = (terminal_root / "src" / "networktools.rs").read_text(encoding="utf-8")
+        nttp = (terminal_root / "src" / "cams.rs").read_text(encoding="utf-8")
 
-        self.assertIn('name = "networktools-terminal"', cargo)
+        self.assertIn('name = "cams-terminal"', cargo)
         for argument in (
             "nt_managed",
             "nt_session_id",
@@ -163,7 +163,7 @@ class LauncherContractTests(unittest.TestCase):
         self.assertIn("options.window_options.terminal_options.hold = true", main)
 
     def test_windows_can_replace_blocked_cython_wheel(self) -> None:
-        batch = (APP_ROOT / "networktools.bat").read_text(encoding="utf-8")
+        batch = (APP_ROOT / "cams.bat").read_text(encoding="utf-8")
 
         self.assertIn("set \"NO_CYTHON_COMPILE=true\"", batch)
         self.assertIn("--reinstall-package cython", batch)
@@ -171,7 +171,7 @@ class LauncherContractTests(unittest.TestCase):
 
     @unittest.skipUnless(os.name == "nt", "Windows batch launcher test")
     def test_windows_menu_full_setup_dispatches_without_nested_call(self) -> None:
-        batch_path = APP_ROOT / "networktools.bat"
+        batch_path = APP_ROOT / "cams.bat"
         batch = batch_path.read_text(encoding="utf-8")
         self.assertNotIn("call :", batch)
 

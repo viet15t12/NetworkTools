@@ -175,7 +175,7 @@ class SftpClientTests(unittest.TestCase):
                 [{"cmd": "copy running-config startup-config", "confirm": True}],
             )
             remote_path = scp_clients[0].remote_path
-            self.assertTrue(remote_path.startswith("flash:/networktools-running-"))
+            self.assertTrue(remote_path.startswith("flash:/cams-running-"))
             self.assertIn(f"delete /force {remote_path}", cli.timing_commands)
             self.assertTrue(result["scpEnabled"])
             self.assertTrue(cli.disconnected)

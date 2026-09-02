@@ -8,15 +8,15 @@ Reviewed: **2026-08-16**. Operational/security details live in
 The SFTP ActivityBar action is the decision point:
 
 1. When an enabled `SFTP Client` exists in External Tools, clicking SFTP
-   launches that executable and keeps NetworkTools on its current workspace.
+   launches that executable and keeps CAMS on its current workspace.
 2. If a saved SFTP profile is already selected, the launcher substitutes
    `{ip}`, `{port}`, `{username}`, and `{path}`.
 3. Without a selected profile, target-dependent arguments are omitted so
    WinSCP/FileZilla opens its own login or saved-session UI.
-4. If no external client is active, NetworkTools opens the built-in SFTP
+4. If no external client is active, CAMS opens the built-in SFTP
    workspace.
 5. If the executable is missing, process creation fails, or a legacy
-   `{password}` argument is found, NetworkTools reports a warning and opens the
+   `{password}` argument is found, CAMS reports a warning and opens the
    built-in workspace.
 
 Passwords are never accepted as an External Tools placeholder and are never

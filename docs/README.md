@@ -15,7 +15,7 @@ nhầm kế hoạch lịch sử hoặc tài liệu của mã bên thứ ba.
 | Viết hoặc review code | [`CODING_STANDARDS.md`](CODING_STANDARDS.md), [`../CONTRIBUTING.md`](../CONTRIBUTING.md) |
 | Vận hành Syslog | [`SYSTEM_LOGS.md`](SYSTEM_LOGS.md) |
 | Vận hành SFTP | [`SFTP.md`](SFTP.md) |
-| Terminal companion | [`decisions/0001-external-networktools-terminal.md`](decisions/0001-external-networktools-terminal.md), [`../app/features/terminal/README.md`](../app/features/terminal/README.md) |
+| Terminal companion | [`decisions/0001-external-cams-terminal.md`](decisions/0001-external-cams-terminal.md), [`../app/features/terminal/README.md`](../app/features/terminal/README.md) |
 | Xem rủi ro và mức kiểm chứng | [`CODE_AUDIT.md`](CODE_AUDIT.md), [`BACKEND_APP_PARITY.md`](BACKEND_APP_PARITY.md) |
 | Kế hoạch phát triển | [`../ROADMAP.md`](../ROADMAP.md), [`plan/`](plan/) |
 
@@ -53,7 +53,7 @@ nhầm kế hoạch lịch sử hoặc tài liệu của mã bên thứ ba.
 - `backend/README.md`: ranh giới, cách nghiên cứu và cảnh báo của subsystem cũ.
 - `app/vendor/README.md`: provenance, build và cập nhật mã vendored.
 - Markdown bên trong `app/vendor/alacritty/` thuộc upstream Alacritty. Không dùng
-  chúng làm tài liệu NetworkTools và không viết lại trừ khi cập nhật snapshot
+  chúng làm tài liệu CAMS và không viết lại trừ khi cập nhật snapshot
   upstream/fork có chủ đích.
 - `app/qtpyTerminal-main/README.md` mô tả adapter tương thích cũ, không phải
   terminal runtime hiện hành.

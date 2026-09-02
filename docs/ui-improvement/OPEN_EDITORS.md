@@ -14,9 +14,9 @@ Reviewed: **2026-08-16**.
   giới hạn chiều cao theo số editor được cấu hình. Giá trị mặc định của VS Code
   là 9 editor nhìn thấy trước khi danh sách cuộn.
 
-## Contract áp dụng trong NetworkTools
+## Contract áp dụng trong CAMS
 
-NetworkTools hiện chỉ có một nhóm editor là `DeviceTabs`, vì vậy `DeviceTabs`
+CAMS hiện chỉ có một nhóm editor là `DeviceTabs`, vì vậy `DeviceTabs`
 là nguồn trạng thái duy nhất:
 
 - `openEditorsSnapshot` phản ánh đúng thứ tự tab, tên, UID, loại thiết bị,
@@ -28,7 +28,7 @@ là nguồn trạng thái duy nhất:
 - Section chỉ xuất hiện khi có tab, có thể collapse, và hiển thị tối đa 9 hàng
   trước khi cuộn. Chiều cao mỗi hàng dùng token `Theme.listItemHeight` 28 px
   của ứng dụng thay vì sao chép 22 px từ VS Code.
-- Theo thứ tự workspace của NetworkTools, section nằm sau danh sách device và
+- Theo thứ tự workspace của CAMS, section nằm sau danh sách device và
   được ghim ở đáy PanelSideBar. Đây là thứ tự sản phẩm đã chọn, không phải sao
   chép vị trí mặc định ở đầu Explorer của VS Code.
 - Icon loại thiết bị và màu trạng thái giúp phân biệt editor nhưng tên/UID vẫn

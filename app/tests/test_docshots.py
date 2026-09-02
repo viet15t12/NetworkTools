@@ -83,7 +83,7 @@ class DocshotCliTests(unittest.TestCase):
         self.assertTrue(terminal.shut_down)
 
     def test_vlan_fixture_starts_clean_and_save_creates_pending_vlan_30(self) -> None:
-        fixture_pattern = "networktools-docshots-*"
+        fixture_pattern = "cams-docshots-*"
         fixtures_before = set(Path(tempfile.gettempdir()).glob(fixture_pattern))
         with tempfile.TemporaryDirectory() as temporary:
             request = RenderRequest(800, 500, 1, "light", Path(temporary))
@@ -126,7 +126,7 @@ class DocshotCliTests(unittest.TestCase):
 
 class DocshotHeadlessTests(unittest.TestCase):
     def test_all_renders_lossless_pngs_at_requested_size(self) -> None:
-        fixture_pattern = "networktools-docshots-*"
+        fixture_pattern = "cams-docshots-*"
         fixtures_before = set(Path(tempfile.gettempdir()).glob(fixture_pattern))
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary) / "gui"
@@ -166,7 +166,7 @@ class DocshotHeadlessTests(unittest.TestCase):
         )
 
     def test_vlan_workflow_renders_ordered_pngs_without_leaking_fixture(self) -> None:
-        fixture_pattern = "networktools-docshots-*"
+        fixture_pattern = "cams-docshots-*"
         fixtures_before = set(Path(tempfile.gettempdir()).glob(fixture_pattern))
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary) / "gui"
@@ -210,7 +210,7 @@ class DocshotHeadlessTests(unittest.TestCase):
         )
 
     def test_dialog_regressions_render_composed_popups_at_scale_two(self) -> None:
-        fixture_pattern = "networktools-docshots-*"
+        fixture_pattern = "cams-docshots-*"
         fixtures_before = set(Path(tempfile.gettempdir()).glob(fixture_pattern))
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary) / "dialogs"

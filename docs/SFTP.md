@@ -1,4 +1,4 @@
-# SFTP trong NetworkTools
+# SFTP trong CAMS
 
 Cập nhật: **2026-08-16**. Tài liệu này mô tả client SFTP tích hợp và cách Activity
 Bar chọn giữa client tích hợp với ứng dụng SFTP ngoài.
@@ -70,7 +70,7 @@ nên UI phải vô hiệu hóa lựa chọn lưu password. Xóa profile cũng x�
 
 Nếu category `SFTP Client` trong External Tools có app active, Activity Bar thử
 mở app đó. Placeholder được phép gồm host/IP, port, username và path; `{password}`
-bị chặn. Khi executable/argument không hợp lệ hoặc launch thất bại, NetworkTools
+bị chặn. Khi executable/argument không hợp lệ hoặc launch thất bại, CAMS
 thông báo và mở client tích hợp. Không có profile vẫn có thể mở UI đăng nhập của
 client ngoài mà không đưa target hay secret lên command line.
 

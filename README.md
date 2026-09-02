@@ -1,13 +1,13 @@
 <!-- markdownlint-disable MD033 MD041 -->
 [English](README.en.md) | [Tiếng Việt](README.md)
 <div align="center">
-  <img src="app/UI/resources/brand/logo_readme.svg" alt="NetworkTools logo" width="144">
+  <img src="app/UI/resources/brand/logo_readme.svg" alt="CAMS logo" width="144">
 
-  <img src="app/UI/resources/brand/name.svg" alt="NetworkTools name">
+  <img src="app/UI/resources/brand/name.svg" alt="CAMS name">
 
   <p><strong>Nền tảng desktop quản lý, cấu hình và giám sát thiết bị mạng tập trung.</strong></p>
 
-  <p><a href="https://github.com/viet15t12/NetworkTools.git">Kho mã nguồn chính thức</a></p>
+  <p><a href="https://github.com/viet15t12/CAMS.git">Kho mã nguồn chính thức</a></p>
 
   <p>
     <img alt="Python" src="https://img.shields.io/badge/Python-%E2%89%A53.11-3776AB?logo=python&logoColor=white">
@@ -21,7 +21,7 @@
 
 ## Tổng quan
 
-NetworkTools cung cấp một giao diện thống nhất để quản lý inventory, theo dõi trạng thái và xây dựng cấu hình cho router, switch cùng các dịch vụ mạng. Ứng dụng kết hợp giao diện Qt Quick/QML với backend Python, lưu dữ liệu cục bộ bằng SQLite và giao tiếp với thiết bị qua SSH/Telnet.
+CAMS cung cấp một giao diện thống nhất để quản lý inventory, theo dõi trạng thái và xây dựng cấu hình cho router, switch cùng các dịch vụ mạng. Ứng dụng kết hợp giao diện Qt Quick/QML với backend Python, lưu dữ liệu cục bộ bằng SQLite và giao tiếp với thiết bị qua SSH/Telnet.
 
 Dự án được phát triển trong khuôn khổ nghiên cứu:
 
@@ -57,8 +57,8 @@ Dự án được phát triển trong khuôn khổ nghiên cứu:
 ### 1. Lấy mã nguồn
 
 ```bash
-git clone https://github.com/viet15t12/NetworkTools.git
-cd NetworkTools/app
+git clone https://github.com/viet15t12/CAMS.git
+cd CAMS/app
 ```
 
 ### 2. Chạy ứng dụng
@@ -67,7 +67,7 @@ cd NetworkTools/app
 uv run main.py
 ```
 
-Đây là lệnh duy nhất cần chạy. `uv` tự tạo môi trường từ `app/pyproject.toml` và `app/uv.lock`; ứng dụng tự tạo database mới hoặc bổ sung object schema còn thiếu mà không xóa dữ liệu hiện có. Dữ liệu runtime mặc định nằm trong `app/data/`; có thể đặt biến môi trường `NETWORKTOOLS_DATA_DIR` để sử dụng vị trí khác.
+Đây là lệnh duy nhất cần chạy. `uv` tự tạo môi trường từ `app/pyproject.toml` và `app/uv.lock`; ứng dụng tự tạo database mới hoặc bổ sung object schema còn thiếu mà không xóa dữ liệu hiện có. Dữ liệu runtime mặc định nằm trong `app/data/`; có thể đặt biến môi trường `CAMS_DATA_DIR` để sử dụng vị trí khác.
 
 ## Hướng dẫn sử dụng
 
@@ -115,7 +115,7 @@ IPv6, verify và rollback tự động chưa được tích hợp; xem chi tiế
 [`app/features/interfaces/README.md`](app/features/interfaces/README.md).
 
 Config Backup lưu lịch sử Git nội bộ bằng Dulwich trong thư mục
-`.networktools-git`. Khi lưu workspace, layout `.git` cũ được migrate trong staging
+`.cams-git`. Khi lưu workspace, layout `.git` cũ được migrate trong staging
 để `.ntp` tiếp tục cấm metadata Git chuẩn nhưng vẫn bảo toàn toàn bộ lịch sử.
 
 ### Syslog, Device Logs và SFTP
@@ -198,4 +198,4 @@ Database runtime, log, cache, credential, private key và backup cục bộ khô
 
 ## Trạng thái dự án
 
-NetworkTools đang trong giai đoạn phát triển và kiểm chứng trong môi trường nghiên cứu/lab. API, một số worker backend và một số luồng View & Push vẫn đang được hoàn thiện; không nên sử dụng như một hệ thống production khi chưa có kiểm thử tích hợp trên hạ tầng mục tiêu.
+CAMS đang trong giai đoạn phát triển và kiểm chứng trong môi trường nghiên cứu/lab. API, một số worker backend và một số luồng View & Push vẫn đang được hoàn thiện; không nên sử dụng như một hệ thống production khi chưa có kiểm thử tích hợp trên hạ tầng mục tiêu.

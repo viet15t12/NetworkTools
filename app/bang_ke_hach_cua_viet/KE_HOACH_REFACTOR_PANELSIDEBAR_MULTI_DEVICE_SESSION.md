@@ -1,6 +1,6 @@
 # KẾ HOẠCH LÀM LẠI `PanelSideBar` VÀ HỖ TRỢ NHIỀU THIẾT BỊ ĐỒNG THỜI
 
-> Repository: `ntdatphu/NetworkTools`  
+> Repository: `ntdatphu/CAMS`  
 > Commit khảo sát: `33caae7305debc9bcf4d71a1ec2d8a41f2832762`  
 > Phạm vi: `app/`  
 > Vị trí đề xuất trong repository:  

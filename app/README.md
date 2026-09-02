@@ -11,13 +11,13 @@ Khởi chạy tương tác, bao gồm kiểm tra `uv`, đồng bộ dependency,
 thử build/kiểm tra Cython, kiểm tra CAMS Terminal companion và chạy app:
 
 ```bash
-./networktools.sh
+./cams.sh
 ```
 
 Trên Windows:
 
 ```bat
-networktools.bat
+cams.bat
 ```
 
 Cython chỉ là tăng tốc tùy chọn. Lệnh `setup`/`all` sẽ cảnh báo và
@@ -28,7 +28,7 @@ Trên Linux, launcher kiểm tra `Python.h` trước khi build tùy chọn; nế
 development header tương ứng, launcher chọn Python fallback mà không in toàn bộ
 lỗi compiler. Lệnh `build` vẫn báo lỗi và gợi ý gói cần cài.
 
-Trên Windows, `networktools.bat` tự nhận biết khi Application Control chặn
+Trên Windows, `cams.bat` tự nhận biết khi Application Control chặn
 các module native bên trong wheel Cython và thử lại bằng compiler pure-Python
 chính thức của Cython. Việc tạo file `.pyd` vẫn cần Microsoft Visual C++
 14.0 trở lên và policy cho phép load file đó.
@@ -36,48 +36,48 @@ chính thức của Cython. Việc tạo file `.pyd` vẫn cần Microsoft Visua
 Chạy thẳng khi môi trường đã sẵn sàng:
 
 ```bash
-./networktools.sh run
+./cams.sh run
 ```
 
 Lệnh `run` kiểm tra hai binary bắt buộc trước khi mở Python/QML:
 
-- C++ Syslog collector tại `bin/networktools-syslog-collector`;
-- Rust terminal tại `vendor/alacritty/target/release/networktools-terminal`.
+- C++ Syslog collector tại `bin/cams-syslog-collector`;
+- Rust terminal tại `vendor/alacritty/target/release/cams-terminal`.
 
 Nếu binary chưa có hoặc source tương ứng mới hơn binary, launcher tự build lại.
 Nếu cả hai đã cập nhật, app được chạy thẳng mà không gọi CMake/Cargo. Có thể kiểm
-tra hoặc build riêng collector bằng `./networktools.sh syslog-check` và
-`./networktools.sh syslog-build`.
+tra hoặc build riêng collector bằng `./cams.sh syslog-check` và
+`./cams.sh syslog-build`.
 
-`./networktools.sh setup` không làm hỏng phần app chính khi Cython tùy chọn
+`./cams.sh setup` không làm hỏng phần app chính khi Cython tùy chọn
 hoặc terminal companion chưa có. Để kiểm tra terminal riêng ở chế độ nghiêm
 ngặt, chạy:
 
 ```bash
-./networktools.sh terminal-check
+./cams.sh terminal-check
 ```
 
 Chỉ build lại terminal companion mà không sync/build lại phần Python:
 
 ```bash
-./networktools.sh terminal-build
+./cams.sh terminal-build
 ```
 
-Script tìm executable `networktools-terminal` trong `PATH`. Nếu Alacritty fork
+Script tìm executable `cams-terminal` trong `PATH`. Nếu Alacritty fork
 được đặt tại `vendor/alacritty`, lệnh `setup` tự build release và app tự tìm
 binary trong `vendor/alacritty/target/release`. Nếu binary được build ở vị trí
 khác, cấu hình đường dẫn tuyệt đối trước khi setup/chạy:
 
 ```bash
-export NETWORKTOOLS_TERMINAL_BINARY=/absolute/path/to/networktools-terminal
-./networktools.sh setup
-./networktools.sh run
+export CAMS_TERMINAL_BINARY=/absolute/path/to/cams-terminal
+./cams.sh setup
+./cams.sh run
 ```
 
 `vendor/alacritty` là source third-party đã sửa, không phải code trong
 `src/vendor`. Baseline upstream, danh sách file sửa, license và quy tắc không
 commit `target/` được ghi tại [`vendor/README.md`](vendor/README.md) và
-[`vendor/alacritty/NETWORKTOOLS-CHANGES.md`](vendor/alacritty/NETWORKTOOLS-CHANGES.md).
+[`vendor/alacritty/CAMS-CHANGES.md`](vendor/alacritty/CAMS-CHANGES.md).
 
 Các lệnh sau chỉ dành cho phát triển/kiểm thử:
 
@@ -86,7 +86,7 @@ uv run python scripts/validate_structure.py
 uv run python -m unittest discover -s tests
 ```
 
-DB runtime mặc định được tạo trong `data/`; đặt `NETWORKTOOLS_DATA_DIR` để dùng thư mục khác. Không commit DB/WAL/journal, backup, log, cache, credential hay private key. Preview/dev mode không được mở kết nối thật.
+DB runtime mặc định được tạo trong `data/`; đặt `CAMS_DATA_DIR` để dùng thư mục khác. Không commit DB/WAL/journal, backup, log, cache, credential hay private key. Preview/dev mode không được mở kết nối thật.
 
 ## Kiến trúc
 
@@ -224,7 +224,7 @@ không có capability `save_config`; app không tự mở kết nối ngầm.
 
 ### Dữ liệu, script và kiểm thử
 
-- `data/`: chứa SQLite runtime; có thể đổi vị trí bằng `NETWORKTOOLS_DATA_DIR`.
+- `data/`: chứa SQLite runtime; có thể đổi vị trí bằng `CAMS_DATA_DIR`.
 - `templates/`: template XLSX hoặc file mẫu tải về; template lệnh nằm cạnh feature.
 - `scripts/build_databases.py`: đọc trực tiếp schema modular theo thứ tự tên, kiểm tra integrity/foreign key rồi thay DB atomically; không tạo SQL aggregate.
 - `scripts/validate_structure.py`: phát hiện README thiếu, QML path sai, runtime artifact bị track và thư mục legacy quay lại.
@@ -248,7 +248,7 @@ không có capability `save_config`; app không tự mở kết nối ngầm.
 | `syslogManager` / `syslogSettings` | Syslog feature | listener/query/filter và cấu hình destination theo thiết bị |
 
 Feature bar, menu chuột phải và `Ctrl+\`` mở hoặc focus ứng dụng đồng hành
-`networktools-terminal`. CAMS sinh UUID, khởi chạy bằng `QProcess`, theo
+`cams-terminal`. CAMS sinh UUID, khởi chạy bằng `QProcess`, theo
 dõi state qua NTTP/1 user-local và không render terminal. SSH child không dùng
 password trên argv; Cisco IOS legacy dùng Paramiko PTY riêng để tránh giới hạn
 SHA-1 của Fedora libcrypto. Terminal không dùng chung Netmiko session automation. Tích hợp

@@ -99,7 +99,7 @@ desktop; “có file” không làm feature đó thành capability app. Mọi po
 qua feature owner, canonical DB, registry và test.
 
 `app/vendor/alacritty/` là fork source lớn. Không review lại toàn bộ upstream như
-code NetworkTools trong mỗi PR; review delta NetworkTools (`--nt-*`, NTTP, hold,
+code CAMS trong mỗi PR; review delta CAMS (`--nt-*`, NTTP, hold,
 branding/build), lưu provenance và giữ license. Build artifact `target/` không
 được track.
 
@@ -110,7 +110,7 @@ cd app
 uv run python scripts/validate_structure.py
 uv run python -m compileall .
 uv run python -m unittest discover -s tests -v
-./networktools.sh terminal-check
+./cams.sh terminal-check
 ```
 
 Ngoài automated gate, thay đổi network command cần preview snapshot, fake-session

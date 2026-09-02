@@ -94,7 +94,7 @@ Các form F2 thông thường dùng 320 px preferred/240 px minimum cho pane tr�
 
 - Panel Side Bar chỉ có một mục External Tools; Feature Bar trong màn chuyển giữa **Applications** và **Suggestion**.
 - pane trái chọn loại tác vụ cố định SSH Client/SFTP Client/DB Browser/Terminal; pane phải xếp app theo Current selection, Operating system default, configured và Suggested Apps. Không có combobox đổi Tool type trong editor;
-- mỗi loại ở pane trái hiển thị app đang active, trạng thái chưa cấu hình hoặc **Built into NetworkTools** cho DB Browser/SFTP Client; Suggestion dùng cùng pattern, kèm số app đã cài và app đang dùng;
+- mỗi loại ở pane trái hiển thị app đang active, trạng thái chưa cấu hình hoặc **Built into CAMS** cho DB Browser/SFTP Client; Suggestion dùng cùng pattern, kèm số app đã cài và app đang dùng;
 - dùng `SplitView` ngang từ 920 px, xếp dọc dưới breakpoint đó; nội dung ứng dụng/editor cuộn độc lập;
 - detected candidate chỉ là đề xuất: hiển thị source/default association, yêu cầu xác nhận **Use application**, không tự ghi DB hoặc thay default Windows/Linux; mỗi loại chỉ có một app active;
 - executable phải đi qua native `FileDialog` và `validateExecutable`; Windows discovery dùng URL `ssh`/`telnet`/`sftp`, file association, Default terminal, App Paths/PATH/Installed Applications/known locations; Linux dùng XDG MIME/default application và PATH, không scan toàn ổ;

@@ -1,5 +1,5 @@
 [project]
-name = "networktools"
+name = "cams"
 version = "0.2"
 description = "PyQt6/QML desktop application for network device configuration workflows."
 readme = "README.md"
@@ -47,4 +47,4 @@ speed = [
 qtpyterminal = { path = "qtpyTerminal-main" }
 
 [project.scripts]
-networktools = "main:main"
+cams = "main:main"

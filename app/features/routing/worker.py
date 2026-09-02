@@ -33,7 +33,7 @@ if FEATURES_ROOT not in sys.path:
 
 # GỌI CÁC THAM SỐ TỪ TRẠM KIỂM SOÁT
 from infrastructure.network.config import TMP_DIR, ROUTING_TEMPLATE_DIR, DB_TABLES
-from infrastructure.network.nornir_netmiko_plugin import register_networktools_netmiko
+from infrastructure.network.nornir_netmiko_plugin import register_cams_netmiko
 
 def render_routing_config(platform, sub_type, config_data, mode):
     # Dùng ROUTING_TEMPLATE_DIR quy hoạch sẵn trong config.py
@@ -355,7 +355,7 @@ def build_worker_inventory(db_path, task_list):
                     port=int(db_port) if db_port else default_port,
                     platform=platform,
                     connection_options={
-                        "networktools_netmiko": ConnectionOptions(
+                        "cams_netmiko": ConnectionOptions(
                             extras={
                                 "conn_timeout": NETWORK_TIMEOUT,
                                 "banner_timeout": NETWORK_TIMEOUT,
@@ -488,7 +488,7 @@ def run_routing_config(input_data, db_path, output_path, session_provider=None):
         return
 
     ConnectionPluginRegister.auto_register()
-    register_networktools_netmiko()
+    register_cams_netmiko()
     config = Config.from_dict(
         runner={"plugin": "threaded", "options": {"num_workers": 5}},
         logging={"enabled": False},

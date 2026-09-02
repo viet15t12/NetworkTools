@@ -7,32 +7,32 @@ vendored for reproducible builds.
 
 ## Context
 
-NetworkTools needs a high-performance interactive device CLI with native
+CAMS needs a high-performance interactive device CLI with native
 terminal behavior. Embedding a terminal parser and renderer in the PyQt6/QML
 application couples human terminal I/O to the same Netmiko sessions used by
 automation, makes terminal correctness an application responsibility, and does
 not provide the independent-window lifecycle described by the product roadmap.
 
-The terminal must not gain access to NetworkTools persistence, configuration
+The terminal must not gain access to CAMS persistence, configuration
 generators, credentials, or automation internals. The Alacritty fork also needs
 to remain close enough to upstream for routine rebases.
 
 ## Decision
 
-Use a separate-process **NetworkTools Terminal** based on Alacritty. Its source
+Use a separate-process **CAMS Terminal** based on Alacritty. Its source
 is vendored under `app/vendor/alacritty` so the app launcher can build a matching
 binary from one checkout. Process/runtime ownership remains separate even though
-the source currently shares this repository. NetworkTools launches it with
+the source currently shares this repository. CAMS launches it with
 `QProcess`, assigns a UUID session ID, and tracks one active managed session per
 inventory host.
 
 The applications exchange versioned NTTP/1 JSON Lines over a user-only Unix
-domain socket below `$XDG_RUNTIME_DIR/networktools/`. `QProcess` owns spawn,
+domain socket below `$XDG_RUNTIME_DIR/cams/`. `QProcess` owns spawn,
 PID, exit, and crash evidence. NTTP/1 owns lifecycle events and the allowlisted
 focus, close, title, ping, and session-info commands. Messages are limited to 64
 KiB and never carry terminal output, arbitrary commands, or credentials.
 
-Interactive access uses system OpenSSH as the terminal child. NetworkTools
+Interactive access uses system OpenSSH as the terminal child. CAMS
 passes an argument list directly and never uses a shell or places the inventory
 password on argv. Existing Netmiko sessions remain dedicated to automation.
 
@@ -46,7 +46,7 @@ vendored dependency can be removed in a separately reviewed cleanup.
 
 - Terminal rendering, PTY, ANSI/VT, input, clipboard, and scrollback stay in a
   mature terminal application.
-- NetworkTools can distinguish process state from window, IPC, and SSH-child
+- CAMS can distinguish process state from window, IPC, and SSH-child
   state and does not use PID or title as identity.
 - A missing companion binary fails with an actionable error instead of silently
   launching a generic system terminal.

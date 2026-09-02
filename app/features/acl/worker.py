@@ -11,7 +11,7 @@ from typing import Any, Callable
 from jinja2 import Environment, FileSystemLoader
 
 from infrastructure.network.config import ACL_TEMPLATE_DIR, DB_TABLES, TMP_DIR
-from infrastructure.network.nornir_netmiko_plugin import register_networktools_netmiko
+from infrastructure.network.nornir_netmiko_plugin import register_cams_netmiko
 
 
 T_DEVICES = DB_TABLES["device_info"]["main"]
@@ -170,7 +170,7 @@ def _build_inventory(
                 "password": password,
                 "port": int(port or (23 if method == "TELNET" else 22)),
                 "platform": platform,
-                "connection_options": {"networktools_netmiko": {"extras": {
+                "connection_options": {"cams_netmiko": {"extras": {
                     "banner_timeout": 30,
                     "auth_timeout": 30,
                     "session_timeout": 60,
@@ -213,7 +213,7 @@ def _run_with_nornir(tasks: list[dict[str, Any]], db_path: str) -> list[dict[str
     from nornir import InitNornir
 
     try:
-        register_networktools_netmiko()
+        register_cams_netmiko()
         nr = InitNornir(
             runner={"plugin": "threaded", "options": {"num_workers": 3}},
             inventory={"plugin": "SimpleInventory", "options": {"host_file": inventory_path}},

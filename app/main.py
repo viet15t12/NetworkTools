@@ -11,7 +11,7 @@ from pathlib import Path
 _QT_DLL_DIRECTORY_HANDLES: list[object] = []
 _QT_LIBRARY_HANDLES: list[object] = []
 _QT_LABS_PLATFORM_REGISTERED = False
-APP_USER_MODEL_ID = "3TM.CAMS.App"
+APP_USER_MODEL_ID = "NetCamsTeam.CAMS.App"
 RUNTIME_QML_DIR = Path(__file__).resolve().parent / "runtime_qml"
 
 
@@ -189,7 +189,7 @@ def main() -> int:
         return 1
 
     app = QApplication(qt_arguments)
-    app.setOrganizationName("3TM")
+    app.setOrganizationName("NetCamsTeam")
     app.setOrganizationDomain("ptit.edu.vn")
     app.setApplicationName("CAMS")
 

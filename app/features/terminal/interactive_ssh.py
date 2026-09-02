@@ -81,7 +81,7 @@ def _confirm_changed_host_key(exc: paramiko.BadHostKeyException) -> bool:
 
         app = QApplication.instance()
         if app is None:
-            app = QApplication(["networktools-host-key-warning"])
+            app = QApplication(["cams-host-key-warning"])
         dialog = QMessageBox()
         dialog.setIcon(QMessageBox.Icon.Warning)
         dialog.setWindowTitle("SSH Host Key Changed")
