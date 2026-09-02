@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Layouts
 import UI
 
@@ -12,13 +13,29 @@ Rectangle {
         anchors.centerIn: parent
         spacing: 24
 
-        // Logo nhạt màu
-        ThemedIcon {
+        Image {
+            id: welcomeLogo
+            objectName: "emptyWorkspaceLogo"
             anchors.horizontalCenter: parent.horizontalCenter
-            iconSource: AppAssets.brandLogo
-            iconSize: 360
-            iconColor: Theme.textDisabled
+            width: 360
+            height: 360
+            source: AppAssets.brandLogo
+            sourceSize: Qt.size(width, height)
+            fillMode: Image.PreserveAspectFit
+            asynchronous: true
+            cache: true
+            smooth: true
             opacity: 0.3
+
+            // Flatten the full-color brand artwork to the subdued monochrome
+            // treatment used by the empty Workspace, while retaining its alpha
+            // and every detail from the source SVG.
+            layer.enabled: true
+            layer.smooth: true
+            layer.effect: MultiEffect {
+                colorization: 1.0
+                colorizationColor: Theme.textDisabled
+            }
         }
 
         Text {

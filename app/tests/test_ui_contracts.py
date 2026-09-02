@@ -1086,7 +1086,7 @@ class QmlModuleContractTests(unittest.TestCase):
                 self.assertIn("tabs: " + json.dumps(expected_tabs), source)
                 self.assertNotIn('"Info"', source)
 
-    def test_welcome_preserves_brand_colors_and_uses_contrast_safe_icons(self) -> None:
+    def test_welcome_uses_context_appropriate_brand_treatments(self) -> None:
         ui_root = Path(__file__).resolve().parents[1] / "UI"
         welcome = (ui_root / "qml/app/Welcome.qml").read_text(encoding="utf-8")
         empty_workspace = (ui_root / "qml/content/WelcomeScreen.qml").read_text(
@@ -1103,7 +1103,11 @@ class QmlModuleContractTests(unittest.TestCase):
         ).getroot()
 
         self.assertIn("preserveOriginalColors: true", welcome)
-        self.assertIn("preserveOriginalColors: true", empty_workspace)
+        self.assertIn("source: AppAssets.brandLogo", empty_workspace)
+        self.assertIn("layer.effect: MultiEffect", empty_workspace)
+        self.assertIn("colorization: 1.0", empty_workspace)
+        self.assertIn("colorizationColor: Theme.textDisabled", empty_workspace)
+        self.assertNotIn("preserveOriginalColors: true", empty_workspace)
         self.assertIn("iconColor: Theme.selectionForeground", action_card)
         self.assertNotIn("brandProjectFileIcon", recent)
         svg_nodes = [
