@@ -1,85 +1,641 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
-
 <svg
-   width="512"
-   height="512"
-   viewBox="0 0 512 512"
+   width="900px"
+   height="900px"
+   viewBox="0 0 900 900"
    version="1.1"
-   id="svg1"
    xml:space="preserve"
-   inkscape:version="1.4.3 (0d15f75, 2025-12-25)"
-   sodipodi:docname="logo.svg"
+   id="SVGRoot"
+   inkscape:version="1.4.4 (dcaf3e7, 2026-05-05)"
+   sodipodi:docname="CAMS-logo.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
-     id="namedview1"
-     pagecolor="#ffffff"
-     bordercolor="#000000"
-     borderopacity="0.25"
-     inkscape:showpageshadow="2"
-     inkscape:pageopacity="0.0"
-     inkscape:pagecheckerboard="0"
-     inkscape:deskcolor="#d1d1d1"
-     inkscape:document-units="px"
-     inkscape:zoom="1.1445312"
-     inkscape:cx="255.56314"
-     inkscape:cy="256"
-     inkscape:window-width="1440"
-     inkscape:window-height="788"
-     inkscape:window-x="-6"
-     inkscape:window-y="-6"
-     inkscape:window-maximized="1"
-     inkscape:current-layer="g14" /><defs
-     id="defs1">
-    <filter id="routerPulseGlow" x="-80%" y="-80%" width="260%" height="260%">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="5"/>
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:c2pa="http://c2pa.org/manifest"><title
+   id="title56">Centralized Automation and Monitoring System Desktop Icon</title><defs
+   id="defs2"><linearGradient
+     id="linearGradient54"
+     inkscape:collect="always"><stop
+       style="stop-color:#0053a0;stop-opacity:1;"
+       offset="0"
+       id="stop54" /><stop
+       style="stop-color:#28aaff;stop-opacity:1;"
+       offset="1"
+       id="stop55" /></linearGradient><linearGradient
+     id="linearGradient52"
+     inkscape:collect="always"><stop
+       style="stop-color:#0053a0;stop-opacity:1;"
+       offset="0"
+       id="stop52" /><stop
+       style="stop-color:#28aaff;stop-opacity:1;"
+       offset="1"
+       id="stop53" /></linearGradient><linearGradient
+     id="linearGradient50"
+     inkscape:collect="always"><stop
+       style="stop-color:#0053a0;stop-opacity:1;"
+       offset="0"
+       id="stop50" /><stop
+       style="stop-color:#28aaff;stop-opacity:1;"
+       offset="1"
+       id="stop51" /></linearGradient><linearGradient
+     id="linearGradient47"
+     inkscape:collect="always"><stop
+       style="stop-color:#0053a0;stop-opacity:1;"
+       offset="0"
+       id="stop47" /><stop
+       style="stop-color:#28aaff;stop-opacity:1;"
+       offset="1"
+       id="stop48" /></linearGradient><linearGradient
+     id="linearGradient43"
+     inkscape:collect="always"><stop
+       style="stop-color:#32effc;stop-opacity:1;"
+       offset="0"
+       id="stop43" /><stop
+       style="stop-color:#007eff;stop-opacity:1;"
+       offset="1"
+       id="stop44" /></linearGradient><linearGradient
+     id="linearGradient6"
+     inkscape:collect="always"><stop
+       style="stop-color:#0b7ee1;stop-opacity:1;"
+       offset="0"
+       id="stop6" /><stop
+       style="stop-color:#0b41ca;stop-opacity:1;"
+       offset="1"
+       id="stop7" /></linearGradient><linearGradient
+     id="linearGradient4"
+     inkscape:collect="always"><stop
+       style="stop-color:#35e0fb;stop-opacity:1;"
+       offset="0"
+       id="stop4" /><stop
+       style="stop-color:#185cf6;stop-opacity:1;"
+       offset="1"
+       id="stop5" /></linearGradient><linearGradient
+     inkscape:collect="always"
+     xlink:href="#linearGradient4"
+     id="linearGradient5"
+     x1="-2.7752097"
+     y1="-2.6968975"
+     x2="883.00977"
+     y2="902.77466"
+     gradientUnits="userSpaceOnUse"
+     gradientTransform="matrix(0.88888884,0,0,0.88888884,50.00002,50.00002)" /><linearGradient
+     inkscape:collect="always"
+     xlink:href="#linearGradient6"
+     id="linearGradient7"
+     x1="-192.38664"
+     y1="-192.27559"
+     x2="1064.344"
+     y2="1092.3859"
+     gradientUnits="userSpaceOnUse"
+     gradientTransform="matrix(0.62651803,0,0,0.62651803,168.06687,168.0669)" /><linearGradient
+     inkscape:collect="always"
+     xlink:href="#linearGradient43"
+     id="linearGradient44"
+     x1="451.13773"
+     y1="365.36716"
+     x2="450"
+     y2="519.42719"
+     gradientUnits="userSpaceOnUse" /><linearGradient
+     inkscape:collect="always"
+     xlink:href="#linearGradient47"
+     id="linearGradient48"
+     x1="167.07893"
+     y1="582.02429"
+     x2="256.4472"
+     y2="498.40768"
+     gradientUnits="userSpaceOnUse" /><linearGradient
+     inkscape:collect="always"
+     xlink:href="#linearGradient50"
+     id="linearGradient51"
+     x1="451.95627"
+     y1="588.90033"
+     x2="450"
+     y2="672.22266"
+     gradientUnits="userSpaceOnUse" /><linearGradient
+     inkscape:collect="always"
+     xlink:href="#linearGradient52"
+     id="linearGradient53"
+     x1="447.76306"
+     y1="312.35699"
+     x2="447.76306"
+     y2="228.98872"
+     gradientUnits="userSpaceOnUse" /><linearGradient
+     inkscape:collect="always"
+     xlink:href="#linearGradient54"
+     id="linearGradient55"
+     x1="727.20723"
+     y1="378.142"
+     x2="813.5755"
+     y2="378.142"
+     gradientUnits="userSpaceOnUse" />
+    <filter id="cams-signal-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
     </filter>
-  </defs><g
-     inkscape:label="Layer 1"
-     inkscape:groupmode="layer"
-     id="layer1"><g
-       id="g13"><g
-         id="g14"
-         transform="translate(-14.159112,-2.182045)">
+    <filter id="cams-heartbeat-glow" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="7" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+<sodipodi:namedview
+   pagecolor="#ffffff"
+   bordercolor="#292929"
+   borderopacity="1"
+   inkscape:showpageshadow="2"
+   inkscape:pageopacity="0.0"
+   inkscape:pagecheckerboard="0"
+   inkscape:deskcolor="#232323"
+   id="namedview1"
+   inkscape:zoom="1.0017346"
+   inkscape:cx="367.36277"
+   inkscape:cy="590.47576"
+   inkscape:window-width="2880"
+   inkscape:window-height="1514"
+   inkscape:window-x="-11"
+   inkscape:window-y="-11"
+   inkscape:window-maximized="1"
+   inkscape:current-layer="SVGRoot" />
+<style
+   type="text/css"
+   id="style1">
+g.prefab path {
+  vector-effect:non-scaling-stroke;
+  -inkscape-stroke:hairline;
+  fill: none;
+  fill-opacity: 1;
+  stroke-opacity: 1;
+  stroke: #00349c;
+}
 
-         <!-- Nhóm "cờ lê" (mắt xích xanh) lắc lư qua lại quanh tâm của nó -->
-         <g id="wrenchGroup">
-           <animateTransform
-              attributeName="transform"
-              type="rotate"
-              values="-7 209.16 211.18; 7 209.16 211.18; -7 209.16 211.18"
-              keyTimes="0;0.5;1"
-              dur="2.4s"
-              repeatCount="indefinite"
-              calcMode="spline"
-              keySplines="0.45 0 0.55 1;0.45 0 0.55 1" />
+/* CAMS logo animation v12 — C draws smoothly, center node materializes softly, ECG appears with an immediate first beat. */
+#logo-enter {
+  transform-origin: 450px 450px;
+  animation: cams-logo-fade 520ms cubic-bezier(.22,.8,.28,1) both;
+}
 
-           <path
-              id="rect8"
-              style="opacity:1;fill:#5599ff;fill-opacity:1;stroke-width:1.85793"
-              d="m 325.8073,12.124898 a 50,50 0 0 0 -44.61765,54.856766 50,50 0 0 0 6.60618,20.173752 l -62.35666,76.666614 a 50,50 0 0 0 -21.09841,-2.35796 50,50 0 0 0 -20.39959,6.73939 L 138.1486,130.74809 A 50,50 0 0 0 140.59271,109.3993 50,50 0 0 0 85.735943,64.781643 50,50 0 0 0 41.118286,119.63841 50,50 0 0 0 95.97505,164.25606 50,50 0 0 0 116.25066,157.5903 l 0.002,-2.1e-4 45.86776,37.51832 a 50,50 0 0 0 -2.39727,21.21242 50,50 0 0 0 6.60813,20.17355 l -62.3584,76.66876 a 50,50 0 0 0 -21.096473,-2.35816 50,50 0 0 0 -44.617658,54.85677 50,50 0 0 0 54.856766,44.61766 50,50 0 0 0 44.617655,-54.85677 50,50 0 0 0 -6.60833,-20.1755 l 62.3586,-76.66682 a 50,50 0 0 0 21.09647,2.35817 50,50 0 0 0 44.61766,-54.85677 50,50 0 0 0 -6.60619,-20.17375 l 62.3584,-76.66876 a 50,50 0 0 0 21.09668,2.36011 50,50 0 0 0 44.61766,-54.856768 50,50 0 0 0 -54.85677,-44.617658 z" />
+#logo-idle {
+  transform-origin: 450px 450px;
+  animation: cams-idle 6.2s ease-in-out 5.95s infinite;
+}
 
-           <!-- 4 nút tròn = 4 router, chớp sáng lên rồi tắt về bình thường lần lượt theo chuỗi -->
-           <g id="routerPulses" style="mix-blend-mode:screen">
-             <circle cx="330.66" cy="61.68" r="50" fill="#ffffff" opacity="0" filter="url(#routerPulseGlow)">
-               <animate attributeName="opacity" values="0;0;0.85;0;0" keyTimes="0;0.1;0.3;0.55;1" dur="2s" begin="0s" repeatCount="indefinite"/>
-             </circle>
-             <circle cx="90.66" cy="114.18" r="50" fill="#ffffff" opacity="0" filter="url(#routerPulseGlow)">
-               <animate attributeName="opacity" values="0;0;0.85;0;0" keyTimes="0;0.1;0.3;0.55;1" dur="2s" begin="0.5s" repeatCount="indefinite"/>
-             </circle>
-             <circle cx="209.16" cy="211.18" r="50" fill="#ffffff" opacity="0" filter="url(#routerPulseGlow)">
-               <animate attributeName="opacity" values="0;0;0.85;0;0" keyTimes="0;0.1;0.3;0.55;1" dur="2s" begin="1s" repeatCount="indefinite"/>
-             </circle>
-             <circle cx="87.66" cy="360.18" r="50" fill="#ffffff" opacity="0" filter="url(#routerPulseGlow)">
-               <animate attributeName="opacity" values="0;0;0.85;0;0" keyTimes="0;0.1;0.3;0.55;1" dur="2s" begin="1.5s" repeatCount="indefinite"/>
-             </circle>
-           </g>
-         </g>
+/* 1) C-shape: the actual C body is drawn smoothly from its lower start toward the upper end. */
+.cams-c-ring {
+  opacity: 0;
+  animation: cams-c-draw 1.1s cubic-bezier(.4,0,.2,1) forwards;
+}
+#path3   { animation-delay: 0.00s; }
+#circle3 { animation-delay: 0.18s; }
 
-         <path
-           id="rect11"
-           style="opacity:1;fill:#ff7f2a;fill-opacity:1;stroke-width:1.15236"
-           d="m 417.96916,-163.99077 a 90.81469,90.81469 0 0 0 0,128.431033 90.81469,90.81469 0 0 0 26.71538,18.495262 l 0.001,195.270575 c 0,20.775 16.72514,37.50014 37.50014,37.50014 20.775,0 37.50014,-16.72514 37.50014,-37.50014 l -0.001,-195.270575 a 90.81469,90.81469 0 0 0 26.71538,-18.495262 90.81469,90.81469 0 0 0 0,-128.431033 90.81469,90.81469 0 0 0 -26.71399,-18.49388 v 67.5867 c -10e-6,17.010044 -13.69387,30.703906 -30.70391,30.703906 h -6.73685 c -0.0201,-3.2e-5 -0.0406,0 -0.0608,0 -0.0201,0 -0.0407,-3.2e-5 -0.0608,0 h -6.73409 c -17.01005,0 -30.7039,-13.693855 -30.7039,-30.703906 l -0.001,-67.58808 a 90.81469,90.81469 0 0 0 -26.71538,18.49526 z"
-           transform="rotate(45)" /></g></g></g></svg>
+/* 2) Center node: no rim-tracing around the circumference; it materializes softly as one object,
+   starting a touch before the C-ring finishes so the handoff reads as one continuous motion. */
+#path5 {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  fill-opacity: 0;
+  stroke-opacity: 0;
+  animation-name: cams-center-materialize, cams-center-firstbeat, cams-center-breathe;
+  animation-duration: .95s, .72s, 3.0s;
+  animation-delay: 1.10s, 2.05s, 5.95s;
+  animation-timing-function: ease-out, cubic-bezier(.3,.02,.18,1), ease-in-out;
+  animation-iteration-count: 1, 1, infinite;
+  animation-direction: normal, normal, alternate;
+  animation-fill-mode: forwards, both, both;
+}
+
+/* 3) ECG appears only after the center node finishes, and its first appearance already contains a beat. */
+#path55 {
+  transform-box: fill-box;
+  transform-origin: center;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  visibility: hidden;
+  animation-name: cams-heartbeat-in, cams-heartbeat-firstbeat, cams-heartbeat-beat;
+  animation-duration: .6s, .72s, 1.5s;
+  animation-delay: 2.05s, 2.05s, 5.95s;
+  animation-timing-function: cubic-bezier(.4,0,.2,1), cubic-bezier(.3,.02,.18,1), linear;
+  animation-iteration-count: 1, 1, infinite;
+  animation-direction: normal, normal, normal;
+  animation-fill-mode: forwards, none, none;
+}
+
+#path55-signal {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: .84 .16;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  filter: url(#cams-heartbeat-glow);
+  animation-name: cams-heartbeat-firstscan, cams-heartbeat-scan;
+  animation-duration: .72s, 1.45s;
+  animation-delay: 2.05s, 5.95s;
+  animation-timing-function: linear, linear;
+  animation-iteration-count: 1, infinite;
+  animation-fill-mode: forwards, none;
+}
+
+/* 4) Connections grow outward from the center. */
+.cams-branch {
+  opacity: 0;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation-name: cams-draw-branch;
+  animation-timing-function: cubic-bezier(.4,0,.2,1);
+  animation-fill-mode: forwards;
+}
+#branch-top    { animation-duration: .58s; animation-delay: 3.10s; }
+#branch-right  { animation-duration: .88s; animation-delay: 3.10s; }
+#branch-bottom { animation-duration: .58s; animation-delay: 3.24s; }
+#branch-left   { animation-duration: .78s; animation-delay: 3.38s; }
+
+.cams-wire-head {
+  pointer-events: none;
+  filter: url(#cams-signal-glow);
+}
+.cams-intro-dot { display: none; }
+
+/* 5) Outer nodes are born from the exact wire endpoint: filled seed -> soft bloom -> stable node. */
+.cams-node {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Only the four surrounding nodes use this birth effect. The center node keeps its own animation above.
+   A second, looping animation (cams-node-absorb) makes each node visibly swallow the data pulse that
+   reaches it during the steady-state loop — timed to land exactly when each stream-dot arrives. */
+#circle5, #circle6, #circle7, #circle8 {
+  opacity: 0;
+  fill-opacity: 1;
+  stroke-opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation-name: cams-node-bloom, cams-node-absorb;
+  animation-duration: .62s, 1.45s;
+  animation-iteration-count: 1, infinite;
+  animation-fill-mode: both, none;
+}
+
+/* Node arrival synced to the traveling light: flash peaks (~0.11s into the .62s bloom)
+   right when each wire-head reaches its endpoint. Wire arrivals: top 3.68s, bottom 3.82s, right 3.98s, left 4.16s.
+   The second delay syncs the steady-state absorb pulse to each stream-dot's arrival time
+   (top 7.40s, right 7.65s, bottom 7.90s, left 8.15s — same cadence as their 1.45s loop). */
+#circle8 { animation-delay: 3.57s, 7.40s; }
+#circle5 { animation-delay: 3.87s, 7.65s; }
+#circle6 { animation-delay: 3.71s, 7.90s; }
+#circle7 { animation-delay: 4.05s, 8.15s; }
+
+/* Idle float lives on a wrapping group element so it never fights the node's own scale-up (bloom) transform. */
+#float-top, #float-bottom {
+  animation: cams-node-float-y 3.9s ease-in-out 5.95s infinite alternate both;
+}
+#float-right, #float-left {
+  animation: cams-node-float-x 4.2s ease-in-out 5.95s infinite alternate both;
+}
+
+/* 6) Data pulses begin only after the network exists. */
+.cams-stream-dot {
+  pointer-events: none;
+  filter: url(#cams-signal-glow);
+}
+.cams-signal { display: none; }
+
+.cams-node-pulse {
+  fill: none;
+  stroke: #e8fdff;
+  stroke-width: 5;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  pointer-events: none;
+  filter: url(#cams-signal-glow);
+}
+#pulse-top    { animation: cams-node-pulse 1.45s ease-out 7.40s infinite; }
+#pulse-right  { animation: cams-node-pulse 1.45s ease-out 7.65s infinite; }
+#pulse-bottom { animation: cams-node-pulse 1.45s ease-out 7.90s infinite; }
+#pulse-left   { animation: cams-node-pulse 1.45s ease-out 8.15s infinite; }
+
+@keyframes cams-logo-fade {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes cams-c-draw {
+  0%   { stroke-dashoffset: 1; opacity: 0; animation-timing-function: ease-out; }
+  18%  { opacity: .28; animation-timing-function: ease-in-out; }
+  55%  { opacity: .68; animation-timing-function: ease-out; }
+  100% { stroke-dashoffset: 0; opacity: 1; }
+}
+
+@keyframes cams-center-materialize {
+  0%   { opacity: 0; fill-opacity: 0; stroke-opacity: 0; transform: scale(.82); animation-timing-function: ease-out; }
+  32%  { opacity: .5; fill-opacity: .16; stroke-opacity: .48; transform: scale(.94); animation-timing-function: ease-in-out; }
+  64%  { opacity: .9; fill-opacity: .64; stroke-opacity: .92; transform: scale(1.015); animation-timing-function: ease-out; }
+  100% { opacity: 1; fill-opacity: 1; stroke-opacity: 1; transform: scale(1); }
+}
+
+/* Node birth: a quick burst right as the traveling light hits (flash peaks early, ~18%),
+   then a light "gulp" contraction as it swallows that glow, then settle. */
+@keyframes cams-node-bloom {
+  0%   { opacity: 0; fill-opacity: 1; stroke-opacity: 0; transform: scale(.05); filter: url(#cams-signal-glow); animation-timing-function: cubic-bezier(.15,.6,.25,1); }
+  4%   { opacity: .55; }
+  9%   { opacity: .9; fill-opacity: 1; stroke-opacity: .3; transform: scale(.5); filter: url(#cams-signal-glow); animation-timing-function: cubic-bezier(.15,.6,.25,1); }
+  18%  { opacity: 1; fill-opacity: 1; stroke-opacity: .85; transform: scale(1.14); filter: url(#cams-signal-glow); animation-timing-function: cubic-bezier(.4,0,.2,1); }
+  38%  { opacity: 1; fill-opacity: 1; stroke-opacity: 1; transform: scale(.87); filter: none; animation-timing-function: cubic-bezier(.4,0,.25,1); }
+  62%  { transform: scale(1.03); filter: none; animation-timing-function: ease-out; }
+  100% { opacity: 1; fill-opacity: 1; stroke-opacity: 1; transform: scale(1); filter: none; }
+}
+
+@keyframes cams-center-firstbeat {
+  0%   { transform: scale(1); filter: none; }
+  16%  { transform: scale(1.14); filter: url(#cams-heartbeat-glow); }
+  34%  { transform: scale(.975); filter: url(#cams-heartbeat-glow); }
+  58%  { transform: scale(1.08); filter: url(#cams-heartbeat-glow); }
+  100% { transform: scale(1); filter: none; }
+}
+
+@keyframes cams-heartbeat-in {
+  0%   { visibility: visible; stroke-dashoffset: 1; opacity: 0; }
+  14%  { visibility: visible; opacity: .85; }
+  100% { visibility: visible; stroke-dashoffset: 0; opacity: 1; }
+}
+
+@keyframes cams-heartbeat-firstbeat {
+  0%   { transform: scale(1); opacity: .95; filter: none; }
+  14%  { transform: scale(1.04); filter: url(#cams-heartbeat-glow); }
+  28%  { transform: scale(.995); }
+  44%  { transform: scale(1.07); filter: url(#cams-heartbeat-glow); }
+  70%  { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; filter: none; }
+}
+
+@keyframes cams-heartbeat-firstscan {
+  0%   { visibility: visible; stroke-dashoffset: 1; opacity: 0; }
+  8%   { visibility: visible; opacity: .18; }
+  16%  { visibility: visible; opacity: 1; }
+  82%  { visibility: visible; opacity: .9; }
+  100% { visibility: visible; stroke-dashoffset: 0; opacity: 0; }
+}
+
+@keyframes cams-heartbeat-scan {
+  0%   { visibility: visible; stroke-dashoffset: 1; opacity: 0; }
+  8%   { visibility: visible; opacity: .12; }
+  14%  { visibility: visible; opacity: 1; }
+  78%  { visibility: visible; opacity: .86; }
+  100% { visibility: visible; stroke-dashoffset: 0; opacity: 0; }
+}
+
+@keyframes cams-draw-branch {
+  0%   { stroke-dashoffset: 1; opacity: 0; animation-timing-function: ease-out; }
+  22%  { opacity: .92; animation-timing-function: ease-in-out; }
+  100% { stroke-dashoffset: 0; opacity: 1; }
+}
+
+@keyframes cams-idle {
+  0%   { transform: translate(0px, 0px) rotate(0deg); }
+  14%  { transform: translate(-0.9px, 0.6px) rotate(-.08deg); }
+  28%  { transform: translate(-1.6px, 1px) rotate(-.15deg); }
+  42%  { transform: translate(-0.6px, -0.3px) rotate(-.02deg); }
+  57%  { transform: translate(1.2px, -1.6px) rotate(.12deg); }
+  71%  { transform: translate(1.9px, -0.2px) rotate(.16deg); }
+  86%  { transform: translate(1px, 0.6px) rotate(.09deg); }
+  100% { transform: translate(0px, 0px) rotate(0deg); }
+}
+
+@keyframes cams-center-breathe {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.018); }
+  100% { transform: scale(1); }
+}
+
+@keyframes cams-node-float-y {
+  0%   { transform: translateY(0px); }
+  35%  { transform: translateY(-2.1px); }
+  68%  { transform: translateY(-0.4px); }
+  100% { transform: translateY(1.7px); }
+}
+
+@keyframes cams-node-float-x {
+  0%   { transform: translateX(0px); }
+  35%  { transform: translateX(2.1px); }
+  68%  { transform: translateX(0.4px); }
+  100% { transform: translateX(-1.7px); }
+}
+
+@keyframes cams-node-pulse {
+  0%   { opacity: 0; transform: scale(.92); }
+  4%   { opacity: .95; }
+  12%  { opacity: .9; }
+  32%  { opacity: .38; }
+  100% { opacity: 0; transform: scale(1.26); }
+}
+
+/* The node itself reacts to the arriving pulse: a quick flash-bump, then a visible inward
+   "gulp" as it swallows the light, then a small rebound settle before the next arrival. */
+@keyframes cams-node-absorb {
+  0%   { transform: scale(1); filter: none; animation-timing-function: ease-out; }
+  4%   { transform: scale(1.06); filter: url(#cams-signal-glow); animation-timing-function: cubic-bezier(.4,0,.2,1); }
+  13%  { transform: scale(.92); filter: none; animation-timing-function: cubic-bezier(.4,0,.25,1); }
+  26%  { transform: scale(1.015); filter: none; animation-timing-function: ease-out; }
+  38%  { transform: scale(1); filter: none; }
+  100% { transform: scale(1); filter: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #logo-enter, #logo-idle, .cams-c-ring, .cams-branch, .cams-node,
+  #path5, #path55, #path55-signal, .cams-node-pulse {
+    animation: none !important;
+    opacity: 1 !important;
+    fill-opacity: 1 !important;
+    stroke-opacity: 1 !important;
+    stroke-dashoffset: 0 !important;
+    transform: none !important;
+    visibility: visible !important;
+  }
+  .cams-intro-dot, .cams-wire-head, .cams-stream-dot, .cams-signal { display: none !important; }
+}
+</style>
+<g id="logo-enter">
+  <g id="logo-idle">
+<g
+   id="g55"
+   inkscape:label="C Shape"><path
+     style="fill:none;stroke:url(#linearGradient5);stroke-width:120;stroke-dasharray:1;stroke-dashoffset:1;stroke-opacity:1"
+     id="path3"
+     class="cams-c-ring"
+     pathLength="1"
+     sodipodi:type="arc"
+     sodipodi:cx="449.99994"
+     sodipodi:cy="450.00006"
+     sodipodi:rx="342.46326"
+     sodipodi:ry="342.46326"
+     sodipodi:start="0.29653525"
+     sodipodi:end="5.666786"
+     sodipodi:open="true"
+     sodipodi:arc-type="arc"
+     d="M 777.51627,550.07071 A 342.46326,342.46326 0 0 1 426.62733,791.66481 342.46326,342.46326 0 0 1 111.90716,504.53771 342.46326,342.46326 0 0 1 320.38061,133.01439 342.46326,342.46326 0 0 1 729.43807,252.02175"
+     inkscape:label="c-outside" /><path
+     style="fill:none;fill-opacity:1;stroke:url(#linearGradient7);stroke-width:84.5799;stroke-dasharray:1;stroke-dashoffset:1;stroke-opacity:1"
+     id="circle3"
+     class="cams-c-ring"
+     pathLength="1"
+     sodipodi:type="arc"
+     sodipodi:cx="449.99994"
+     sodipodi:cy="450.00006"
+     sodipodi:rx="241.37933"
+     sodipodi:ry="241.37933"
+     sodipodi:start="0.2964262"
+     sodipodi:end="5.6667855"
+     sodipodi:open="true"
+     sodipodi:arc-type="arc"
+     d="M 680.85188,520.50796 A 241.37933,241.37933 0 0 1 433.54588,690.81793 241.37933,241.37933 0 0 1 211.70317,488.45304 241.37933,241.37933 0 0 1 358.63381,226.58069 241.37933,241.37933 0 0 1 646.95703,310.45836"
+     inkscape:label="c-inside" /></g>
+<g
+   id="g9"
+   inkscape:label="Circle"
+   style="display:inline"><g
+     id="g56"
+     inkscape:label="line">
+     <path
+       style="display:inline;fill:none;fill-opacity:1;stroke:#25c6f8;stroke-width:12;stroke-dasharray:1;stroke-dashoffset:1;stroke-opacity:1"
+       d="M 450,450 L 447.76306,312.35698"
+       id="branch-top"
+       class="cams-branch"
+       pathLength="1"
+       inkscape:label="branch-top" />
+     <path
+       style="display:inline;fill:none;fill-opacity:1;stroke:#25c6f8;stroke-width:12;stroke-dasharray:1;stroke-dashoffset:1;stroke-opacity:1"
+       d="M 450,450 L 619,449 L 666,379 L 730.20723,378.142"
+       id="branch-right"
+       class="cams-branch"
+       pathLength="1"
+       inkscape:label="branch-right" />
+     <path
+       style="display:inline;fill:none;fill-opacity:1;stroke:#25c6f8;stroke-width:12;stroke-dasharray:1;stroke-dashoffset:1;stroke-opacity:1"
+       d="M 450,450 L 450,588.85438"
+       id="branch-bottom"
+       class="cams-branch"
+       pathLength="1"
+       inkscape:label="branch-bottom" />
+     <path
+       style="display:inline;fill:none;fill-opacity:1;stroke:#25c6f8;stroke-width:12;stroke-dasharray:1;stroke-dashoffset:1;stroke-opacity:1"
+       d="M 450,450 L 291,451 L 243.29136,510.07235"
+       id="branch-left"
+       class="cams-branch"
+       pathLength="1"
+       inkscape:label="branch-left" />
+
+     <path d="M 450,450 L 447.76306,312.35698" id="branch-top-signal" class="cams-signal" pathLength="1" aria-hidden="true" />
+     <path d="M 450,450 L 619,449 L 666,379 L 730.20723,378.142" id="branch-right-signal" class="cams-signal" pathLength="1" aria-hidden="true" />
+     <path d="M 450,450 L 450,588.85438" id="branch-bottom-signal" class="cams-signal" pathLength="1" aria-hidden="true" />
+     <path d="M 450,450 L 291,451 L 243.29136,510.07235" id="branch-left-signal" class="cams-signal" pathLength="1" aria-hidden="true" />
+
+     <!-- Connection-growth heads: part of the wire-building phase, not data traffic.
+          Stays bright almost all the way to the node so the arrival reads as one continuous hit. -->
+     <circle id="wire-head-top" class="cams-wire-head" r="6.5" fill="#8cecff" opacity="0" aria-hidden="true">
+       <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.06;0.97;1" begin="3.10s" dur="0.58s" fill="freeze" />
+       <animateMotion begin="3.10s" dur="0.58s" fill="freeze" path="M 450,450 L 447.76306,312.35698" />
+     </circle>
+     <circle id="wire-head-right" class="cams-wire-head" r="6.5" fill="#8cecff" opacity="0" aria-hidden="true">
+       <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.06;0.97;1" begin="3.10s" dur="0.88s" fill="freeze" />
+       <animateMotion begin="3.10s" dur="0.88s" fill="freeze" path="M 450,450 L 619,449 L 666,379 L 730.20723,378.142" />
+     </circle>
+     <circle id="wire-head-bottom" class="cams-wire-head" r="6.5" fill="#8cecff" opacity="0" aria-hidden="true">
+       <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.06;0.97;1" begin="3.24s" dur="0.58s" fill="freeze" />
+       <animateMotion begin="3.24s" dur="0.58s" fill="freeze" path="M 450,450 L 450,588.85438" />
+     </circle>
+     <circle id="wire-head-left" class="cams-wire-head" r="6.5" fill="#8cecff" opacity="0" aria-hidden="true">
+       <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.06;0.97;1" begin="3.38s" dur="0.78s" fill="freeze" />
+       <animateMotion begin="3.38s" dur="0.78s" fill="freeze" path="M 450,450 L 291,451 L 243.29136,510.07235" />
+     </circle>
+
+     <!-- Data pulses: stay bright until just before the node (fade only in the last ~6%) so the
+          arrival reads as a hit, not a fade-to-nothing. -->
+     <circle id="stream-dot-top" class="cams-stream-dot" r="6.2" fill="#d9fbff" opacity="0" aria-hidden="true">
+       <animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.08;0.16;0.94;1" begin="5.95s" dur="1.45s" repeatCount="indefinite" />
+       <animateMotion begin="5.95s" dur="1.45s" repeatCount="indefinite" path="M 450,450 L 447.76306,312.35698" />
+     </circle>
+     <circle id="stream-dot-right" class="cams-stream-dot" r="6.2" fill="#d9fbff" opacity="0" aria-hidden="true">
+       <animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.08;0.16;0.94;1" begin="6.20s" dur="1.45s" repeatCount="indefinite" />
+       <animateMotion begin="6.20s" dur="1.45s" repeatCount="indefinite" path="M 450,450 L 619,449 L 666,379 L 730.20723,378.142" />
+     </circle>
+     <circle id="stream-dot-bottom" class="cams-stream-dot" r="6.2" fill="#d9fbff" opacity="0" aria-hidden="true">
+       <animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.08;0.16;0.94;1" begin="6.45s" dur="1.45s" repeatCount="indefinite" />
+       <animateMotion begin="6.45s" dur="1.45s" repeatCount="indefinite" path="M 450,450 L 450,588.85438" />
+     </circle>
+     <circle id="stream-dot-left" class="cams-stream-dot" r="6.2" fill="#d9fbff" opacity="0" aria-hidden="true">
+       <animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.08;0.16;0.94;1" begin="6.70s" dur="1.45s" repeatCount="indefinite" />
+       <animateMotion begin="6.70s" dur="1.45s" repeatCount="indefinite" path="M 450,450 L 291,451 L 243.29136,510.07235" />
+     </circle>
+   </g><ellipse
+     style="fill:url(#linearGradient44);fill-opacity:1;stroke:#25c6f8;stroke-width:3;stroke-dasharray:none;stroke-opacity:1"
+     id="path5" class="cams-node" pathLength="1"
+     cx="451.13773"
+     cy="448.73541"
+     inkscape:label="circle-main"
+     rx="83.367996"
+     ry="83.368263" />
+     <g id="float-right"><circle
+     style="fill:url(#linearGradient55);fill-opacity:1;stroke:#25c6f8;stroke-width:6;stroke-dasharray:none;stroke-opacity:1"
+     id="circle5" class="cams-node" pathLength="1"
+     cx="771.89136"
+     cy="378.142"
+     inkscape:label="circle-outside"
+     r="41.684128" /></g>
+     <g id="float-left"><circle
+     style="fill:url(#linearGradient48);fill-opacity:1;stroke:#bfdeff;stroke-width:6;stroke-dasharray:none;stroke-opacity:1"
+     id="circle7" class="cams-node" pathLength="1"
+     inkscape:label="circle-inside"
+     r="41.684132"
+     cy="537.34015"
+     cx="211.76306" /></g>
+     <g id="float-top"><circle
+     style="fill:url(#linearGradient53);fill-opacity:1;stroke:#bfdeff;stroke-width:6;stroke-dasharray:none;stroke-opacity:1"
+     id="circle8" class="cams-node" pathLength="1"
+     cx="447.76306"
+     cy="270.67285"
+     r="41.684132"
+     inkscape:label="circle-bot" /></g>
+     <g id="float-bottom"><circle
+     style="fill:url(#linearGradient51);fill-opacity:1;stroke:#bfdeff;stroke-width:6;stroke-dasharray:none;stroke-opacity:1"
+     id="circle6" class="cams-node" pathLength="1"
+     cx="450"
+     cy="630.53851"
+     r="41.684132"
+     inkscape:label="circle-top" /></g>
+     <circle id="pulse-top" class="cams-node-pulse" cx="447.76306" cy="270.67285" r="41.684132" aria-hidden="true" />
+     <circle id="pulse-right" class="cams-node-pulse" cx="771.89136" cy="378.142" r="41.684128" aria-hidden="true" />
+     <circle id="pulse-bottom" class="cams-node-pulse" cx="450" cy="630.53851" r="41.684132" aria-hidden="true" />
+     <circle id="pulse-left" class="cams-node-pulse" cx="211.76306" cy="537.34015" r="41.684132" aria-hidden="true" /></g><path
+   style="opacity:0;visibility:hidden;fill:none;fill-opacity:1;stroke:#bfdeff;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+   d="m 390.26475,455.11765 h 33.3529 l 16.0588,-38.4706 20.6471,66.70589 15,-28.76471 30.1765,0.52943"
+   id="path55"
+   class="cams-line cams-heartbeat"
+   pathLength="1"
+   sodipodi:nodetypes="cccccc" />
+<path
+   d="m 390.26475,455.11765 h 33.3529 l 16.0588,-38.4706 20.6471,66.70589 15,-28.76471 30.1765,0.52943"
+   id="path55-signal"
+   pathLength="1"
+   sodipodi:nodetypes="cccccc"
+   aria-hidden="true" />  </g>
+</g>
+<metadata
+   id="metadata56"><c2pa:manifest>AAAWgmp1bWIAAAAeanVtZGMycGEAEQAQgAAAqgA4m3EDYzJwYQAAABZcanVtYgAAAEdqdW1kYzJtYQARABCAAACqADibcQN1cm46YzJwYTplZGZkNTU1OS0zZTkxLTRmMjktOGJmNC03YTY4ZGUzYmQ0NDMAAAADl2p1bWIAAAApanVtZGMyYXMAEQAQgAAAqgA4m3EDYzJwYS5hc3NlcnRpb25zAAAAALxqdW1iAAAARGp1bWRjYm9yABEAEIAAAKoAOJtxE2MycGEuaW5ncmVkaWVudC52MwAAAAAYYzJzaNAk6s8XgWrPwpD8c6ucAuQAAABwY2JvcqNpZGM6Zm9ybWF0bWltYWdlL3N2Zyt4bWxqaW5zdGFuY2VJRHgseG1wOmlpZDo0OTU5ODVmNS1iYmEyLTQxZGItYTdhYi0wNWY3ZjRjZmMxZmJscmVsYXRpb25zaGlwaHBhcmVudE9mAAAB4mp1bWIAAABBanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5hY3Rpb25zLnYyAAAAABhjMnNo0vvl4/HrUMW5wkdRU7S/owAAAZljYm9yomdhY3Rpb25zgqJmYWN0aW9ua2MycGEub3BlbmVkanBhcmFtZXRlcnOha2luZ3JlZGllbnRzgaJjdXJseC1zZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmluZ3JlZGllbnQudjNkaGFzaFggEzm0tbt1ccP1P9YvcLL4WZIPt6syJMUY/B8AZc8n632kZmFjdGlvbngdY29tLmFudGhyb3BpYy5jbGF1ZGUucHJvdmlkZWRqcGFyYW1ldGVyc6F4H2NvbS5hbnRocm9waWMub3JpZ2luLWNvbmZpZGVuY2VndW5rbm93bmtkZXNjcmlwdGlvbnhmQ2xhdWRlIHByb3ZpZGVkIHRoaXMgZmlsZSBhdCB0aGUgcmVxdWVzdCBvZiBhIHVzZXIgYW5kIG1heSBoYXZlIGNyZWF0ZWQgb3IgbW9kaWZpZWQgdGhlIGZpbGUgY29udGVudHMubXNvZnR3YXJlQWdlbnShZG5hbWVmQ2xhdWRlcmFsbEFjdGlvbnNJbmNsdWRlZPUAAADIanVtYgAAAEBqdW1kY2JvcgARABCAAACqADibcRNjMnBhLmhhc2guZGF0YQAAAAAYYzJzaK/bF6R458kBnYdQHE+yg9kAAACAY2JvcqVjYWxnZnNoYTI1NmNwYWRMAAAAAAAAAAAAAAAAZGhhc2hYIKMkFn/D7Wa5Xn7gLFUhosE8w4/rW3VvxkZbcA2THQLwZG5hbWVuanVtYmYgbWFuaWZlc3RqZXhjbHVzaW9uc4GiZXN0YXJ0GWj5Zmxlbmd0aBkeBAAAAj5qdW1iAAAAJ2p1bWRjMmNsABEAEIAAAKoAOJtxA2MycGEuY2xhaW0udjIAAAACD2Nib3KlY2FsZ2ZzaGEyNTZpc2lnbmF0dXJleE1zZWxmI2p1bWJmPS9jMnBhL3VybjpjMnBhOmVkZmQ1NTU5LTNlOTEtNGYyOS04YmY0LTdhNjhkZTNiZDQ0My9jMnBhLnNpZ25hdHVyZWppbnN0YW5jZUlEeCx4bXA6aWlkOjM4ODM5OTc3LTNhNzUtNDZhZS04NjNiLWU5YzFhMmRjYmQ5OXJjcmVhdGVkX2Fzc2VydGlvbnODomN1cmx4LXNlbGYjanVtYmY9YzJwYS5hc3NlcnRpb25zL2MycGEuaW5ncmVkaWVudC52M2RoYXNoWCATObS1u3Vxw/U/1i9wsvhZkg+3qzIkxRj8HwBlzyfrfaJjdXJseCpzZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmFjdGlvbnMudjJkaGFzaFggLTlw2XMUH8CU3YdNxCvc17ME33qsQRzuUAzUdiI0bzuiY3VybHgpc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5oYXNoLmRhdGFkaGFzaFggQrmbmKxmku0gxsteiV9CNrjcoznJuBHqLAQtFskpDcd0Y2xhaW1fZ2VuZXJhdG9yX2luZm+jZG5hbWVvQW50aHJvcGljIEZpbGVzZ3ZlcnNpb25lMS4wLjBrc3BlY1ZlcnNpb25lMi40LjAAABA4anVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVyZQAAABAIY2JvctKEWQISogEmGCFZAgowggIGMIIBjaADAgECAhRA5aAK7sI50L64g/oGQgU9Z1UTADAKBggqhkjOPQQDAzBJMRcwFQYDVQQKEw5BbnRocm9waWMsIFBCQzEuMCwGA1UEAxMlQW50aHJvcGljIENvbnRlbnQgQ3JlZGVudGlhbHMgUm9vdCBDQTAeFw0yNjA4MDcxODQzNTZaFw0yODA4MDYxOTQzNTZaMEQxFzAVBgNVBAoTDkFudGhyb3BpYywgUEJDMSkwJwYDVQQDEyBBbnRocm9waWMgQ2xhdWRlIENvbnRlbnQgU2lnbmluZzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJh6CmvLUBgFFNU0vUKlOVtE6djd17L5SuwX0LemFisBM3dkd/3cyjxFA3Qo5S46fX0/ihY0VZ7mfb9KF703t5OjWDBWMA4GA1UdDwEB/wQEAwIHgDAVBgNVHSUEDjAMBgorBgEEAYPoXgIBMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAUzlHiBIFOZFsj+OPEz5o+nMHXXMIwCgYIKoZIzj0EAwMDZwAwZAIwMXMdFJ4BetLLVY7ORuE9noqbbAZOZn/aArXyTwFAZfKrPzxF2vPoJNf1+UCdg1XGAjBwX1zd9WGqYkqmL5SFqw1QySjr1zJfpJM9+1rdDwSPLMOPOjKuiXjoU/pUUeG9RwmhY3BhZFkNngAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPZYQJFhXCneL5BxgZuWFIazlqzGZ2JuDadGyWhdP6iDHLRN1GnQnrhBlXuWFfRboVYWHZRStLwD4QnRfWOuBiCY3oM=</c2pa:manifest><rdf:RDF><cc:Work
+       rdf:about=""><dc:title>Centralized Automation and Monitoring System Desktop Icon</dc:title><dc:date>2026-09-02</dc:date><dc:creator><cc:Agent><dc:title>Nguyen Tran Dat Phu</dc:title></cc:Agent></dc:creator><dc:rights><cc:Agent><dc:title>Copyright 2026 Nguyen Tran Dat Phu. All rights reserved.</dc:title></cc:Agent></dc:rights><dc:publisher><cc:Agent><dc:title>Posts and Telecommunications Institute of Technology</dc:title></cc:Agent></dc:publisher><dc:identifier>cams-desktop-icon-v2.0</dc:identifier><dc:relation>Part of Centralized Automation and Monitoring System</dc:relation><dc:language>en</dc:language><dc:subject><rdf:Bag><rdf:li>cams</rdf:li><rdf:li>logo</rdf:li><rdf:li>icon</rdf:li><rdf:li>desktop</rdf:li><rdf:li>app</rdf:li><rdf:li>centralized</rdf:li><rdf:li>monitoring</rdf:li><rdf:li>system</rdf:li></rdf:Bag></dc:subject><dc:coverage>Global</dc:coverage><dc:contributor><cc:Agent><dc:title>Nguyen Tran Dat Phu</dc:title></cc:Agent></dc:contributor></cc:Work></rdf:RDF></metadata></svg>
