@@ -73,7 +73,7 @@ tar -C "$SOURCE_ROOT" \
     -cf "$archive" \
     UI bin core data/README.md docshots domain features infrastructure native \
     qtpyTerminal-main runtime_qml scripts templates vendor licenses \
-    .python-version README.md LICENSE app_facade.py cams.sh main.py \
+    .python-version README.md LICENSE app_facade.py cams.sh main.py update.sh \
     pyproject.toml setup_cython.py uv.lock packaging/linux/cams-launcher
 
 # Program files are replaceable; user databases live in the sibling data/
@@ -83,6 +83,23 @@ mkdir -p "$app_dir" "$user_data_dir" "$bin_dir" "$applications_dir" \
     "$scalable_icons_dir" "$bitmap_icons_dir"
 tar -C "$app_dir" -xf "$archive"
 install -m 0755 "$app_dir/packaging/linux/cams-launcher" "$app_dir/cams-launcher"
+chmod 0755 "$app_dir/update.sh"
+
+release_commit=${CAMS_UPDATE_COMMIT:-$(git -C "$SOURCE_ROOT" rev-parse HEAD 2>/dev/null || true)}
+release_branch=${CAMS_UPDATE_BRANCH:-$(git -C "$SOURCE_ROOT" branch --show-current 2>/dev/null || true)}
+release_repository=${CAMS_UPDATE_REPOSITORY:-$(git -C "$SOURCE_ROOT" config --get remote.origin.url 2>/dev/null || true)}
+[ -n "$release_commit" ] || release_commit=unknown
+[ -n "$release_branch" ] || release_branch=main
+[ -n "$release_repository" ] || release_repository=https://github.com/viet15t12/NetworkTools.git
+case "$release_repository" in
+    git@github.com:*) release_repository="https://github.com/${release_repository#git@github.com:}" ;;
+    ssh://git@github.com/*) release_repository="https://github.com/${release_repository#ssh://git@github.com/}" ;;
+esac
+{
+    printf '%s\n' "$release_commit"
+    printf '%s\n' "$release_branch"
+    printf '%s\n' "$release_repository"
+} > "$app_dir/.cams-release"
 
 if [ "${CAMS_INSTALL_SKIP_SETUP:-0}" != "1" ]; then
     echo "Installing Python dependencies..."

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -22,6 +23,87 @@ class LauncherContractTests(unittest.TestCase):
         self.assertIn('ln -sfn "$app_dir/cams-launcher"', installer)
         self.assertIn('exec "$python" "$app_dir/main.py"', launcher)
         self.assertIn("CAMS_DATA_DIR", launcher)
+        self.assertIn("update.sh", installer)
+        self.assertIn("CAMS_INSTALL_BASE", launcher)
+
+    @unittest.skipIf(os.name == "nt", "POSIX updater test")
+    def test_updater_checks_and_installs_a_new_git_commit(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            remote = root / "remote"
+            installed = root / "installed"
+            install_base = root / "target"
+            remote.mkdir()
+            installed.mkdir()
+            subprocess.run(
+                ["git", "init", "-q", "-b", "main"], cwd=remote, check=True
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.invalid"],
+                cwd=remote,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.name", "CAMS Test"],
+                cwd=remote,
+                check=True,
+            )
+            fake_installer = remote / "install.sh"
+            fake_installer.write_text(
+                "#!/bin/sh\n"
+                "set -eu\n"
+                "mkdir -p \"$CAMS_INSTALL_BASE\"\n"
+                "printf '%s\\n' \"$CAMS_UPDATE_COMMIT\" > \"$CAMS_INSTALL_BASE/installed-commit\"\n",
+                encoding="utf-8",
+            )
+            fake_installer.chmod(0o755)
+            (remote / "payload").write_text("first\n", encoding="utf-8")
+            subprocess.run(["git", "add", "."], cwd=remote, check=True)
+            subprocess.run(["git", "commit", "-qm", "first"], cwd=remote, check=True)
+            first_commit = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=remote, check=True,
+                text=True, capture_output=True,
+            ).stdout.strip()
+
+            shutil.copy2(APP_ROOT / "update.sh", installed / "update.sh")
+            (installed / ".cams-release").write_text(
+                f"{first_commit}\nmain\n{remote}\n", encoding="utf-8"
+            )
+            environment = os.environ.copy()
+            environment["CAMS_INSTALL_BASE"] = str(install_base)
+
+            current = subprocess.run(
+                [str(installed / "update.sh"), "--check"],
+                env=environment, text=True, capture_output=True, check=False,
+            )
+            self.assertEqual(current.returncode, 0, current.stdout + current.stderr)
+            self.assertIn("CAMS_UPDATE_STATUS=current", current.stdout)
+
+            (remote / "payload").write_text("second\n", encoding="utf-8")
+            subprocess.run(["git", "add", "payload"], cwd=remote, check=True)
+            subprocess.run(["git", "commit", "-qm", "second"], cwd=remote, check=True)
+            second_commit = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=remote, check=True,
+                text=True, capture_output=True,
+            ).stdout.strip()
+
+            available = subprocess.run(
+                [str(installed / "update.sh"), "--check"],
+                env=environment, text=True, capture_output=True, check=False,
+            )
+            self.assertEqual(available.returncode, 0, available.stdout + available.stderr)
+            self.assertIn("CAMS_UPDATE_STATUS=available", available.stdout)
+
+            updated = subprocess.run(
+                [str(installed / "update.sh"), "--update"],
+                env=environment, text=True, capture_output=True, check=False,
+            )
+            self.assertEqual(updated.returncode, 0, updated.stdout + updated.stderr)
+            self.assertIn("CAMS_UPDATE_STATUS=updated", updated.stdout)
+            self.assertEqual(
+                (install_base / "installed-commit").read_text(encoding="utf-8").strip(),
+                second_commit,
+            )
 
     @unittest.skipIf(os.name == "nt", "POSIX installer test")
     def test_linux_install_update_and_uninstall_preserve_user_data(self) -> None:

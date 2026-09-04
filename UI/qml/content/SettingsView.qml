@@ -25,6 +25,7 @@ Rectangle {
                                                    || activeSettingKey === "tool_catalog"
     readonly property bool isSyslogSetting: activeSettingKey === "syslog_server"
     readonly property bool isSftpSetting: activeSettingKey === "sftp"
+    readonly property bool isSoftwareUpdateSetting: activeSettingKey === "software_update"
 
     function statusBarPreviewDate() {
         const customFormat = (StatusBarState.customDateFormat || "").trim()
@@ -1129,6 +1130,7 @@ Rectangle {
                  && !settingsView.isExternalToolsSetting
                  && !settingsView.isSyslogSetting
                  && !settingsView.isSftpSetting
+                 && !settingsView.isSoftwareUpdateSetting
 
         Text {
             anchors.centerIn: parent
@@ -1152,6 +1154,11 @@ Rectangle {
     SftpSettings {
         anchors.fill: parent
         visible: settingsView.isSftpSetting
+    }
+
+    SoftwareUpdateSettings {
+        anchors.fill: parent
+        visible: settingsView.isSoftwareUpdateSetting
     }
 
     Item {

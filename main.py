@@ -151,6 +151,7 @@ from app_facade import (
     SystemAppearance,
     TerminalHelper,
     ThemeSettings,
+    UpdateManager,
     WindowSettings,
     WelcomeController,
     WorkspaceSaveController,
@@ -243,6 +244,7 @@ def main() -> int:
     language_settings = LanguageSettings()
     system_appearance = SystemAppearance()
     window_settings = WindowSettings()
+    update_manager = UpdateManager()
     welcome_controller = WelcomeController()
 
     def prepare_workspace_close() -> None:
@@ -329,6 +331,7 @@ def main() -> int:
             sftp_controller.shutdown()
             workspace_save_controller.shutdown()
             welcome_controller.shutdown()
+            update_manager.shutdown()
         finally:
             for cleanup_error in cleanup_runtime_tmp():
                 print(
@@ -348,6 +351,7 @@ def main() -> int:
     context.setContextProperty("menuPresentation", menu_presentation)
     context.setContextProperty("systemAppearance", system_appearance)
     context.setContextProperty("windowSettings", window_settings)
+    context.setContextProperty("updateManager", update_manager)
     context.setContextProperty("welcomeController", welcome_controller)
     context.setContextProperty("workspaceSaveController", workspace_save_controller)
     context.setContextProperty("AppPaths", app_paths)

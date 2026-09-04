@@ -5,6 +5,7 @@ launcher_path=$(readlink -f -- "$0")
 app_dir=$(CDPATH= cd -- "$(dirname -- "$launcher_path")" && pwd)
 install_base=$(dirname -- "$app_dir")
 
+export CAMS_INSTALL_BASE="${CAMS_INSTALL_BASE:-$install_base}"
 export CAMS_DATA_DIR="${CAMS_DATA_DIR:-$install_base/data}"
 mkdir -p "$CAMS_DATA_DIR"
 

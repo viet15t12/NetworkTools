@@ -69,6 +69,17 @@ cần `sudo`, lưu chương trình tại `~/.local/share/cams/app`, tạo launch
 
 ### Cập nhật
 
+Trong CAMS, mở **Settings → Cập nhật phần mềm** rồi chọn **Kiểm tra và cập
+nhật**. Khi hoàn tất, khởi động lại ứng dụng để dùng phiên bản mới.
+
+Hoặc cập nhật từ terminal bằng một lệnh:
+
+```bash
+~/.local/share/cams/app/update.sh --update
+```
+
+Với repository dùng để phát triển, vẫn có thể cập nhật thủ công:
+
 Mở terminal tại repository đã clone, tải mã mới rồi chạy lại bộ cài:
 
 ```bash

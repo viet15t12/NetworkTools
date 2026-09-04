@@ -67,6 +67,10 @@ under `~/.local/share/cams/app`, creates a launcher in `~/.local/bin`, and store
 user databases separately under `~/.local/share/cams/data`. Run `./install.sh`
 again to upgrade without deleting user data.
 
+To update from the app, open **Settings → Software Update** and choose **Check
+and update**, then restart CAMS when prompted. The same updater can be run with
+`~/.local/share/cams/app/update.sh --update`.
+
 Use `./uninstall.sh` to remove the program. Pass `--purge-data` only when local
 databases and settings should also be removed.
 

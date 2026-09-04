@@ -17,6 +17,7 @@ Item {
     property var allItems: [
         { "key": "theme", "title": LanguageState.text("Theme"), "desc": LanguageState.text("Theme, accent, and Status Bar settings") },
         { "key": "language", "title": LanguageState.text("Language"), "desc": LanguageState.text("Language and notification translation") },
+        { "key": "software_update", "title": LanguageState.text("Software Update"), "desc": LanguageState.text("Check for and install CAMS updates") },
         { "key": "external_tools", "title": LanguageState.text("External Tools"), "desc": LanguageState.text("Choose default, suggested, or custom applications") },
         { "key": "sftp", "title": "SFTP", "desc": LanguageState.text("Default local and remote connection directories") },
         { "key": "syslog_server", "title": LanguageState.text("System Logs"), "desc": LanguageState.text("Listener, device destination, and message retention") }

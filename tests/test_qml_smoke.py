@@ -41,6 +41,7 @@ from app_facade import (
     SystemAppearance,
     TerminalHelper,
     ThemeSettings,
+    UpdateManager,
     WindowSettings,
 )
 from features.config_backup import ConfigBackupService
@@ -76,6 +77,7 @@ class QmlSmokeTests(unittest.TestCase):
             "themeSettings": ThemeSettings(),
             "languageSettings": LanguageSettings(),
             "windowSettings": WindowSettings(),
+            "updateManager": UpdateManager(),
             "workspaceSaveController": workspace_save_controller,
             "welcomeController": welcome_controller,
             "AppPaths": AppPaths(),
@@ -815,9 +817,9 @@ class QmlSmokeTests(unittest.TestCase):
             panel,
             "filteredItems.length",
         ).evaluate()[0]
-        self.assertEqual(filtered_count, 5)
+        self.assertEqual(filtered_count, 6)
         self.assertTrue(
-            self._wait_until(lambda: panel.property("renderedCardCount") == 5)
+            self._wait_until(lambda: panel.property("renderedCardCount") == 6)
         )
 
         cards = [
@@ -826,7 +828,7 @@ class QmlSmokeTests(unittest.TestCase):
                 panel,
                 f"cardAt({index})",
             ).evaluate()[0]
-            for index in range(5)
+            for index in range(6)
         ]
         self.assertTrue(all(card is not None for card in cards))
 
@@ -859,6 +861,19 @@ class QmlSmokeTests(unittest.TestCase):
         restored = LanguageSettings()
         self.assertEqual(restored.language, "vi")
         backend.setLanguage("en")
+        self.assertEqual(self.warnings, [])
+
+    def test_software_update_settings_exposes_check_and_update_action(self) -> None:
+        view = self._create("UI/qml/content/SettingsView.qml")
+        view.setProperty("activeSettingKey", "software_update")
+        self.app.processEvents()
+
+        button = view.findChild(QObject, "checkAndUpdateButton")
+        version = view.findChild(QObject, "installedVersionText")
+        self.assertIsNotNone(button)
+        self.assertIsNotNone(version)
+        self.assertTrue(button.property("enabled"))
+        self.assertIn("0.2", version.property("text"))
         self.assertEqual(self.warnings, [])
 
     def test_appearance_menu_style_override_updates_backend(self) -> None:

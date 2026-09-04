@@ -32,6 +32,27 @@ _VIETNAMESE_TEXT: dict[str, str] = {
     "System Logs": "System Logs",
     "Listener, device destination, and message retention": "Listener, đích thiết bị và thời gian lưu message",
     "Language and notification translation": "Ngôn ngữ và bản dịch thông báo",
+    "Software Update": "Cập nhật phần mềm",
+    "Check for and install CAMS updates": "Kiểm tra và cài đặt bản cập nhật CAMS",
+    "Check the CAMS repository and install the latest version.": "Kiểm tra repository CAMS và cài đặt phiên bản mới nhất.",
+    "Installed version": "Phiên bản đã cài đặt",
+    "Check and update": "Kiểm tra và cập nhật",
+    "The update service is unavailable.": "Dịch vụ cập nhật không khả dụng.",
+    "Unavailable": "Không khả dụng",
+    "Ready to check for updates.": "Sẵn sàng kiểm tra bản cập nhật.",
+    "Checking for CAMS updates...": "Đang kiểm tra bản cập nhật CAMS...",
+    "CAMS is already up to date.": "CAMS đã là phiên bản mới nhất.",
+    "CAMS was updated successfully. Restart the app to use the new version.":
+        "CAMS đã được cập nhật thành công. Hãy khởi động lại ứng dụng để dùng phiên bản mới.",
+    "CAMS update failed. Check the network connection and try again.":
+        "Cập nhật CAMS thất bại. Hãy kiểm tra kết nối mạng rồi thử lại.",
+    "The update check finished without a recognizable result.":
+        "Đã kiểm tra cập nhật nhưng không nhận được kết quả hợp lệ.",
+    "Could not start the CAMS updater.": "Không thể khởi chạy trình cập nhật CAMS.",
+    "Automatic updates are available on Linux installations only.":
+        "Cập nhật tự động chỉ khả dụng trên bản cài đặt Linux.",
+    "Automatic updates are supported by Linux installations. You can still update a development checkout with Git.":
+        "Cập nhật tự động được hỗ trợ cho bản cài đặt Linux. Bản development vẫn có thể được cập nhật bằng Git.",
     "Global Settings": "Cài đặt chung",
     "Appearance is available before a project is opened": "Có thể chỉnh giao diện trước khi mở project",
     "Color theme": "Color theme",

@@ -102,6 +102,7 @@ ExternalToolsSettings 1.0 qml/content/ExternalToolsSettings.qml
 ExternalToolCatalogSettings 1.0 qml/content/ExternalToolCatalogSettings.qml
 InformationView 1.0 qml/content/InformationView.qml
 SettingsView 1.0 qml/content/SettingsView.qml
+SoftwareUpdateSettings 1.0 qml/content/SoftwareUpdateSettings.qml
 WelcomeScreen 1.0 qml/content/WelcomeScreen.qml
 
 DeviceTabItem 1.0 qml/devices/DeviceTabItem.qml
