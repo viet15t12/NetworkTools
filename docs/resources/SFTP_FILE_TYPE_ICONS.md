@@ -1,7 +1,7 @@
 # Icon loại file của SFTP
 
 Cập nhật: **2026-08-16**. Runtime hiện có **53 SVG loại file** trong
-`app/UI/resources/files/types/`, cộng `file.svg`, `folder.svg` và hai icon hướng
+`UI/resources/files/types/`, cộng `file.svg`, `folder.svg` và hai icon hướng
 transfer. Không còn thư mục `_unused`.
 
 ## Nguồn và giấy phép

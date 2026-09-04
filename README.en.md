@@ -1,9 +1,9 @@
 <!-- markdownlint-disable MD033 MD041 -->
 [English](README.en.md) | [Tiếng Việt](README.md)
 <div align="center">
-  <img src="app/UI/resources/brand/logo_readme.svg" alt="CAMS logo" width="144">
+  <img src="UI/resources/brand/logo_readme.svg" alt="CAMS logo" width="144">
 
-  <img src="app/UI/resources/brand/name.svg" alt="CAMS name">
+  <img src="UI/resources/brand/name.svg" alt="CAMS name">
 
   <p><strong>A desktop platform for centralized network device management, configuration, and monitoring.</strong></p>
 
@@ -15,7 +15,7 @@
   </p>
 </div>
 
-<img src="app/UI/resources/brand/stats-dark.svg" alt="stats-dark">
+<img src="UI/resources/brand/stats-dark.svg" alt="stats-dark">
 
 ## Overview
 
@@ -52,20 +52,33 @@ The project is developed as part of a research initiative:
 
 ## Quick Start
 
-### 1. Get the source code
+### Linux: install as a desktop application
 
 ```bash
 git clone https://github.com/ntdatphu/CAMS.git
-cd CAMS/app
+cd CAMS
+./install.sh
 ```
 
-### 2. Run the application
+After the first installation, open **CAMS** from the application menu or run
+`cams` in a terminal. You no longer need to enter the repository or run
+`cams.sh run`. The user-local installer requires no `sudo`, keeps program files
+under `~/.local/share/cams/app`, creates a launcher in `~/.local/bin`, and stores
+user databases separately under `~/.local/share/cams/data`. Run `./install.sh`
+again to upgrade without deleting user data.
+
+Use `./uninstall.sh` to remove the program. Pass `--purge-data` only when local
+databases and settings should also be removed.
+
+### Run directly for development
 
 ```bash
-uv run main.py
+./cams.sh setup
+./cams.sh run
 ```
 
-This is the only command required. `uv` creates the environment from `app/pyproject.toml` and `app/uv.lock`; the application creates new databases or restores missing schema objects without deleting existing data. Runtime data is stored by default in `app/data/`; you can set `CAMS_DATA_DIR` to use a different location.
+Development commands run from the repository root. `uv` creates the environment
+from `pyproject.toml` and `uv.lock`; set `CAMS_DATA_DIR` to use another data path.
 
 ## Usage Guide
 
@@ -106,12 +119,12 @@ interfaces can be created or deleted. PPP
 passwords are redacted from previews and reports, and database rows are marked
 applied only after the device accepts the command batch. RESTCONF/NETCONF, IPv6,
 post-push verification, and automatic rollback are not integrated yet; see
-[`app/features/interfaces/README.md`](app/features/interfaces/README.md).
+[`features/interfaces/README.md`](features/interfaces/README.md).
 
 Switching uses the same View & Push flow for VLANs, switch ports/EtherChannel,
 STP, VTP, and Layer 2 security over SSH/Telnet. Each module is marked synchronized
 only after the device accepts its commands. See
-[`app/features/switching/INTEGRATION_LIMITATIONS.md`](app/features/switching/INTEGRATION_LIMITATIONS.md).
+[`features/switching/INTEGRATION_LIMITATIONS.md`](features/switching/INTEGRATION_LIMITATIONS.md).
 
 Configuration Backup stores per-host Dulwich history in `.cams-git`.
 When a workspace is saved, the staging process migrates the former `.git` layout
@@ -144,21 +157,19 @@ Feature services / repositories / workers
 
 | Path | Role |
 | --- | --- |
-| `app/UI/` | QML modules, layouts, components, themes, and UI assets |
-| `app/core/` | Facade and shared contracts between Python and QML |
-| `app/features/` | Business logic organized by feature |
-| `app/infrastructure/` | Database, system, and network connection adapters |
-| `app/scripts/` | Database build tooling and structure validation |
-| `app/tests/` | Unit, integration, and QML smoke tests |
-| `backend/` | Experimental/legacy code not loaded by the desktop composition root |
+| `UI/`, `core/`, `features/` | Interface, facade, and application business logic |
+| `infrastructure/` | Database, system, and network connection adapters |
+| `scripts/`, `tests/` | Build/validation tools and the test suite |
+| `archive/backend/` | Experimental/legacy code not loaded by the desktop composition root |
 | `docs/` | Usage, architecture, and technical convention documentation |
-| `reports/` | Research report material, separate from the application runtime |
+| `docs/research/` | Research report and Typst book sources, separate from runtime |
+| `packaging/` | Application launcher and packaging resources |
 
 Read more in [System Architecture](docs/ARCHITECTURE.md) and [Project Structure](docs/PROJECT_STRUCTURE.md).
 
 ## Testing and Quality Checks
 
-Run the following commands from the `app/` directory:
+Run the following commands from the repository root:
 
 ```bash
 uv run python scripts/validate_structure.py

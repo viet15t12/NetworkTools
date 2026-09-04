@@ -1,7 +1,7 @@
 # Chức năng hiện có của CAMS App
 
 Cập nhật: **2026-08-16**. Tài liệu này chỉ ghi những gì composition root
-`app/main.py` thực sự đưa vào desktop. `implemented` nghĩa là có UI/service/test
+`main.py` thực sự đưa vào desktop. `implemented` nghĩa là có UI/service/test
 cục bộ; không đồng nghĩa đã được chứng nhận production trên mọi thiết bị.
 
 ## 1. Project và shell ứng dụng
@@ -62,7 +62,7 @@ Không suy rộng dev-mode đó sang Interface, FHRP hoặc Switching.
 
 STP, VTP và EtherChannel chưa có trang CRUD riêng. Pull-sync STP/security/SVI,
 NETCONF/RESTCONF, verify và rollback tự động chưa hoàn chỉnh. Xem
-[`../app/features/switching/INTEGRATION_LIMITATIONS.md`](../app/features/switching/INTEGRATION_LIMITATIONS.md).
+[`../features/switching/INTEGRATION_LIMITATIONS.md`](../features/switching/INTEGRATION_LIMITATIONS.md).
 
 ## 5. Quan sát và truyền file
 
@@ -102,7 +102,7 @@ acceptance thực tế trên Fedora/Wayland/EVE-NG vẫn **partial**. Embedded
 
 ## 7. Không phải chức năng desktop hiện tại
 
-- `api_server.py` và dispatcher trong `backend/` không được app khởi tạo, chưa có
+- `archive/api_server.py` và dispatcher trong `archive/backend/` không được app khởi tạo, chưa có
   auth/task contract và không phải API sản phẩm.
 - Topology discovery/draw.io, SNMP, Console Serial và plugin/provider API chưa có
   runtime/UI hoàn chỉnh.

@@ -1,7 +1,7 @@
 # Hướng dẫn cài đặt và sử dụng CAMS
 
-Cập nhật: **2026-08-16**. Hướng dẫn này dành cho desktop app trong `app/`.
-`api_server.py`/`backend/` không phải bước cài đặt bắt buộc và không được khởi
+Cập nhật: **2026-09-04**. Hướng dẫn này dành cho desktop app ở root repository.
+`archive/api_server.py`/`archive/backend/` không phải bước cài đặt bắt buộc và không được khởi
 chạy cùng workspace nếu chưa hoàn tất contract riêng.
 
 ## 1. Chuẩn bị và chạy app
@@ -14,7 +14,14 @@ Yêu cầu:
 - quyền truy cập hợp lệ tới thiết bị lab;
 - Rust toolchain nếu cần tự build terminal companion vendored.
 
-Từ `app/`:
+Để cài một lần trên Linux và mở từ menu ứng dụng:
+
+```bash
+./install.sh
+```
+
+Sau đó dùng biểu tượng **CAMS** hoặc lệnh `cams`. Để phát triển trực tiếp từ
+source ở root:
 
 ```bash
 ./cams.sh
@@ -40,7 +47,7 @@ Hoặc chạy trực tiếp:
 uv run main.py
 ```
 
-Database mặc định được tạo trong `app/data/`. Đặt `CAMS_DATA_DIR` trước
+Database mặc định được tạo trong `data/`. Đặt `CAMS_DATA_DIR` trước
 khi chạy để đổi vị trí. Không chạy nhiều instance cùng ghi một workspace.
 
 ## 2. Project `.ntp`
@@ -93,7 +100,7 @@ bao gồm thay đổi STP/VTP/security không nằm trên trang đang mở.
 Physical chỉ edit interface đã thu thập. Loopback, Tunnel và Subinterface được
 tạo/xóa qua form; backend sinh tên canonical. SVI/EtherChannel thuộc Switching.
 Preview che PPP password. Hiện chỉ cam kết Cisco IOS SSH/Telnet, IPv4 và phạm vi
-ghi trong [`../app/features/interfaces/README.md`](../app/features/interfaces/README.md).
+ghi trong [`../features/interfaces/README.md`](../features/interfaces/README.md).
 
 ### Routing và FHRP
 
@@ -116,7 +123,7 @@ chỉnh quan hệ cha-con trực tiếp bằng Database Browser.
 Workspace hỗ trợ VLAN, switchport/access/trunk/EtherChannel, Port Security, SVI
 và monitoring đã thu thập. Layer 2 View & Push còn bao gồm STP, VTP và DHCP
 Snooping/DAI từ DB. Pull-sync chỉ đầy đủ cho VLAN/interface/EtherChannel/VTP; xem
-[`../app/features/switching/INTEGRATION_LIMITATIONS.md`](../app/features/switching/INTEGRATION_LIMITATIONS.md).
+[`../features/switching/INTEGRATION_LIMITATIONS.md`](../features/switching/INTEGRATION_LIMITATIONS.md).
 
 ## 5. Running-config history và Manual Sys
 
@@ -164,7 +171,7 @@ Folder delete không đệ quy. Lưu password tắt mặc định và chỉ có 
 
 ## 9. Kiểm tra và xử lý sự cố
 
-Từ `app/`:
+Từ root repository:
 
 ```bash
 uv run python scripts/validate_structure.py
@@ -180,9 +187,9 @@ hạ crypto policy toàn hệ thống.
 
 ## 10. Backend/API kế thừa
 
-Không cần chạy `api_server.py` để dùng desktop. Backend chưa có dependency/entry
+Không cần chạy `archive/api_server.py` để dùng desktop. Backend chưa có dependency/entry
 point/auth/task contract độc lập và không được ghi vào workspace đang mở. Nếu
-nghiên cứu chuyển feature, đọc [`../backend/README.md`](../backend/README.md) và
+nghiên cứu chuyển feature, đọc [`../archive/backend/README.md`](../archive/backend/README.md) và
 [`BACKEND_APP_PARITY.md`](BACKEND_APP_PARITY.md), dùng fake device/DB tạm trước
 khi chạm lab.
 

@@ -1,7 +1,7 @@
 # Đối chiếu backend cũ và desktop app
 
-Cập nhật: **2026-08-16**. Backend được đối chiếu là `backend/PyCode`; app chuẩn là
-`app/` theo luồng `QML → core → features → infrastructure`.
+Cập nhật: **2026-08-16**. Backend được đối chiếu là `archive/backend/PyCode`; app chuẩn là
+runtime ở root theo luồng `QML → core → features → infrastructure`.
 
 | Backend cũ | Trạng thái trong app | Kết luận |
 | --- | --- | --- |

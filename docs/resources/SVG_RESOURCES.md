@@ -1,6 +1,6 @@
 # Kiểm kê và tổ chức SVG
 
-Cập nhật: **2026-08-16**. `app/UI/resources/` hiện có **124 SVG** active:
+Cập nhật: **2026-08-16**. `UI/resources/` hiện có **124 SVG** active:
 
 | Nhóm | Số file | Vai trò |
 | --- | ---: | --- |
@@ -25,7 +25,7 @@ iconSource: AppAssets.navigationSyslog
 ```
 
 Không viết literal `resources/...svg` tại consumer và không gọi helper path tùy
-ý. Ngoại lệ có chủ đích: `app/main.py` dùng `brand/logo.ico` làm window icon;
+ý. Ngoại lệ có chủ đích: `main.py` dùng `brand/logo.ico` làm window icon;
 README có thể dùng brand SVG trực tiếp vì không phải QML runtime.
 
 `AppAssets.fileTypeIcon()` quản lý mapping SFTP; xem
@@ -34,7 +34,7 @@ monochrome theo theme; icon loại file nhiều màu dùng `Image`.
 
 ## License
 
-Notice cấp repository nằm trong `licenses/`. `app/UI/resources/licenses/` giữ
+Notice cấp repository nằm trong `licenses/`. `UI/resources/licenses/` giữ
 notice được đóng gói cùng resource khi cần. Không xóa/đổi tên notice nếu asset
 tương ứng còn tồn tại. Mọi asset mới phải ghi nguồn, giấy phép và consumer trong
 PR.

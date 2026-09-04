@@ -11,6 +11,8 @@ nhận là baseline phát triển đầu tiên, không phải tuyên bố sẵn 
 
 ### Added
 
+- Bổ sung bộ cài Linux user-local, lệnh `cams`, desktop entry và bộ gỡ cài đặt;
+  dữ liệu người dùng được tách khỏi program files để cập nhật an toàn.
 - Bổ sung bản đồ tài liệu `docs/README.md`, hướng dẫn SFTP chuyên sâu, README cho
   runtime data/templates và README phân định backend kế thừa.
 - Bổ sung CAMS-side MVP cho CAMS Terminal fork Alacritty: session
@@ -41,6 +43,12 @@ nhận là baseline phát triển đầu tiên, không phải tuyên bố sẵn 
 
 ### Changed
 
+- Sửa icon ứng dụng Linux: desktop entry dùng đường dẫn SVG tuyệt đối, cài thêm
+  PNG 256 px, làm mới icon cache và đồng bộ desktop file name với cửa sổ Qt.
+- Loại bỏ tài liệu Markdown lịch sử/trùng lặp; bản đồ tài liệu chỉ còn trỏ tới
+  tài liệu hiện hành và các kế hoạch còn mở.
+- Đưa ứng dụng desktop từ `app/` lên root repository; gom báo cáo/sách Typst vào
+  `docs/research/`, mã backend kế thừa vào `archive/` và dữ liệu mẫu vào `examples/`.
 - Đối chiếu lại toàn bộ tài liệu hạng nhất với source/schema ngày 2026-08-16;
   viết lại kiến trúc database/project, schema lifecycle, feature inventory,
   hướng dẫn sử dụng, Syslog, SFTP và code audit.

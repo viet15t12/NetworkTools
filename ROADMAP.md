@@ -51,7 +51,7 @@ Ký hiệu:
   terminal packaging vẫn `partial`.
 - Backend worker/template cho nhiều nhóm Cisco và các luồng sync/push đang được tích
   hợp.
-- Unit, integration, QML contract/smoke test và structural validation cho `app/`.
+- Unit, integration, QML contract/smoke test và structural validation cho runtime ở root.
 - Tài liệu kiến trúc, sử dụng, database, UI và báo cáo nghiên cứu.
 
 ## 4. Milestone v0.2.0 — Nền tảng có thể tái lập và security gate
@@ -63,7 +63,7 @@ contract dữ liệu thống nhất mà không cần path hoặc dữ liệu ri�
 | --- | --- | --- | --- |
 | FND-01 | Chốt package/entry point backend và loại import/path phụ thuộc cấu trúc cũ | P0 | `in-progress` |
 | FND-02 | Chọn schema authority; version hóa DB và tạo migration đầu tiên | P0 | `in-progress` |
-| FND-03 | Thêm backend/API smoke test với database tạm và fake device | P0 | `planned` |
+| FND-03 | Thêm archive/backend/API smoke test với database tạm và fake device | P0 | `planned` |
 | SEC-01 | Lập inventory secret; thay plaintext credential bằng secret provider hoặc migration có kiểm soát | P0 | `planned` |
 | SEC-02 | Bật xác minh SSH/NETCONF/RESTCONF an toàn; loại bypass mặc định | P0 | `planned` |
 | API-01 | Thêm typed request/response, authentication, authorization và validation cho API | P0 | `planned` |
@@ -74,7 +74,7 @@ contract dữ liệu thống nhất mà không cần path hoặc dữ liệu ri�
 
 ### Exit criteria v0.2.0
 
-- `uv sync`, database build, desktop smoke test và backend/API smoke test chạy được
+- `uv sync`, database build, desktop smoke test và archive/backend/API smoke test chạy được
   từ clean checkout.
 - Chỉ có một schema authority cho từng database; nâng cấp DB cũ không mất dữ liệu và
   có rollback/backup guidance.

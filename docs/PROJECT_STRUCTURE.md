@@ -1,37 +1,32 @@
 # Cấu trúc dự án CAMS
 
-Cập nhật: **2026-08-16**. Runtime desktop nằm trong `app/`; `backend/` và
-`api_server.py` là subsystem kế thừa, còn `app/vendor/` là mã bên thứ ba/fork.
+Cập nhật: **2026-09-04**. Runtime desktop nằm trực tiếp ở root; mã kế thừa nằm
+trong `archive/`, dữ liệu mẫu trong `examples/`, còn `vendor/` là mã bên thứ ba/fork.
 
 ## 1. Cây repository
 
 ```text
 CAMS-main/
 ├── README.md / README.en.md
-├── api_server.py                 # FastAPI kế thừa, không thuộc desktop runtime
-├── app/                          # Desktop application chuẩn
-│   ├── main.py                   # Composition root PyQt6/QML
-│   ├── app_facade.py             # Public bootstrap exports
-│   ├── pyproject.toml / uv.lock  # Python dependency lock
-│   ├── core/                     # QObject facade, settings và app contracts
-│   ├── domain/                   # Kiểu nghiệp vụ dùng chung, không I/O
-│   ├── features/                 # Nghiệp vụ theo feature
-│   ├── infrastructure/           # SQLite/network/system/workspace adapters
-│   ├── UI/                       # QML module, component, theme và resource
-│   ├── scripts/                  # Build DB và validate structure
-│   ├── templates/                # Template import/export cho người dùng
-│   ├── data/                     # Runtime data mặc định, artifact bị ignore
-│   ├── tests/                    # unittest, QML harness và fixture
-│   ├── vendor/alacritty/         # Fork terminal companion bằng Rust
-│   └── qtpyTerminal-main/        # Compatibility adapter không active
-├── backend/                      # Worker/SQL kế thừa
+├── main.py / app_facade.py       # Composition root và public bootstrap exports
+├── pyproject.toml / uv.lock      # Python dependency lock
+├── core/ / domain/ / features/   # Contract và nghiệp vụ ứng dụng
+├── infrastructure/               # SQLite/network/system/workspace adapters
+├── UI/                           # QML module, component, theme và resource
+├── scripts/ / tests/             # Build, validation và test suite
+├── templates/ / data/            # Template và runtime data mặc định
+├── vendor/alacritty/             # Fork terminal companion bằng Rust
+├── install.sh / uninstall.sh     # Cài/gỡ ứng dụng user-local trên Linux
+├── packaging/                    # Launcher/tài nguyên đóng gói
+├── archive/                      # FastAPI và worker/SQL kế thừa
 ├── docs/                         # Tài liệu chuẩn, ADR, plan và resource inventory
-├── mock/                         # Payload/config thủ công, không phải authority
+│   └── research/                 # Báo cáo và sách Typst
+├── examples/mock/                # Payload/config thủ công, không phải authority
 ├── licenses/                     # Notice/license tài nguyên và dependency
-└── reports/                      # Báo cáo nghiên cứu, ngoài runtime
+└── qtpyTerminal-main/            # Compatibility adapter không active
 ```
 
-## 2. `app/` theo layer
+## 2. Runtime ở root theo layer
 
 | Đường dẫn | Owner | Ví dụ |
 | --- | --- | --- |
@@ -71,7 +66,7 @@ capability cấp người dùng nằm tại
 
 ## 4. QML module
 
-`app/UI/qmldir` là manifest component công khai. Cấu trúc:
+`UI/qmldir` là manifest component công khai. Cấu trúc:
 
 ```text
 UI/
@@ -90,26 +85,26 @@ UI/
 ```
 
 View nặng được lazy-load và giữ instance khi phù hợp. QML test harness nằm trong
-`app/tests/qml/`; test Python khóa qmldir, object contract và null-backend load.
+`tests/qml/`; test Python khóa qmldir, object contract và null-backend load.
 
 ## 5. Source of truth
 
 | Câu hỏi | Nguồn ưu tiên |
 | --- | --- |
-| App khởi tạo gì? | `app/main.py`, `app/app_facade.py` |
-| QML được phép gọi gì? | `app/UI/qmldir`, context properties và slot/signal Python |
-| Nghiệp vụ làm gì? | `app/features/<feature>/` và test liên quan |
-| Bảng/constraint nào tồn tại? | `app/infrastructure/database/schemas/` |
-| Path/network/session do ai sở hữu? | `app/infrastructure/` |
+| App khởi tạo gì? | `main.py`, `app_facade.py` |
+| QML được phép gọi gì? | `UI/qmldir`, context properties và slot/signal Python |
+| Nghiệp vụ làm gì? | `features/<feature>/` và test liên quan |
+| Bảng/constraint nào tồn tại? | `infrastructure/database/schemas/` |
+| Path/network/session do ai sở hữu? | `infrastructure/` |
 | Tính năng người dùng hiện có? | `docs/CURRENT_APP_FEATURES.md` |
 | Tài liệu nào dùng cho việc gì? | `docs/README.md` |
 
-Mã trong `backend/` hoặc `mock/` không được dùng để nâng claim desktop nếu chưa
-có composition, UI/service và test trong `app/`.
+Mã trong `archive/backend/` hoặc `examples/mock/` không được dùng để nâng claim
+desktop nếu chưa có composition, UI/service và test trong runtime ở root.
 
 ## 6. Artifact không commit
 
 `.venv`, `data/*.db*`, backup/running-config, project `.ntp`, log, cache, compiled
 Cython extension, `vendor/alacritty/target`, credential và private key là runtime
 hoặc build artifact. Không thêm chúng bằng force. Xem `.gitignore` và chạy
-`app/scripts/validate_structure.py` trước khi commit.
+`scripts/validate_structure.py` trước khi commit.

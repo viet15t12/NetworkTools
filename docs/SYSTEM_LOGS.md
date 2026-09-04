@@ -1,103 +1,92 @@
-# System Logs (Syslog)
+# Cisco Syslog Server workflow
 
-Cập nhật: **2026-08-16**. System Logs là receiver Syslog của desktop app; nó
-khác Device Logs, nơi dùng TShark để quan sát packet trên interface cục bộ.
+Đối chiếu: **2026-08-23**.
 
-## 1. Luồng runtime
+Syslog được tổ chức theo các tầng độc lập:
 
 ```text
-UDP datagram hoặc TCP stream
-  → SyslogReceiver (socket thread, select + stop event)
-  → SyslogWriter (queue có giới hạn, ghi batch)
-  → parse_message()
-  → SyslogRepository
-  → info_collected.db
-  → SyslogManager (QObject)
-  → SyslogWorkspace.qml
+C++ UDP+TCP collector → parser/resolver → info_collected.db
+          ↑                                  ↓
+     syslog.json                    JSON-line inserted event
+                                             ↓
+QML ← Python Qt manager/signals ← QProcess bridge
+
+Device config QML → Python service → Cisco worker/verifier → DeviceStateRepository
 ```
 
-`app/main.py` tạo `SyslogManager`, đăng ký cả `syslogManager` và
-`syslogSettings`, đổi path khi workspace active thay đổi và gọi `shutdown()` khi
-thoát. Listener chỉ auto-start nếu `enabledOnStartup` bật; lỗi bind/start được báo
-nhưng không làm hỏng việc tải UI.
+`qt/manager.py` giữ signal/property/slot và khởi động listener C++ bằng `QProcess`.
+C++ sở hữu socket, parse, resolve source IP và ghi SQLite. Chỉ sau khi commit
+thành công, collector phát một JSON-line event; Python chuyển event đó thành
+`messagesInserted` để QML cập nhật. Query, retention và cấu hình Cisco vẫn dùng
+application/repository Python. Các module receiver/writer Python được giữ làm
+compatibility entry point và phục vụ kiểm thử riêng.
 
-Receiver hỗ trợ **một** transport active tại một thời điểm: UDP hoặc TCP. Socket
-I/O, parse và SQLite không chạy trên Qt UI thread. Writer dùng queue có giới hạn;
-khi quá tải message mới có thể bị drop và counter được phát lên control bar thay
-vì tăng RAM vô hạn.
+## Ingestion
 
-## 2. Parse và model dữ liệu
+Collector C++ sở hữu đồng thời socket UDP và TCP trên cùng bind address/port.
+Transport giới hạn kích thước message và số TCP client, tách TCP stream theo LF
+và trả frame cuối khi peer đóng kết nối. SQLite dùng busy timeout 10 giây. Khi
+dừng ứng dụng, Python gửi SIGTERM qua `QProcess` và collector đóng toàn bộ socket.
 
-Parser hỗ trợ PRI, timestamp kiểu RFC và Cisco mnemonic. Mọi message đều giữ
-`raw_message`; message lỗi parse vẫn được lưu với `parse_status` để không mất bằng
-chứng. `source_ip` đến từ socket peer; `device_host` chỉ được resolve nếu khớp
-inventory.
+`SyslogProcessor` gọi parser và TTL-cached source resolver. Parser lần lượt xử lý:
 
-Schema canonical nằm ở
-`app/infrastructure/database/schemas/info_collected/12_info_syslog.sql`. Feature
-cũng có migration `CREATE ... IF NOT EXISTS` để bổ sung an toàn cho workspace cũ.
+1. RFC PRI (`syslog_pri`, `syslog_facility`, severity fallback).
+2. Cisco sequence number và timestamp, gồm milliseconds và dấu `*` báo clock có
+   thể chưa đồng bộ.
+3. Cisco header `%FACILITY[-SUBFACILITY]-SEVERITY-MNEMONIC`.
 
-| Bảng | Vai trò |
-| --- | --- |
-| `t12_syslog_messages` | Thời gian nhận/thiết bị, source, facility, severity, mnemonic, message, raw, protocol và parse status |
-| `t12_syslog_device_state` | Destination/transport/port/source-interface đã cấu hình theo host |
+Cisco severity trong message header được ưu tiên hơn PRI severity. PRI facility
+không bao giờ ghi đè Cisco facility. Message malformed vẫn có `parse_status=raw`
+và được lưu nguyên văn.
 
-Các index phục vụ source IP, host/time, severity/time và facility/time. Query dùng
-keyset pagination `before_id` với page tối đa 200 row; model UI giữ tối đa 2.000
-row. Pause chỉ dừng cập nhật view, không dừng listener/writer; Resume reload để
-bù dữ liệu.
+## Persistence và migration
 
-Retention mặc định 30 ngày, tối thiểu một ngày, xóa theo batch 5.000 row.
-`Clear View` chỉ xóa model đang hiển thị; không xóa database. Retention chạy tách
-khỏi listener lifecycle để lỗi cleanup không làm dừng receiver.
+SQLite phía Python vẫn được chia thành `MessageRepository`, `DeviceStateRepository` và
+`DeviceLookupRepository`. Message nhận được nằm trong
+`info_collected.db.t12_syslog_messages`; nhiều cấu hình đích và trạng thái push
+theo thiết bị nằm trong `device_network.db.t10_syslog_servers`. Ingestion native
+ghi từng message đã parse và phát event sau commit. Migration thêm cột khi cần, giữ cột
+compatibility `facility`, backfill dữ liệu cũ và copy một lần cấu hình từ bảng
+legacy `t12_syslog_device_state` sang device DB. Migration không xóa bảng hoặc
+row cũ.
 
-## 3. Cấu hình listener
+## Cisco device configuration
 
-Settings được lưu bằng `QSettings`:
+Command builder và verifier là pure function. Worker là thành phần duy nhất thao
+tác Cisco connection. Service kiểm tra thiết bị connected/đúng OS, tìm hoặc nhận
+source-interface, apply command, verify running-config, save, verify
+startup-config, sau đó mới cập nhật device-state repository. Cancel chỉ gỡ đúng
+destination do ứng dụng quản lý.
 
-- bật khi khởi động;
-- transport `udp` hoặc `tcp`;
-- bind IP local và port;
-- advertised IP gửi cho thiết bị;
-- số ngày retention.
+Router, switch Layer 2 và switch Layer 3 dùng tab **Syslog Server** trong
+workspace thiết bị. Một host có thể quản lý nhiều destination; Add/Edit/Delete/
+Reload chỉ thay đổi desired state, còn **View & Push** preview rồi áp dụng toàn bộ
+row `pending_apply`/`pending_delete`. Cấu hình mới mặc định dùng UDP/5514 và
+`logging trap notifications` (severity 5), vì `warnings` (severity 4) không gửi
+message `%SYS-5-CONFIG_I`. Màn System Logs ở activity bar không cấu hình thiết
+bị: màn này bật/tắt một listener logic nhận đồng thời UDP+TCP, chọn host và lọc
+theo nội dung, khoảng thời gian, severity hoặc transport trước khi xem log. Có
+thể giới hạn N log gần nhất cho từng host, dùng Smart filter với cú pháp
+`key:value`, xem hướng dẫn ngay trên thanh lọc và xuất chính xác tập row đang
+hiển thị sang Excel. Trong **Settings > System Logs**, mục **Reset log data** cho
+phép xuất toàn bộ log thuộc một host hoặc tất cả host sang Excel trước khi xóa.
+Thao tác xóa yêu cầu tích xác nhận và nhập đúng cụm từ xác thực; collector đang
+chạy được dừng tạm thời rồi khởi động lại sau khi hoàn tất. Cấu hình Syslog trên
+thiết bị không bị xóa. Listener/writer dùng
+tiến trình C++ riêng và `info_collected.db`, không giữ session CLI của View & Push.
 
-Bind IP `0.0.0.0` được phép cho listener, nhưng advertised IP phải là IPv4 cụ thể
-để thiết bị có destination hợp lệ. Port phải nằm trong 1–65535. Đổi settings khi
-listener đang chạy cần stop/start để socket nhận cấu hình mới. Port dưới 1024 có
-thể cần quyền hệ điều hành; nên dùng port không đặc quyền như 5514 trong lab.
+## Build và cấu hình native
 
-Không expose listener ra mạng công cộng nếu chưa có firewall, phân vùng mạng và
-giám sát dung lượng. Syslog UDP không bảo đảm giao hàng; TCP cũng không cung cấp
-TLS trong implementation hiện tại.
+```bash
+native/syslog_collector/build.sh
+```
 
-## 4. Cấu hình thiết bị Cisco
+Script dùng CMake, cài binary vào `bin/cams-syslog-collector`. Listener
+đọc `syslog.json` trong thư mục cấu hình ứng dụng. `SyslogSettings` tự migration
+một lần các khóa Syslog cũ từ QSettings sang JSON. Thay đổi bind IP/port có hiệu
+lực sau khi restart listener.
 
-Sidebar chỉ liệt kê thiết bị đang `connected`. Context menu có thể áp dụng hoặc
-gỡ destination Syslog trên Cisco IOS/IOS-XE qua session registry hiện hữu. Command
-builder validate server IP, protocol, port và tên source interface; không ghép
-input tùy ý. Nếu DB chưa biết source interface, UI yêu cầu nhập thủ công và
-validate theo allowlist tên interface.
+## Giới hạn hiện tại
 
-`bindIp` chỉ là địa chỉ socket local; lệnh thiết bị dùng `advertisedIp`. OS không
-hỗ trợ, host mất session hoặc command thất bại phải trả lỗi và không ghi trạng
-thái configured giả. Lệnh gỡ chỉ xóa destination do CAMS quản lý, không
-xóa toàn bộ cấu hình logging khác của thiết bị.
-
-## 5. UI và filter
-
-`SyslogWorkspace` ghép `SyslogControlBar`, `SyslogFilterBar`, `SyslogLogTable`,
-`SyslogMessageDetails` và `SyslogServerSettings`. Filter hỗ trợ host, search và
-severity; panel thiết bị có search, refresh và trạng thái configured. Các QML
-consumer chịu được backend `null` để preview/smoke test vẫn load.
-
-## 6. Giới hạn và kiểm thử
-
-- Chưa hỗ trợ TLS Syslog, RFC 5424 structured data đầy đủ, multi-listener, remote
-  forwarding, export hoặc alert/rule engine.
-- TCP receiver không được mô tả là RELP; mất kết nối có thể mất message chưa gửi.
-- Mapping source IP → inventory có thể mơ hồ khi NAT hoặc nhiều thiết bị dùng
-  chung địa chỉ.
-
-Test nằm trong `app/tests/syslog/`: parser, command builder, configurator,
-UDP receiver, repository/migration, settings, manager variants và QML. Test suite
-mặc định không bind ra interface công cộng hay gửi lệnh đến thiết bị thật.
+TCP đang dùng newline framing; RFC6587 octet-counting và TLS chưa được bật. Module
+chưa hướng tới Syslog đa hãng, RELP, SIEM hay alert engine phức tạp.

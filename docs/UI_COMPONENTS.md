@@ -2,7 +2,7 @@
 
 Cập nhật: **2026-08-16**.
 
-Tài liệu này chỉ áp dụng cho frontend QML trong `app/`; nó không mô tả toàn backend dự án. QML module là `UI`, khai báo tại `app/UI/qmldir`. Component dùng qua `import UI`; SVG dùng property ngữ nghĩa của singleton `AppAssets` (ví dụ `AppAssets.actionSave`).
+Tài liệu này chỉ áp dụng cho frontend QML ở root; nó không mô tả toàn backend dự án. QML module là `UI`, khai báo tại `UI/qmldir`. Component dùng qua `import UI`; SVG dùng property ngữ nghĩa của singleton `AppAssets` (ví dụ `AppAssets.actionSave`).
 
 ## 1. Interface families
 

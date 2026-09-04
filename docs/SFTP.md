@@ -15,7 +15,7 @@ SftpController (QObject, state và điều phối)
        └─ OperationWorker → QThreadPool
 ```
 
-`app/main.py` tạo một `SftpController`, đăng ký context property
+`main.py` tạo một `SftpController`, đăng ký context property
 `sftpController` và gọi `shutdown()` khi thoát. Controller serialize thao tác
 kết nối/danh sách và quản lý transfer bất đồng bộ; QML không truy cập Paramiko
 hoặc filesystem trực tiếp.
@@ -96,6 +96,6 @@ Shortcut không chiếm phím khi text input đang focus, ngoại trừ mouse na
 - Không cam kết atomicity cho upload/download và không rollback file đã truyền
   trước khi task lỗi.
 
-Regression chính: `app/tests/test_sftp_client.py`, `test_external_tools.py`,
+Regression chính: `tests/test_sftp_client.py`, `test_external_tools.py`,
 `test_ui_contracts.py` và QML smoke. Test dùng fake service/temp directory; không
 được kết nối host thật trong test suite mặc định.

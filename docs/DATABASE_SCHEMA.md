@@ -8,9 +8,9 @@ riêng ranh giới backend để không trộn tên bảng hoặc trạng thái.
 
 | File mặc định | Authority | Vai trò | Project `.ntp` |
 | --- | --- | --- | ---: |
-| `app/data/device_network.db` | `app/infrastructure/database/schemas/device_network/*.sql` | Inventory, desired state, trạng thái push | Có |
-| `app/data/info_collected.db` | `app/infrastructure/database/schemas/info_collected/*.sql` | Dữ liệu quan sát và Syslog | Có |
-| `app/data/app_state.db` | `recent_projects.py` | Recent project metadata | Không |
+| `data/device_network.db` | `infrastructure/database/schemas/device_network/*.sql` | Inventory, desired state, trạng thái push | Có |
+| `data/info_collected.db` | `infrastructure/database/schemas/info_collected/*.sql` | Dữ liệu quan sát và Syslog | Có |
+| `data/app_state.db` | `recent_projects.py` | Recent project metadata | Không |
 
 `CAMS_DATA_DIR` đổi thư mục mặc định. Khi project mở, các service được
 route đến hai database giải nén trong workspace; khi đóng project, chúng quay về
@@ -78,7 +78,7 @@ Desired-state row dùng `pending_apply`, `synchronized`, `pending_delete`,
 `skipped`. Switching phần lớn theo dõi cả module bằng
 `t06_switch_push_state.payload_hash`; Port Security/SVI và member FHRP dùng
 trạng thái theo row. Chi tiết ở
-[`../app/SCHEMA_LOGIC.md`](../app/SCHEMA_LOGIC.md).
+[`SCHEMA_LOGIC.md`](SCHEMA_LOGIC.md).
 
 ## 4. `info_collected.db` — 20 bảng
 
@@ -109,7 +109,7 @@ collector khác cần policy snapshot/retention riêng khi được mở rộng.
 
 ## 6. Backend kế thừa
 
-`backend/sql/` và `backend/PyCode/share/database/` chứa SQL/builder riêng. Một số
+`archive/backend/sql/` và `archive/backend/PyCode/share/database/` chứa SQL/builder riêng. Một số
 tên và map đã được cập nhật theo prefix `tNN_`, nhưng subsystem vẫn có path,
 dependency và ownership riêng. Không lấy SQL backend để repair/migrate database
 desktop và không để FastAPI/backend ghi đồng thời vào workspace đang mở.
@@ -117,7 +117,7 @@ desktop và không để FastAPI/backend ghi đồng thời vào workspace đang
 Muốn hợp nhất phải có schema version chung, migration/backup, path injection,
 locking/busy-timeout, auth/task contract và integration test API → fake worker →
 DB. Xem [`BACKEND_APP_PARITY.md`](BACKEND_APP_PARITY.md) và
-[`../backend/README.md`](../backend/README.md).
+[`../archive/backend/README.md`](../archive/backend/README.md).
 
 ## 7. Bảo mật và vận hành
 

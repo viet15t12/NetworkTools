@@ -21,7 +21,7 @@ chi tiết cho Python, QML, database và worker mạng nằm trong
 ## 2. Trước khi bắt đầu
 
 1. Đọc [README](README.md), [Roadmap](ROADMAP.md),
-   [quy tắc kiến trúc](app/ARCHITECTURE_RULES.md) và README của feature liên quan.
+   [quy tắc kiến trúc](docs/ARCHITECTURE_RULES.md) và README của feature liên quan.
 2. Kiểm tra issue/PR hiện có để tránh làm trùng.
 3. Với thay đổi lớn, tạo issue mô tả vấn đề, phạm vi, phương án, rủi ro và tiêu chí
    nghiệm thu trước khi viết code.
@@ -30,7 +30,7 @@ chi tiết cho Python, QML, database và worker mạng nằm trong
 
 ## 3. Chuẩn bị môi trường
 
-Chạy từ thư mục `app/`:
+Chạy từ root repository:
 
 ```bash
 uv sync
@@ -129,7 +129,7 @@ PR không được chứa:
 
 ## 8. Quality gate
 
-Tối thiểu chạy từ `app/`:
+Tối thiểu chạy từ root repository:
 
 ```bash
 uv run python scripts/validate_structure.py
@@ -179,7 +179,7 @@ Một thay đổi chỉ hoàn thành khi:
 1. Đóng phạm vi milestone và xử lý blocker.
 2. Chạy toàn bộ quality gate trên clean checkout.
 3. Chuyển nội dung `Unreleased` sang phiên bản mới với ngày ISO `YYYY-MM-DD`.
-4. Đồng bộ phiên bản trong `app/pyproject.toml` và metadata liên quan.
+4. Đồng bộ phiên bản trong `pyproject.toml` và metadata liên quan.
 5. Commit `chore(release): prepare vX.Y.Z`.
 6. Tạo annotated tag `vX.Y.Z` và GitHub Release từ nội dung changelog.
 7. Lưu checksum, môi trường build và bằng chứng test của artifact phát hành.

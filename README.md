@@ -1,9 +1,9 @@
 <!-- markdownlint-disable MD033 MD041 -->
 [English](README.en.md) | [Tiếng Việt](README.md)
 <div align="center">
-  <img src="app/UI/resources/brand/logo_readme.svg" alt="CAMS logo" width="144">
+  <img src="UI/resources/brand/logo_readme.svg" alt="CAMS logo" width="144">
 
-  <img src="app/UI/resources/brand/name.svg" alt="CAMS name">
+  <img src="UI/resources/brand/name.svg" alt="CAMS name">
 
   <p><strong>Nền tảng desktop quản lý, cấu hình và giám sát thiết bị mạng tập trung.</strong></p>
 
@@ -17,7 +17,7 @@
   </p>
 </div>
 
-<img src="app/UI/resources/brand/stats-dark.svg" alt="stats-dark">
+<img src="UI/resources/brand/stats-dark.svg" alt="stats-dark">
 
 ## Tổng quan
 
@@ -52,22 +52,62 @@ Dự án được phát triển trong khuôn khổ nghiên cứu:
 - TShark/Wireshark nếu sử dụng tính năng Device Logs;
 - quyền truy cập hợp lệ tới thiết bị mạng khi sử dụng kết nối thật.
 
-## Cài đặt nhanh
+## Cài đặt, cập nhật và gỡ CAMS trên Linux
 
-### 1. Lấy mã nguồn
+### Cài đặt lần đầu
 
 ```bash
 git clone https://github.com/viet15t12/CAMS.git
-cd CAMS/app
+cd CAMS
+./install.sh
 ```
 
-### 2. Chạy ứng dụng
+Sau lần cài đầu tiên, mở **CAMS** từ menu ứng dụng hoặc chạy `cams` ở terminal;
+không cần vào lại repository hay gọi `cams.sh run`. Bộ cài đặt user-local không
+cần `sudo`, lưu chương trình tại `~/.local/share/cams/app`, tạo launcher trong
+`~/.local/bin` và giữ database người dùng riêng tại `~/.local/share/cams/data`.
+
+### Cập nhật
+
+Mở terminal tại repository đã clone, tải mã mới rồi chạy lại bộ cài:
 
 ```bash
-uv run main.py
+cd /duong/dan/toi/CAMS
+git pull --ff-only
+./install.sh
 ```
 
-Đây là lệnh duy nhất cần chạy. `uv` tự tạo môi trường từ `app/pyproject.toml` và `app/uv.lock`; ứng dụng tự tạo database mới hoặc bổ sung object schema còn thiếu mà không xóa dữ liệu hiện có. Dữ liệu runtime mặc định nằm trong `app/data/`; có thể đặt biến môi trường `CAMS_DATA_DIR` để sử dụng vị trí khác.
+Bộ cài chỉ thay thế file chương trình và giữ nguyên database, workspace cùng
+thiết lập người dùng trong `~/.local/share/cams/data`. Sau khi cập nhật, tiếp tục
+mở CAMS từ menu ứng dụng hoặc bằng lệnh `cams`.
+
+### Gỡ cài đặt
+
+Từ repository CAMS, chạy:
+
+```bash
+./uninstall.sh
+```
+
+Lệnh trên gỡ chương trình, launcher và icon nhưng giữ dữ liệu người dùng. Muốn
+xóa luôn database và thiết lập cục bộ, chạy:
+
+```bash
+./uninstall.sh --purge-data
+```
+
+Không thể khôi phục dữ liệu đã xóa bằng tùy chọn `--purge-data` nếu không có bản
+sao lưu.
+
+### Chạy trực tiếp để phát triển
+
+```bash
+./cams.sh setup
+./cams.sh run
+```
+
+Các lệnh phát triển chạy ngay từ root. `uv` tạo môi trường từ `pyproject.toml`
+và `uv.lock`; có thể đặt `CAMS_DATA_DIR` để dùng vị trí dữ liệu khác.
 
 ## Hướng dẫn sử dụng
 
@@ -105,14 +145,14 @@ cơ chế này; không nên xem dev-mode là lớp bảo vệ duy nhất.
 Switch Layer 2 dùng cùng luồng View & Push cho VLAN, switch port/EtherChannel,
 STP, VTP và L2 Security qua SSH/Telnet. App chỉ đánh dấu từng module đã đồng bộ
 sau khi thiết bị chấp nhận lệnh. Xem giới hạn an toàn tại
-[`app/features/switching/INTEGRATION_LIMITATIONS.md`](app/features/switching/INTEGRATION_LIMITATIONS.md).
+[`features/switching/INTEGRATION_LIMITATIONS.md`](features/switching/INTEGRATION_LIMITATIONS.md).
 
 Router Interface View & Push hỗ trợ Cisco IOS qua SSH/Telnet cho Physical/L3/WAN,
 Loopback, Tunnel và 802.1Q Subinterface. Physical chỉ được chỉnh sửa khi đã có từ
 dữ liệu thiết bị; backend chỉ cho tạo/xóa interface ảo. Preview che mật khẩu PPP và app chỉ
 đánh dấu row đã áp dụng sau khi thiết bị chấp nhận batch lệnh. RESTCONF/NETCONF,
 IPv6, verify và rollback tự động chưa được tích hợp; xem chi tiết tại
-[`app/features/interfaces/README.md`](app/features/interfaces/README.md).
+[`features/interfaces/README.md`](features/interfaces/README.md).
 
 Config Backup lưu lịch sử Git nội bộ bằng Dulwich trong thư mục
 `.cams-git`. Khi lưu workspace, layout `.git` cũ được migrate trong staging
@@ -144,21 +184,19 @@ Feature services / repositories / workers
 
 | Đường dẫn | Vai trò |
 | --- | --- |
-| `app/UI/` | Module QML, layout, component, theme và tài nguyên giao diện |
-| `app/core/` | Facade và contract dùng chung giữa Python với QML |
-| `app/features/` | Nghiệp vụ được tổ chức theo từng tính năng |
-| `app/infrastructure/` | Adapter cơ sở dữ liệu, hệ thống và kết nối mạng |
-| `app/scripts/` | Công cụ build database và kiểm tra cấu trúc |
-| `app/tests/` | Unit, integration và QML smoke tests |
-| `backend/` | Mã thử nghiệm/kế thừa, không được composition root desktop nạp |
+| `UI/`, `core/`, `features/` | Giao diện, facade và nghiệp vụ của ứng dụng |
+| `infrastructure/` | Adapter cơ sở dữ liệu, hệ thống và kết nối mạng |
+| `scripts/`, `tests/` | Công cụ build/kiểm tra và test suite |
+| `archive/backend/` | Mã thử nghiệm/kế thừa, không được composition root desktop nạp |
 | `docs/` | Tài liệu sử dụng, kiến trúc và quy ước kỹ thuật |
-| `reports/` | Báo cáo nghiên cứu, tách khỏi runtime và ngoài phạm vi tài liệu app |
+| `docs/research/` | Báo cáo và sách Typst, tách khỏi runtime |
+| `packaging/` | Launcher và tài nguyên đóng gói ứng dụng |
 
 Đọc thêm tại [Kiến trúc hệ thống](docs/ARCHITECTURE.md) và [Cấu trúc dự án](docs/PROJECT_STRUCTURE.md).
 
 ## Kiểm thử và kiểm tra chất lượng
 
-Chạy các lệnh sau từ thư mục `app/`:
+Chạy các lệnh sau từ root repository:
 
 ```bash
 uv run python scripts/validate_structure.py

@@ -2,10 +2,10 @@
 
 Ngày đối chiếu: **2026-08-16**.
 
-Tài liệu này mô tả kiến trúc đang chạy của ứng dụng desktop trong `app/` và đặt
+Tài liệu này mô tả kiến trúc đang chạy của ứng dụng desktop ở root repository và đặt
 các thành phần cũ ở root repository vào đúng ranh giới. Mọi khẳng định về runtime
 được đối chiếu từ composition root, import, schema, service và test hiện có.
-`backend/` cùng `api_server.py` không nằm trong tiến trình desktop.
+`archive/backend/` cùng `archive/api_server.py` không nằm trong tiến trình desktop.
 
 ## 1. Bối cảnh hệ thống
 
@@ -28,31 +28,31 @@ Người dùng
   │          └─ terminal manager ─────────→ cams-terminal
   │
   └─ API/backend cũ
-       api_server.py → backend/PyCode
-       (không được app/main.py khởi tạo hoặc gọi)
+       archive/api_server.py → archive/backend/PyCode
+       (không được main.py khởi tạo hoặc gọi)
 ~~~
 
 Runtime sản phẩm hiện là ứng dụng desktop chạy trong một tiến trình Python.
 Không có HTTP service trung gian giữa QML và nghiệp vụ: QML gọi các QObject do
-`app/main.py` đăng ký, còn Python gọi repository hoặc worker trực tiếp.
+`main.py` đăng ký, còn Python gọi repository hoặc worker trực tiếp.
 
 ## 2. Ranh giới repository
 
 | Thành phần | Vai trò hiện tại | Có trong desktop runtime? |
 | --- | --- | ---: |
-| `app/` | Ứng dụng desktop chuẩn: UI, facade, feature, infrastructure và test. | Có |
-| `backend/` | Backend cũ/tham khảo cho dispatcher, sync, topology, security và worker mạng. | Không |
-| `api_server.py` | Gateway FastAPI cũ gọi `backend/PyCode`. | Không |
-| `mock/` | Payload, cấu hình và fixture thủ công. | Không |
-| `reports/` | Tài liệu và artifact báo cáo nghiên cứu, tách khỏi runtime. | Không |
+| Root repository | Ứng dụng desktop chuẩn: UI, facade, feature, infrastructure và test. | Có |
+| `archive/backend/` | Backend cũ/tham khảo cho dispatcher, sync, topology, security và worker mạng. | Không |
+| `archive/api_server.py` | Gateway FastAPI cũ gọi `archive/backend/PyCode`. | Không |
+| `examples/mock/` | Payload, cấu hình và fixture thủ công. | Không |
+| `docs/research/report/` | Tài liệu và artifact báo cáo nghiên cứu, tách khỏi runtime. | Không |
 | `docs/` | Contract, audit, hướng dẫn và quyết định kiến trúc. | Không |
 
-`backend/` có thể được nghiên cứu để chuyển khả năng sang app, nhưng không phải
+`archive/backend/` có thể được nghiên cứu để chuyển khả năng sang app, nhưng không phải
 lớp hạ tầng của desktop. Khả năng chỉ tồn tại ở backend cũ không được mô tả là
-khả năng của ứng dụng cho tới khi có UI/service an toàn và test trong `app/`.
+khả năng của ứng dụng cho tới khi có UI/service an toàn và test trong runtime ở root.
 Bảng đối chiếu nằm tại [BACKEND_APP_PARITY.md](BACKEND_APP_PARITY.md).
 
-## 3. Kiến trúc phân lớp trong `app/`
+## 3. Kiến trúc phân lớp ở root
 
 Luồng phụ thuộc chuẩn:
 
@@ -72,15 +72,15 @@ QML → core facade/slot → feature service
 | `scripts/` | Build database và kiểm tra cấu trúc repository. | Runtime state |
 | `tests/` | Unit, integration, QML harness và contract test. | Dữ liệu production |
 
-`app/app_facade.py` chỉ tập hợp public object phục vụ bootstrap.
+`app_facade.py` chỉ tập hợp public object phục vụ bootstrap.
 `DatabaseManager` trong `core/database/manager.py` là facade tương thích được ghép
 từ các slot mixin; đây không phải database server. Nghiệp vụ đang tiếp tục được
 tách khỏi facade sang `features/*` theo
-[ARCHITECTURE_RULES.md](../app/ARCHITECTURE_RULES.md).
+[ARCHITECTURE_RULES.md](ARCHITECTURE_RULES.md).
 
 ## 4. Khởi động và vòng đời ứng dụng
 
-`app/main.py` là composition root duy nhất của desktop:
+`main.py` là composition root duy nhất của desktop:
 
 1. cấu hình Qt/PyQt6 theo nền tảng và tạo các database mặc định còn thiếu;
 2. tạo `QApplication`, `QQmlApplicationEngine` và import path cho module `UI`;
@@ -243,11 +243,11 @@ repository này.
 
 ## 8. Backend và FastAPI cũ
 
-`api_server.py` khai báo các endpoint gọi dispatcher trong `backend/PyCode` cho
+`archive/api_server.py` khai báo các endpoint gọi dispatcher trong `archive/backend/PyCode` cho
 DHCP, sync, interface, routing, ACL/NAT, switching và info collection. Đây là
 một subsystem cũ, không phải API của desktop:
 
-- `app/main.py` không import hoặc khởi chạy FastAPI;
+- `main.py` không import hoặc khởi chạy FastAPI;
 - backend dùng config/path/global output riêng và còn trộn hai kiểu import
   `backend.PyCode...` với `PyCode...`;
 - backend yêu cầu `.env` và database riêng theo contract của nó;
@@ -280,16 +280,15 @@ trước khi có schema version, locking và ownership contract rõ ràng.
 
 Nguồn sự thật theo thứ tự:
 
-1. `app/main.py` và public QML contract trong `UI/qmldir`;
+1. `main.py` và public QML contract trong `UI/qmldir`;
 2. code/service/repository/worker của feature;
 3. schema modular trong `infrastructure/database/schemas`;
-4. test trong `app/tests`;
+4. test trong `tests`;
 5. README feature và tài liệu cấp `docs/`.
 
 Kiểm tra thay đổi kiến trúc bằng:
 
 ~~~bash
-cd app
 uv run python scripts/validate_structure.py
 uv run python -m unittest discover -s tests
 ~~~

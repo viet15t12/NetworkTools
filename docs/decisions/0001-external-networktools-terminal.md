@@ -20,7 +20,7 @@ to remain close enough to upstream for routine rebases.
 ## Decision
 
 Use a separate-process **CAMS Terminal** based on Alacritty. Its source
-is vendored under `app/vendor/alacritty` so the app launcher can build a matching
+is vendored under `vendor/alacritty` so the app launcher can build a matching
 binary from one checkout. Process/runtime ownership remains separate even though
 the source currently shares this repository. CAMS launches it with
 `QProcess`, assigns a UUID session ID, and tracks one active managed session per
@@ -36,7 +36,7 @@ Interactive access uses system OpenSSH as the terminal child. CAMS
 passes an argument list directly and never uses a shell or places the inventory
 password on argv. Existing Netmiko sessions remain dedicated to automation.
 
-The maintained Python implementation lives in `app/features/terminal/`; the
+The maintained Python implementation lives in `features/terminal/`; the
 stable QML context remains the thin `core.terminal.TerminalHelper` facade. The
 old embedded qtpyTerminal/Netmiko implementation is not part of active
 composition and is retained temporarily only as migration evidence until its

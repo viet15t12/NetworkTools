@@ -3,7 +3,7 @@
 Cập nhật: **2026-08-16**. CAMS manager, NTTP/1 server và source companion
 Alacritty đã có trong repository. Tài liệu này chỉ giữ các gate còn mở; kiến trúc
 đã quyết định nằm ở
-[`../decisions/0001-external-cams-terminal.md`](../decisions/0001-external-cams-terminal.md).
+[`../decisions/0001-external-networktools-terminal.md`](../decisions/0001-external-networktools-terminal.md).
 
 ## 1. Baseline đã có
 
@@ -79,7 +79,6 @@ Chỉ xóa `features/terminal/manager.py`, `window.py`, `worker.py`, `stream.py`
 ## 7. Lệnh kiểm tra
 
 ```bash
-cd app
 ./cams.sh terminal-build
 ./cams.sh terminal-check
 uv run python -m unittest tests.unit.test_managed_terminal tests.test_launcher_contracts -v

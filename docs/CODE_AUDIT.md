@@ -6,18 +6,18 @@ kiểm chứng thiết bị thật. Nó không nâng claim production từ việ
 ## 1. Phạm vi
 
 - Đọc composition root, facade, feature, infrastructure, QML, schema, script và
-  test trong `app/`.
-- Đối chiếu read-only `api_server.py`, `backend/`, `mock/`, license và vendored
+  test trong runtime ở root.
+- Đối chiếu read-only `archive/api_server.py`, `archive/backend/`, `examples/mock/`, license và vendored
   terminal để xác định ranh giới tích hợp.
 - Không chạy worker trên thiết bị thật, không bind listener công cộng và không
   kiểm tra nội dung trong các thư mục được loại khỏi đợt tài liệu.
-- Markdown upstream trong `app/vendor/alacritty/` được giữ nguyên; provenance và
-  fork delta do `app/vendor/README.md` quản lý.
+- Markdown upstream trong `vendor/alacritty/` được giữ nguyên; provenance và
+  fork delta do `vendor/README.md` quản lý.
 
 ## 2. Bằng chứng cấu trúc
 
 Desktop có 335 file Python toàn repository (bao gồm backend), 256 QML và 37 SQL;
-phần `app/` hiện hành được tổ chức theo `core/features/infrastructure/UI`.
+runtime hiện hành được tổ chức theo `core/features/infrastructure/UI`.
 Schema sạch tạo được 73 bảng device và 20 bảng collected, với foreign key,
 index/trigger và migration trạng thái số legacy.
 
@@ -34,7 +34,7 @@ chạy đạt trước khi suite dừng, nhưng baseline **không xanh**:
 
 - contract docstring của database slot còn ít nhất một failure;
 - một số test External Tools giả lập Windows thất bại/lỗi trên host Linux;
-- QML run kết thúc process khi default `app/data/device_network.db` chưa tồn tại.
+- QML run kết thúc process khi default `data/device_network.db` chưa tồn tại.
 
 Vì vậy không ghi số “x/y tests passed” và không dùng kết quả này làm chứng nhận
 release. Đây là vấn đề code/test environment tồn tại trước thay đổi Markdown;
@@ -93,12 +93,12 @@ Chi tiết người dùng xem tại
 
 ## 6. Backend và vendor boundary
 
-`backend/` vẫn hữu ích làm nguồn parser/template, và gần đây có thêm sync L2
+`archive/backend/` vẫn hữu ích làm nguồn parser/template, và gần đây có thêm sync L2
 security/SVI. Tuy nhiên subsystem chưa chia sẻ lifecycle/schema/locking với
 desktop; “có file” không làm feature đó thành capability app. Mọi port phải đi
 qua feature owner, canonical DB, registry và test.
 
-`app/vendor/alacritty/` là fork source lớn. Không review lại toàn bộ upstream như
+`vendor/alacritty/` là fork source lớn. Không review lại toàn bộ upstream như
 code CAMS trong mỗi PR; review delta CAMS (`--nt-*`, NTTP, hold,
 branding/build), lưu provenance và giữ license. Build artifact `target/` không
 được track.
@@ -106,7 +106,6 @@ branding/build), lưu provenance và giữ license. Build artifact `target/` kh�
 ## 7. Quality gate đề xuất
 
 ```bash
-cd app
 uv run python scripts/validate_structure.py
 uv run python -m compileall .
 uv run python -m unittest discover -s tests -v

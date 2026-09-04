@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+set -eu
+
+launcher_path=$(readlink -f -- "$0")
+app_dir=$(CDPATH= cd -- "$(dirname -- "$launcher_path")" && pwd)
+install_base=$(dirname -- "$app_dir")
+
+export CAMS_DATA_DIR="${CAMS_DATA_DIR:-$install_base/data}"
+mkdir -p "$CAMS_DATA_DIR"
+
+python="$app_dir/.venv/bin/python"
+if [ ! -x "$python" ]; then
+    echo "CAMS is not fully installed: $python is missing." >&2
+    echo "Run install.sh again from the CAMS source directory." >&2
+    exit 1
+fi
+
+cd "$app_dir"
+exec "$python" "$app_dir/main.py" "$@"

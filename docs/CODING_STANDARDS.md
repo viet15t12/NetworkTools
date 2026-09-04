@@ -14,13 +14,13 @@ QML → QObject/slot → service → repository → SQLite
                          └──→ worker → infrastructure/network → device
 ```
 
-- `app/UI/` chỉ trình bày trạng thái và phát ý định người dùng; không chứa SQL,
+- `UI/` chỉ trình bày trạng thái và phát ý định người dùng; không chứa SQL,
   command thiết bị hoặc logic nghiệp vụ dài.
-- `app/core/` giữ facade/context dùng chung; không nhận repository hoặc nghiệp vụ
+- `core/` giữ facade/context dùng chung; không nhận repository hoặc nghiệp vụ
   feature mới.
-- `app/features/<feature>/` sở hữu model, validation, service, repository, worker,
+- `features/<feature>/` sở hữu model, validation, service, repository, worker,
   parser và template của feature.
-- `app/infrastructure/` chỉ chứa adapter kỹ thuật; không import QML và không quyết
+- `infrastructure/` chỉ chứa adapter kỹ thuật; không import QML và không quyết
   định chính sách nghiệp vụ.
 - Repository chỉ làm việc với persistence. Worker chỉ làm việc với thiết bị hoặc
   tác vụ nền. Service điều phối validation, transaction và chuyển trạng thái.
@@ -29,7 +29,7 @@ QML → QObject/slot → service → repository → SQLite
 - Adapter legacy phải có consumer xác định, ghi rõ thời hạn loại bỏ và test bảo vệ
   contract tương thích.
 
-Xem thêm [quy tắc kiến trúc của app](../app/ARCHITECTURE_RULES.md).
+Xem thêm [quy tắc kiến trúc của app](ARCHITECTURE_RULES.md).
 
 ## 2. Python
 
@@ -137,7 +137,7 @@ Trong object gốc, sắp xếp theo thứ tự:
 
 ## 5. Database và migration
 
-- Các tệp schema mô-đun trong `app/infrastructure/database/schemas/` là nguồn để
+- Các tệp schema mô-đun trong `infrastructure/database/schemas/` là nguồn để
   build database desktop. Không sửa database runtime rồi coi đó là schema change.
 - Mọi schema change phải gồm: schema nguồn, migration cho database đã tồn tại,
   repository/query liên quan, bootstrap test, migration test và cập nhật tài liệu.
