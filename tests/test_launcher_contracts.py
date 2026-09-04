@@ -19,6 +19,9 @@ class LauncherContractTests(unittest.TestCase):
         )
 
         self.assertIn("CAMS_INSTALL_SKIP_SETUP", installer)
+        self.assertIn("install_fedora_dependencies", installer)
+        self.assertIn("CAMS_INSTALL_SYSTEM_DEPS", installer)
+        self.assertIn("sudo dnf install", installer)
         self.assertIn("cams.desktop", installer)
         self.assertIn('ln -sfn "$app_dir/cams-launcher"', installer)
         self.assertIn('exec "$python" "$app_dir/main.py"', launcher)

@@ -13,6 +13,8 @@ CAMS to the desktop application menu. Existing user data is preserved.
 Optional environment variables:
   CAMS_INSTALL_BASE  Program/data base directory (default: XDG data/cams)
   CAMS_BIN_DIR       Command directory (default: ~/.local/bin)
+  CAMS_INSTALL_SYSTEM_DEPS
+                      Install missing Fedora packages (default: 1; use 0 to skip)
 EOF
     exit 0
 fi
@@ -27,6 +29,77 @@ if [ -z "${HOME:-}" ]; then
     echo "ERROR: HOME is not set." >&2
     exit 1
 fi
+
+install_fedora_dependencies() {
+    [ "${CAMS_INSTALL_SKIP_SETUP:-0}" != "1" ] || return 0
+
+    os_release_file=${CAMS_OS_RELEASE_FILE:-/etc/os-release}
+    [ -r "$os_release_file" ] || return 0
+
+    # /etc/os-release is specified as shell-compatible variable assignments.
+    ID=
+    ID_LIKE=
+    . "$os_release_file"
+    case "${ID:-} ${ID_LIKE:-}" in
+        *fedora*) ;;
+        *) return 0 ;;
+    esac
+
+    if ! command -v rpm >/dev/null 2>&1 || ! command -v dnf >/dev/null 2>&1; then
+        echo "ERROR: Fedora package tools (rpm and dnf) are required." >&2
+        exit 1
+    fi
+
+    fedora_packages="tar git uv python3-devel gcc gcc-c++ cmake make pkgconf-pkg-config freetype-devel fontconfig-devel libxcb-devel libxkbcommon-devel rust cargo"
+    # PyQt wheels bundle Qt itself, but the Wayland/X11 platform plugins still
+    # dynamically link to these Fedora runtime libraries.
+    fedora_packages="$fedora_packages libX11 libX11-xcb libXext libxcb libxkbcommon libxkbcommon-x11 libwayland-client libwayland-cursor"
+    fedora_packages="$fedora_packages xcb-util xcb-util-cursor xcb-util-image xcb-util-keysyms xcb-util-renderutil xcb-util-wm"
+    missing_packages=
+    for package in $fedora_packages; do
+        if ! rpm -q "$package" >/dev/null 2>&1; then
+            missing_packages="$missing_packages $package"
+        fi
+    done
+    [ -n "$missing_packages" ] || return 0
+
+    echo "Missing Fedora dependencies:$missing_packages"
+    case "${CAMS_INSTALL_SYSTEM_DEPS:-1}" in
+        1|true|yes) ;;
+        0|false|no)
+            echo "ERROR: Install the missing packages, then run ./install.sh again:" >&2
+            echo "  sudo dnf install$missing_packages" >&2
+            exit 1
+            ;;
+        *)
+            echo "ERROR: CAMS_INSTALL_SYSTEM_DEPS must be 1 or 0." >&2
+            exit 2
+            ;;
+    esac
+
+    echo "Installing Fedora system dependencies..."
+    if [ "$(id -u)" -eq 0 ]; then
+        # Word splitting is intentional: every value came from the fixed list above.
+        dnf install -y $missing_packages
+    else
+        if ! command -v sudo >/dev/null 2>&1; then
+            echo "ERROR: sudo is required to install Fedora system dependencies." >&2
+            echo "Run as root: dnf install$missing_packages" >&2
+            exit 1
+        fi
+        if [ ! -t 0 ] && ! sudo -n true >/dev/null 2>&1; then
+            echo "ERROR: System packages are missing and sudo cannot prompt here." >&2
+            echo "Run this in a terminal, then retry CAMS:" >&2
+            echo "  sudo dnf install$missing_packages" >&2
+            exit 1
+        fi
+        # Word splitting is intentional: every value came from the fixed list above.
+        sudo dnf install -y $missing_packages
+    fi
+}
+
+install_fedora_dependencies
+
 if ! command -v tar >/dev/null 2>&1; then
     echo "ERROR: tar is required to install CAMS." >&2
     exit 1

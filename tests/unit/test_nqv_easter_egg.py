@@ -17,7 +17,7 @@ class NqvEasterEggTests(unittest.TestCase):
         self.assertTrue(_application_icon_path("linux").is_file())
         self.assertTrue(_application_icon_path("win32").is_file())
 
-    def test_wayland_filter_suppresses_only_known_text_input_diagnostics(self):
+    def test_wayland_filter_suppresses_known_qt_diagnostics(self):
         environment = {
             "XDG_SESSION_TYPE": "wayland",
             "QT_LOGGING_RULES": "qt.qml.binding.removal.info=true",
@@ -28,7 +28,8 @@ class NqvEasterEggTests(unittest.TestCase):
             _configure_qt_logging()
             self.assertEqual(
                 os.environ["QT_LOGGING_RULES"],
-                "qt.qml.binding.removal.info=true;qt.qpa.wayland.textinput=false",
+                "qt.qml.binding.removal.info=true;qt.qpa.wayland.textinput=false;"
+                "qt.qpa.services=false",
             )
 
     def test_v_flag_is_private_and_removed_before_qt(self):

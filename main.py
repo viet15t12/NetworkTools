@@ -29,7 +29,7 @@ def _prepend_env_path(name: str, value: Path) -> None:
 
 
 def _configure_qt_logging() -> None:
-    """Silence a known Qt Wayland text-input diagnostic without hiding other logs."""
+    """Silence known harmless Qt Wayland diagnostics without hiding other logs."""
     if not sys.platform.startswith("linux"):
         return
     session_type = os.environ.get("XDG_SESSION_TYPE", "").casefold()
@@ -37,12 +37,24 @@ def _configure_qt_logging() -> None:
     if "wayland" not in session_type and "wayland" not in qt_platform:
         return
 
-    category = "qt.qpa.wayland.textinput"
     rules = os.environ.get("QT_LOGGING_RULES", "")
     split_rules = rules.replace("\n", ";").split(";")
-    if any(rule.strip().startswith(f"{category}=") for rule in split_rules):
-        return
-    os.environ["QT_LOGGING_RULES"] = f"{rules + ';' if rules else ''}{category}=false"
+    categories = (
+        "qt.qpa.wayland.textinput",
+        # Qt 6.10 can ask xdg-desktop-portal to register the same desktop ID
+        # twice. Fedora reports it as a warning even though startup succeeds.
+        "qt.qpa.services",
+    )
+    additions = [
+        f"{category}=false"
+        for category in categories
+        if not any(
+            rule.strip().startswith(f"{category}=") for rule in split_rules
+        )
+    ]
+    if additions:
+        prefix = f"{rules};" if rules else ""
+        os.environ["QT_LOGGING_RULES"] = prefix + ";".join(additions)
 
 
 def _bootstrap_pyqt6_paths() -> None:
