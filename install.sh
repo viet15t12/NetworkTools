@@ -71,7 +71,7 @@ tar -C "$SOURCE_ROOT" \
     --exclude='target' \
     --exclude='*.egg-info' \
     -cf "$archive" \
-    UI bin core data/README.md docshots domain features infrastructure native \
+    UI core data/README.md docshots domain features infrastructure native \
     qtpyTerminal-main runtime_qml scripts templates vendor licenses \
     .python-version README.md LICENSE app_facade.py cams.sh main.py update.sh \
     pyproject.toml setup_cython.py uv.lock packaging/linux/cams-launcher
