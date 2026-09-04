@@ -2900,6 +2900,12 @@ class QmlSmokeTests(unittest.TestCase):
         self.assertIsNotNone(window.findChild(QObject, "welcomeCreateProjectButton"))
         self.assertIsNotNone(window.findChild(QObject, "welcomeOpenProjectButton"))
         self.assertIsNotNone(window.findChild(QObject, "welcomeSettingsButton"))
+        self.assertIsNotNone(
+            window.findChild(QObject, "welcomeCheckAndUpdateButton")
+        )
+        self.assertIsNotNone(
+            window.findChild(QObject, "welcomeInstalledVersionText")
+        )
         self.assertIsNotNone(window.findChild(QObject, "welcomeRecentProjectList"))
         self.assertIsNotNone(window.findChild(QObject, "welcomeCommandRegistry"))
         self.assertIsNotNone(window.findChild(QObject, "welcomeProjectLocationField"))
