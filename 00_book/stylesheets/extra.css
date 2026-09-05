@@ -25,3 +25,52 @@ input {
   box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 8%);
 }
 
+.chapter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.chapter-grid > p {
+  display: contents;
+}
+
+.chapter-grid a {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 7rem;
+  padding: 1rem 1.1rem;
+  color: var(--md-default-fg-color);
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 0.55rem;
+  background: var(--md-default-bg-color);
+  box-shadow: 0 0.2rem 0.8rem rgb(0 0 0 / 5%);
+  transition: border-color 160ms ease, box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.chapter-grid a:hover,
+.chapter-grid a:focus-visible {
+  color: var(--md-primary-fg-color);
+  border-color: var(--md-primary-fg-color--light);
+  box-shadow: 0 0.35rem 1rem rgb(0 0 0 / 10%);
+  transform: translateY(-2px);
+}
+
+.chapter-grid a span {
+  color: var(--md-default-fg-color--light);
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+
+@media screen and (max-width: 44.984375em) {
+  .chapter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chapter-grid a {
+    min-height: auto;
+  }
+}

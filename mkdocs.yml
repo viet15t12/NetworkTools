@@ -10,8 +10,17 @@ edit_uri: edit/main/00_book/
 docs_dir: 00_book
 site_dir: site
 
+nav:
+  - Trang chủ: index.md
+  - Hướng dẫn sử dụng:
+      - Lời mở đầu: DOC/00_loi_mo_dau.md
+      - "Chương 1 · Tổng quan": DOC/01_tong_quan.md
+      - "Chương 2 · Cài đặt và bắt đầu sử dụng": DOC/02_cai_dat_su_dung.md
+      - "Chương 3 · Giao diện và điều hướng": DOC/03_giao_dien_dieu_huong.md
+      - "Chương 4 · Quản lý thiết bị": DOC/04_quan_ly_thiet_bi.md
+
 # Giữ mã nguồn Typst trong 00_book nhưng không đưa các file đó lên website.
-# Các file Markdown được thêm vào sau này sẽ tự xuất hiện trong điều hướng.
+# Các file Markdown được xuất bản được sắp xếp trong mục nav phía trên.
 exclude_docs: |
   **/*.typ
   config/**
