@@ -1,0 +1,15 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Rename report and book folders",
+            "type": "process",
+            "command": "bash",
+            "args": ["${workspaceFolder}/.vscode/rename-doc-folders.sh"],
+            "problemMatcher": [],
+            "runOptions": {
+                "runOn": "folderOpen"
+            }
+        }
+    ]
+}

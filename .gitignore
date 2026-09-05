@@ -5,7 +5,9 @@
 .DS_Store
 Thumbs.db
 .directory
-.vscode/
+.vscode/*
+!.vscode/tasks.json
+!.vscode/rename-doc-folders.sh
 .cache/
 .uv-cache/
 *.swp
