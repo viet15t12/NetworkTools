@@ -11,6 +11,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
+from infrastructure.database.sqlcipher import migrate_plaintext_database
+
 from .errors import InvalidWorkspacePackage
 from .package import REQUIRED_DATABASES, SNAPSHOT_INDEX_NAME, WorkspaceSession
 from .staging import backup_sqlite_database, copy_stable_tree, sha256_file
@@ -319,12 +321,24 @@ class SnapshotService:
         expected = metadata.get("items")
         if not isinstance(expected, list) or expected != self._inventory(root):
             raise InvalidWorkspacePackage("Snapshot content verification failed.")
+        migrated = False
         for database_name in REQUIRED_DATABASES:
             probe = root / database_name
             if not probe.is_file():
                 raise InvalidWorkspacePackage(
                     f"Snapshot database is missing: {database_name}."
                 )
+            migrated = migrate_plaintext_database(probe) or migrated
+        if migrated:
+            # Legacy snapshots are upgraded only after their old checksums pass.
+            # Refresh the internal inventory so later snapshot validation remains
+            # deterministic; the next workspace save refreshes package checksums.
+            metadata["items"] = self._inventory(root)
+            metadata_path.write_text(
+                json.dumps(metadata, ensure_ascii=False, indent=2, sort_keys=True)
+                + "\n",
+                encoding="utf-8",
+            )
 
     @staticmethod
     def _apply_retention(

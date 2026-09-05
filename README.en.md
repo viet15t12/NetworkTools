@@ -10,7 +10,7 @@
   <p>
     <img alt="Python" src="https://img.shields.io/badge/Python-%E2%89%A53.11-3776AB?logo=python&logoColor=white">
     <img alt="PyQt6" src="https://img.shields.io/badge/UI-PyQt6%20%2B%20QML-41CD52?logo=qt&logoColor=white">
-    <img alt="SQLite" src="https://img.shields.io/badge/Database-SQLite-003B57?logo=sqlite&logoColor=white">
+    <img alt="SQLCipher" src="https://img.shields.io/badge/Database-SQLCipher-003B57?logo=sqlite&logoColor=white">
     <img alt="Status" src="https://img.shields.io/badge/Status-Development-F59E0B">
   </p>
 </div>
@@ -19,7 +19,7 @@
 
 ## Overview
 
-CAMS provides a unified interface for managing device inventory, tracking status, and building configurations for routers, switches, and network services. The application combines a Qt Quick/QML interface with a Python backend, stores data locally in SQLite, and communicates with devices over SSH/Telnet.
+CAMS provides a unified interface for managing device inventory, tracking status, and building configurations for routers, switches, and network services. The application combines a Qt Quick/QML interface with a Python backend, stores data locally in SQLCipher, and communicates with devices over SSH/Telnet.
 
 The project is developed as part of a research initiative:
 

@@ -11,7 +11,6 @@ from PyQt6.QtCore import QObject, pyqtProperty, pyqtSignal, pyqtSlot
 from infrastructure.database.paths import DEVICE_NETWORK_DB, INFO_COLLECTED_DB
 
 from ..application.log_data import SyslogLogDataService
-from ..application.retention import run_retention
 from ..application.server_service import SyslogServerService
 from ..export import export_logs_xlsx, file_url_to_path
 from ..group_service import SyslogGroupService
@@ -97,7 +96,7 @@ class SyslogManager(QObject):
 
     @property
     def receiver(self) -> object | None:
-        return self.native if self.native.is_running else None
+        return self.service.receiver
 
     def set_database_paths(self, info_db: Any, device_db: Any) -> None:
         was_running = self.listenerState in {"starting", "listening"}
@@ -124,7 +123,7 @@ class SyslogManager(QObject):
 
     @pyqtProperty(int, notify=stateChanged)
     def droppedCount(self) -> int:
-        return self.native.dropped
+        return self.service.dropped
 
     def _set_state(self, state: str, message: str) -> None:
         with self._state_lock:
@@ -141,18 +140,15 @@ class SyslogManager(QObject):
         try:
             config = self.settings.listener_config()
             self._set_state("starting", "Starting Syslog server...")
-            run_retention(self.service.repository, self.settings.retentionDays)
-            message = self.native.start(
-                self.settings.path,
-                self.service.repository.info_db,
-                self.service.repository.device_db,
-            )
+            # The legacy C++ collector links plain libsqlite3. Keep ingestion in
+            # the Python pipeline so every write passes through SQLCipher.
+            self.service.start(config, self.settings.retentionDays)
             transports = "UDP+TCP" if config.protocol == "both" else config.protocol.upper()
-            message = message or f"Listening on {config.bind_ip}:{config.port}/{transports}"
+            message = f"Listening on {config.bind_ip}:{config.port}/{transports}"
             self._set_state("listening", message)
             return {"ok": True, "message": message}
         except Exception as exc:
-            self.native.stop()
+            self.service.stop()
             self._set_state("error", str(exc))
             return {"ok": False, "message": str(exc)}
 
@@ -161,7 +157,7 @@ class SyslogManager(QObject):
         if self.listenerState == "stopped":
             return {"ok": True, "message": self.statusMessage}
         self._set_state("stopping", "Stopping Syslog server...")
-        self.native.stop()
+        self.service.stop()
         self._set_state("stopped", "Syslog server is stopped.")
         return {"ok": True, "message": self.statusMessage}
 

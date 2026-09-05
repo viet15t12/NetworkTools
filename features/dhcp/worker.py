@@ -1,5 +1,5 @@
 import os
-import sqlite3
+from infrastructure.database import sqlcipher as sqlite3
 import re
 import yaml
 import json
@@ -15,6 +15,7 @@ from infrastructure.network.nornir_netmiko_tasks import (
 )
 from nornir.core.task import Result
 from infrastructure.network.nornir_netmiko_plugin import register_cams_netmiko
+from infrastructure.security import decrypt_device_password
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -167,7 +168,8 @@ def build_dhcp_inventory(db_path, task_list):
             cursor.execute(f'SELECT device_name, username, password, os, portnumber, method FROM {T_DEVICES} WHERE host = ?', (ip,))
             row = cursor.fetchone()
             if row:
-                dev_name, db_user, db_pass, db_os, db_port, db_method = row
+                dev_name, db_user, stored_password, db_os, db_port, db_method = row
+                db_pass = decrypt_device_password(stored_password)
                 
                 # --- CHUẨN HÓA PLATFORM VÀ PORT CHO NETMIKO ---
                 platform_final = "cisco_ios" # Mặc định là SSH

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import sqlite3
+from infrastructure.database import sqlcipher as sqlite3
 from typing import Any
 
 from .child_sync import CHILD_TABLES, sync_eigrp_child_table

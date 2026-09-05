@@ -4,7 +4,7 @@ Re-uses the same patterns as features/dhcp/common.py.
 """
 from __future__ import annotations
 
-import sqlite3
+from infrastructure.database import sqlcipher as sqlite3
 import sys
 from contextlib import contextmanager
 from typing import Any

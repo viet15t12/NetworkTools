@@ -17,9 +17,9 @@ Cisco IOS/IOS-XE, persistence SQLite và cấu hình destination trên thiết b
 Luồng nhận log:
 
 ```text
-C++ UDP+TCP collector → SQLite → JSON-line event → QProcess/Python signal → QML
-                                  ↑
-                         syslog.json settings
+Python UDP+TCP receiver → parser → writer queue → SQLCipher → Qt signal → QML
+              ↑
+     syslog.json settings
 
 QML device configuration → qt/manager.py → device_config service → Cisco session
 ```
@@ -27,14 +27,14 @@ QML device configuration → qt/manager.py → device_config service → Cisco s
 | Package | Trách nhiệm |
 | --- | --- |
 | `domain/` | Data object thuần Python |
-| `native/syslog_collector/` | C++ UDP/TCP socket, parser, source resolver và SQLite writer |
-| `transport/` | Python compatibility receiver dùng bởi unit test/integration cũ |
+| `native/syslog_collector/` | Collector C++ legacy, không được khởi động với database mã hóa |
+| `transport/` | Python UDP/TCP receiver đang dùng trong production |
 | `parsing/` | PRI, sequence/timestamp và Cisco system-message header |
 | `application/` | Server lifecycle, queue/batch, processor, resolver, retention |
 | `persistence/` | Message, device-state và read-only device lookup repository |
 | `device_config/` | Pure command builder, verifier, Cisco worker và service |
 | `group_service.py`, `group_repository.py` | Validation, inventory ownership và persistence Syslog Group đa host |
-| `qt/` | QML adapter và QProcess bridge; không nhận socket hoặc parse message |
+| `qt/` | QML adapter; không nhận socket hoặc parse message |
 
 Các module cũ như `parser.py`, `repository.py`, `manager.py` vẫn là compatibility
 entry point để không phá import hiện hữu. `SyslogRepository` cũng là facade tương
@@ -47,20 +47,10 @@ Parser lưu riêng:
 - `sequence_number`, `device_time`, `clock_unsynchronized` từ Cisco prefix.
 
 Message sai định dạng vẫn được lưu cùng raw text. TCP lưu frame cuối khi client
-đóng mà không có newline; message size và client count đều bounded. C++ ghi trực
-tiếp vào SQLite với busy timeout, sau đó mới phát row JSON cho Python. Cấu hình
-listener nằm ở `syslog.json`; QML ghi file này và C++ đọc khi khởi động. Retention
-mặc định 30 ngày vẫn do application service chạy trước khi mở listener.
-
-Build listener native trước khi chạy ứng dụng:
-
-```bash
-native/syslog_collector/build.sh
-```
-
-Binary được cài cục bộ vào `bin/cams-syslog-collector`. Có thể override
-bằng biến môi trường `CAMS_SYSLOG_COLLECTOR`; đường dẫn JSON có thể
-override bằng `CAMS_SYSLOG_SETTINGS`.
+đóng mà không có newline; message size và client count đều bounded. Writer ghi
+qua adapter SQLCipher với busy timeout, sau đó mới phát row cho QML. Cấu hình
+listener nằm ở `syslog.json`; retention mặc định 30 ngày do application service
+thực hiện khi mở listener.
 
 Cấu hình Cisco chạy như transaction: kiểm tra source-interface, apply, verify
 running-config, lưu startup-config, verify persistence rồi mới ghi trạng thái DB.

@@ -214,7 +214,6 @@ ensure_syslog_collector() {
 }
 
 ensure_runtime_binaries() {
-    ensure_syslog_collector
     ensure_terminal
 }
 
@@ -275,7 +274,6 @@ run_app() {
 setup_all() {
     sync_environment
     build_cython_optional
-    ensure_syslog_collector
     build_terminal_optional
     check_terminal_optional
 }

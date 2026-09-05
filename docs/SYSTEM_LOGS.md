@@ -5,28 +5,24 @@
 Syslog được tổ chức theo các tầng độc lập:
 
 ```text
-C++ UDP+TCP collector → parser/resolver → info_collected.db
-          ↑                                  ↓
-     syslog.json                    JSON-line inserted event
-                                             ↓
-QML ← Python Qt manager/signals ← QProcess bridge
+Python UDP+TCP receiver → parser/resolver → writer queue → info_collected.db
+          ↑                                                    ↓
+     syslog.json                                  Python Qt manager/signals → QML
 
 Device config QML → Python service → Cisco worker/verifier → DeviceStateRepository
 ```
 
-`qt/manager.py` giữ signal/property/slot và khởi động listener C++ bằng `QProcess`.
-C++ sở hữu socket, parse, resolve source IP và ghi SQLite. Chỉ sau khi commit
-thành công, collector phát một JSON-line event; Python chuyển event đó thành
-`messagesInserted` để QML cập nhật. Query, retention và cấu hình Cisco vẫn dùng
-application/repository Python. Các module receiver/writer Python được giữ làm
-compatibility entry point và phục vụ kiểm thử riêng.
+`qt/manager.py` giữ signal/property/slot và khởi động pipeline Python. Receiver,
+parser, resolver và writer queue đều chạy ngoài Qt main thread; repository mở
+`info_collected.db` qua adapter SQLCipher dùng chung. Chỉ sau khi commit thành
+công, writer phát `messagesInserted` để QML cập nhật.
 
 ## Ingestion
 
-Collector C++ sở hữu đồng thời socket UDP và TCP trên cùng bind address/port.
+Receiver Python sở hữu đồng thời socket UDP và TCP trên cùng bind address/port.
 Transport giới hạn kích thước message và số TCP client, tách TCP stream theo LF
-và trả frame cuối khi peer đóng kết nối. SQLite dùng busy timeout 10 giây. Khi
-dừng ứng dụng, Python gửi SIGTERM qua `QProcess` và collector đóng toàn bộ socket.
+và trả frame cuối khi peer đóng kết nối. SQLCipher dùng busy timeout 10 giây.
+Khi dừng ứng dụng, service đóng socket rồi drain/dừng writer có giới hạn.
 
 `SyslogProcessor` gọi parser và TTL-cached source resolver. Parser lần lượt xử lý:
 
@@ -41,11 +37,11 @@ và được lưu nguyên văn.
 
 ## Persistence và migration
 
-SQLite phía Python vẫn được chia thành `MessageRepository`, `DeviceStateRepository` và
+Persistence được chia thành `MessageRepository`, `DeviceStateRepository` và
 `DeviceLookupRepository`. Message nhận được nằm trong
 `info_collected.db.t12_syslog_messages`; nhiều cấu hình đích và trạng thái push
-theo thiết bị nằm trong `device_network.db.t10_syslog_servers`. Ingestion native
-ghi từng message đã parse và phát event sau commit. Migration thêm cột khi cần, giữ cột
+theo thiết bị nằm trong `device_network.db.t10_syslog_servers`. Writer queue
+ghi từng batch message đã parse và phát event sau commit. Migration thêm cột khi cần, giữ cột
 compatibility `facility`, backfill dữ liệu cũ và copy một lần cấu hình từ bảng
 legacy `t12_syslog_device_state` sang device DB. Migration không xóa bảng hoặc
 row cũ.

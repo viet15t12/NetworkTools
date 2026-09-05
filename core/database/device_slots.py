@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import sqlite3
+from infrastructure.database import sqlcipher as sqlite3
 import sys
 from typing import Any
 
@@ -10,6 +10,12 @@ from PyQt6.QtCore import pyqtSlot
 
 from domain.status import ConnectionStatus, connection_status
 from infrastructure.database.paths import require_database
+from infrastructure.database.sqlcipher import attach_database
+from infrastructure.security.device_credentials import (
+    CredentialVaultError,
+    decrypt_device_password,
+    encrypt_device_password,
+)
 from features.devices.classification import device_type_for_role, normalize_device_role
 from features.devices.ssh_algorithm_repository import (
     clear_ssh_algorithm_override,
@@ -218,7 +224,7 @@ class DeviceSlotsMixin:
                         method or None,
                         port,
                         username or None,
-                        password or None,
+                        encrypt_device_password(password),
                         os_name or None,
                         role,
                         device_type,
@@ -228,7 +234,7 @@ class DeviceSlotsMixin:
             return True
         except sqlite3.IntegrityError:
             return False
-        except sqlite3.Error as exc:
+        except (sqlite3.Error, CredentialVaultError) as exc:
             print(f"[db] addDevice failed: {exc}", file=sys.stderr)
             return False
 
@@ -298,7 +304,8 @@ class DeviceSlotsMixin:
                         """,
                         (
                             row["host"], row["name"] or None, row["method"] or None,
-                            row["port"], row["username"] or None, row["password"] or None,
+                            row["port"], row["username"] or None,
+                            encrypt_device_password(row["password"]),
                             row["os"] or None, row["role"], row["type"],
                         ),
                     )
@@ -315,7 +322,7 @@ class DeviceSlotsMixin:
                     else:
                         skipped += 1
                 conn.commit()
-        except sqlite3.Error as exc:
+        except (sqlite3.Error, CredentialVaultError) as exc:
             print(f"[db] addDevicesBatch failed: {exc}", file=sys.stderr)
             return {
                 "ok": False,
@@ -347,7 +354,7 @@ class DeviceSlotsMixin:
         try:
             info_path = require_database(self.info_db_path)
             with self._connect() as conn:
-                conn.execute("ATTACH DATABASE ? AS info_db;", (str(info_path),))
+                attach_database(conn, info_path, "info_db")
                 conn.execute("BEGIN IMMEDIATE;")
 
                 exists = conn.execute(
@@ -565,7 +572,7 @@ class DeviceSlotsMixin:
                         method or None,
                         port,
                         username or None,
-                        password or None,
+                        encrypt_device_password(password),
                         os_name or None,
                         role,
                         device_type,
@@ -576,7 +583,7 @@ class DeviceSlotsMixin:
             if cursor.rowcount <= 0:
                 return False
             return True
-        except sqlite3.Error as exc:
+        except (sqlite3.Error, CredentialVaultError) as exc:
             print(f"[db] updateDevice failed: {exc}", file=sys.stderr)
             return False
 
@@ -601,13 +608,13 @@ class DeviceSlotsMixin:
                 "protocol": row["method"] or "SSH",
                 "port": "" if row["portnumber"] is None else str(row["portnumber"]),
                 "user": row["username"] or "",
-                "pass": row["password"] or "",
+                "pass": decrypt_device_password(row["password"]),
                 "os": row["os"] or "cisco_ios",
                 "role": row["role"] or "",
                 "type": device_type_for_role(row["role"]),
                 "dev": row["dev"] if row["dev"] is not None else 0,
             }
-        except sqlite3.Error as exc:
+        except (sqlite3.Error, CredentialVaultError) as exc:
             print(f"[db] getDeviceByHost failed: {exc}", file=sys.stderr)
             return {}
 

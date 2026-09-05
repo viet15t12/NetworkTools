@@ -7,7 +7,7 @@ import json
 import os
 import re
 import shutil
-import sqlite3
+from infrastructure.database import sqlcipher as sqlite3
 import stat
 import tempfile
 import threading
@@ -19,6 +19,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
+
+from infrastructure.database.sqlcipher import migrate_plaintext_database
 
 from .crypto import (
     Argon2Parameters,
@@ -972,6 +974,7 @@ class WorkspacePackageCodec:
     @staticmethod
     def _validate_sqlite(path: Path) -> None:
         try:
+            migrate_plaintext_database(path)
             with closing(
                 sqlite3.connect(
                     path.resolve().as_uri() + "?mode=ro&immutable=1", uri=True
@@ -1276,6 +1279,7 @@ def _sha256_file(path: Path, chunk_size: int) -> str:
 
 def _sqlite_user_version(path: Path) -> int:
     try:
+        migrate_plaintext_database(path)
         with closing(
             sqlite3.connect(path.resolve().as_uri() + "?mode=ro&immutable=1", uri=True)
         ) as db:

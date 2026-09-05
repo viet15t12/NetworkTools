@@ -7,7 +7,7 @@ drift between VLAN, SVI, STP, security and EtherChannel workflows.
 
 from __future__ import annotations
 
-import sqlite3
+from infrastructure.database import sqlcipher as sqlite3
 from typing import Any
 
 

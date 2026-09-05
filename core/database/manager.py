@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import sqlite3
+from infrastructure.database import sqlcipher as sqlite3
 import sys
 from pathlib import Path
 from typing import Any
@@ -10,6 +10,7 @@ from typing import Any
 from PyQt6.QtCore import QObject, pyqtProperty, pyqtSignal, pyqtSlot
 
 from infrastructure.database.health import configure_worker_paths, validate_device_database
+from infrastructure.security import migrate_device_passwords
 from ..acl_slots import AclSlotsMixin
 from ..app_paths import APP_DIR
 from ..config_backup_slots import ConfigBackupSlotsMixin
@@ -106,6 +107,7 @@ class DatabaseManager(
                 ensure_interface_schema(connection)
                 ensure_fhrp_schema(connection)
                 ensure_ospf_schema(connection)
+            migrate_device_passwords(self.db_path)
             DeviceRepository(self.db_path).synchronize_classification()
             configure_worker_paths(self.db_path)
             return True

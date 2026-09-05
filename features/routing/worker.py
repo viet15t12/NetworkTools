@@ -1,7 +1,7 @@
 import os
 import json
 import sys
-import sqlite3
+from infrastructure.database import sqlcipher as sqlite3
 import requests
 import urllib3
 import time
@@ -34,6 +34,7 @@ if FEATURES_ROOT not in sys.path:
 # GỌI CÁC THAM SỐ TỪ TRẠM KIỂM SOÁT
 from infrastructure.network.config import TMP_DIR, ROUTING_TEMPLATE_DIR, DB_TABLES
 from infrastructure.network.nornir_netmiko_plugin import register_cams_netmiko
+from infrastructure.security import decrypt_device_password
 
 def render_routing_config(platform, sub_type, config_data, mode):
     # Dùng ROUTING_TEMPLATE_DIR quy hoạch sẵn trong config.py
@@ -334,7 +335,8 @@ def build_worker_inventory(db_path, task_list):
             cursor.execute(f'SELECT device_name, username, password, os, portnumber, method FROM {T_DEVICES} WHERE host = ?', (ip,))
             row = cursor.fetchone()
             if row:
-                dev_name, db_user, db_pass, db_os, db_port, db_method = row
+                dev_name, db_user, stored_password, db_os, db_port, db_method = row
+                db_pass = decrypt_device_password(stored_password)
                 method = (db_method or "SSH").upper()
                 platform = (
                     "cisco_ios_telnet"

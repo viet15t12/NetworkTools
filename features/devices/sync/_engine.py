@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-import sqlite3
+from infrastructure.database import sqlcipher as sqlite3
 from dataclasses import dataclass, field
 from ipaddress import IPv4Address
 from typing import Any

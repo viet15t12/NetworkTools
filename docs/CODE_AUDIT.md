@@ -67,8 +67,9 @@ Chi tiết người dùng xem tại
 
 ### P0/P1 — trước môi trường production
 
-1. Credential thiết bị/PPP còn có thể plaintext trong workspace mở; cần secret
-   reference/store và redaction end-to-end.
+1. Credential đăng nhập thiết bị đã dùng RSA-OAEP + Fernet và toàn bộ database
+   dùng SQLCipher. PPP desired-state vẫn chỉ dựa vào lớp SQLCipher toàn file;
+   cân nhắc field-level encryption nếu threat model yêu cầu cô lập riêng secret này.
 2. Một số RESTCONF request còn tắt TLS verification; không mở production trước
    khi có trust/CA policy.
 3. API cũ thiếu authentication/authorization, typed request, task status/cancel

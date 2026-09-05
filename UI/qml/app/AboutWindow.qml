@@ -139,6 +139,19 @@ Window {
             RowLayout {
                 Layout.fillWidth: true
 
+                Text {
+                    text: "<a href=\"" + Qt.resolvedUrl("../../resources/licenses/SQLCIPHER.txt")
+                          + "\">" + qsTr("SQLCipher Community Edition · © 2008–2026 Zetetic, LLC") + "</a>"
+                    textFormat: Text.RichText
+                    linkColor: Theme.accentColor
+                    color: Theme.textSecondary
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeSmall
+                    onLinkActivated: link => Qt.openUrlExternally(link)
+
+                    HoverHandler { cursorShape: Qt.PointingHandCursor }
+                }
+
                 Item { Layout.fillWidth: true }
 
                 StandardButton {

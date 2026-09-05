@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import os
-import sqlite3
+from infrastructure.database import sqlcipher as sqlite3
 from collections import defaultdict
 from contextlib import closing
 from pathlib import Path
@@ -12,6 +12,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from infrastructure.network.config import ACL_TEMPLATE_DIR, DB_TABLES, TMP_DIR
 from infrastructure.network.nornir_netmiko_plugin import register_cams_netmiko
+from infrastructure.security import decrypt_device_password
 
 
 T_DEVICES = DB_TABLES["device_info"]["main"]
@@ -150,7 +151,8 @@ def _build_inventory(
             if not row:
                 errors.append({"target": ip, "status": "failed", "message": "Device credentials were not found."})
                 continue
-            name, user, password, os_name, port, method = row
+            name, user, stored_password, os_name, port, method = row
+            password = decrypt_device_password(stored_password)
             method = str(method or "SSH").upper()
             if method == "RESTCONF":
                 errors.append({

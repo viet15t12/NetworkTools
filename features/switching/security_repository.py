@@ -8,7 +8,7 @@ Protection, Trusted Uplinks, Static MAC, and Port Security consistent.
 from __future__ import annotations
 
 import re
-import sqlite3
+from infrastructure.database import sqlcipher as sqlite3
 from contextlib import closing
 from typing import Any
 

@@ -149,7 +149,7 @@ _bootstrap_pyqt6_paths()
 from PyQt6.QtCore import QMetaObject
 from PyQt6.QtGui import QIcon
 from PyQt6.QtQml import QQmlApplicationEngine
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication, QInputDialog, QLineEdit, QMessageBox
 
 from app_facade import (
     AppPaths,
@@ -176,6 +176,9 @@ from features.sftp import SftpController
 from features.syslog import SyslogManager
 from infrastructure.network.session_registry import DeviceSessionRegistry
 from infrastructure.database.paths import DEVICE_NETWORK_DB, INFO_COLLECTED_DB
+from infrastructure.database import sqlcipher
+from infrastructure.security import clear_active_vault, configure_active_vault
+from infrastructure.security.device_credentials import CredentialVault
 from infrastructure.system.runtime_tmp import cleanup_runtime_tmp
 
 
@@ -200,19 +203,69 @@ def _application_icon_path(platform_name: str | None = None) -> Path:
     return QML_MODULE_DIR / "resources" / "brand" / f"logo.{suffix}"
 
 
+def _unlock_application_security() -> bool:
+    """Prompt once per process and unlock both SQLCipher and the RSA vault."""
+    vault = CredentialVault()
+    creating = not vault.exists
+    title = "Create CAMS master passphrase" if creating else "Unlock CAMS"
+    prompt = (
+        "Create a master passphrase for encrypted databases and device credentials:"
+        if creating
+        else "Enter the CAMS master passphrase:"
+    )
+    passphrase, accepted = QInputDialog.getText(
+        None, title, prompt, QLineEdit.EchoMode.Password
+    )
+    if not accepted:
+        return False
+    if len(passphrase) < 8:
+        QMessageBox.critical(None, title, "The master passphrase must contain at least 8 characters.")
+        return False
+    if creating:
+        confirmation, confirmed = QInputDialog.getText(
+            None,
+            title,
+            "Confirm the master passphrase (it cannot be recovered):",
+            QLineEdit.EchoMode.Password,
+        )
+        if not confirmed or confirmation != passphrase:
+            QMessageBox.critical(None, title, "The master passphrases do not match.")
+            return False
+    try:
+        sqlcipher.configure(passphrase)
+        unlocked_vault = configure_active_vault(passphrase)
+        if creating:
+            QMessageBox.information(
+                None,
+                title,
+                "CAMS created an encrypted device-credential keypair. Back up the keys "
+                f"separately from your databases:\n{unlocked_vault.key_directory}",
+            )
+        return True
+    except Exception as exc:
+        clear_active_vault()
+        sqlcipher.clear()
+        QMessageBox.critical(None, title, str(exc))
+        return False
+
+
 def main() -> int:
     _set_windows_app_user_model_id()
     qt_arguments, brand_easter_egg = _runtime_arguments(sys.argv)
-    try:
-        bootstrap_report = ensure_runtime_databases()
-    except Exception as exc:
-        print(f"Failed to create missing databases: {exc}", file=sys.stderr)
-        return 1
-
     app = QApplication(qt_arguments)
     app.setOrganizationName("NetCamsTeam")
     app.setOrganizationDomain("ptit.edu.vn")
     app.setApplicationName("CAMS")
+    if not _unlock_application_security():
+        return 1
+    try:
+        bootstrap_report = ensure_runtime_databases()
+    except Exception as exc:
+        print(f"Failed to create missing databases: {exc}", file=sys.stderr)
+        QMessageBox.critical(None, "CAMS database error", str(exc))
+        clear_active_vault()
+        sqlcipher.clear()
+        return 1
     if sys.platform.startswith("linux"):
         # Match packaging/linux's cams.desktop so Wayland associates the
         # running window with the launcher and displays its icon correctly.
@@ -345,6 +398,8 @@ def main() -> int:
             welcome_controller.shutdown()
             update_manager.shutdown()
         finally:
+            clear_active_vault()
+            sqlcipher.clear()
             for cleanup_error in cleanup_runtime_tmp():
                 print(
                     f"Failed to remove temporary runtime artifact: {cleanup_error}",

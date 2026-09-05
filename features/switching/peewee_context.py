@@ -9,7 +9,27 @@ from typing import Any, Iterator
 
 from peewee import SqliteDatabase
 
+from infrastructure.database import sqlcipher as sqlite3
+
 from .peewee_models import SwitchingModels, build_switching_models
+
+
+class CamsSqlCipherDatabase(SqliteDatabase):
+    """Peewee adapter using the same keyed DB-API connection as CAMS."""
+
+    def _connect(self):
+        connection = sqlite3.connect(
+            self.database,
+            timeout=self._timeout,
+            isolation_level=None,
+            **self.connect_params,
+        )
+        try:
+            self._add_conn_hooks(connection)
+        except Exception:
+            connection.close()
+            raise
+        return connection
 
 
 def switching_database_path(db: Any) -> Path:
@@ -33,7 +53,7 @@ def switching_orm(db: Any) -> Iterator[SwitchingModels]:
     DatabaseManager can change ``db_path`` when the active workspace changes,
     and QML workers may run concurrently.
     """
-    database = SqliteDatabase(
+    database = CamsSqlCipherDatabase(
         switching_database_path(db),
         timeout=10.0,
         pragmas={"foreign_keys": 1, "busy_timeout": 10_000},

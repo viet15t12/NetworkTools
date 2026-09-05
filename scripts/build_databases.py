@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import argparse
+import getpass
 import re
 import shutil
-import sqlite3
 import sys
 from contextlib import closing
 from pathlib import Path
@@ -14,6 +14,7 @@ APP_DIR = Path(__file__).resolve().parents[1]
 if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
+from infrastructure.database import sqlcipher as sqlite3
 from infrastructure.database.paths import (
     DEVICE_NETWORK_DB,
     DEVICE_NETWORK_SCHEMA_DIR,
@@ -21,6 +22,11 @@ from infrastructure.database.paths import (
     INFO_COLLECTED_SCHEMA_DIR,
     ensure_data_dir,
 )
+from infrastructure.database.sqlcipher import (
+    attach_database,
+    migrate_plaintext_database,
+)
+from infrastructure.security import configure_active_vault
 
 TARGETS = (
     (DEVICE_NETWORK_SCHEMA_DIR, DEVICE_NETWORK_DB),
@@ -145,7 +151,7 @@ def _migrate_legacy_status_schema(source_dir: Path, db_path: Path) -> bool:
     try:
         with closing(sqlite3.connect(migrated)) as connection:
             connection.execute("PRAGMA foreign_keys = OFF;")
-            connection.execute("ATTACH DATABASE ? AS legacy;", (str(db_path),))
+            attach_database(connection, db_path, "legacy")
             new_tables = [
                 str(row[0])
                 for row in connection.execute(
@@ -361,14 +367,26 @@ def ensure_runtime_databases() -> dict[str, object]:
     created: list[str] = []
     repaired: dict[str, list[str]] = {}
     for source_dir, db_path in TARGETS:
+        migrated_to_sqlcipher = migrate_plaintext_database(db_path)
+        migrated_backups = sum(
+            1
+            for backup in db_path.parent.glob(db_path.name + ".*.bak*")
+            if backup.is_file() and migrate_plaintext_database(backup)
+        )
         if not db_path.is_file():
             build_database(source_dir, db_path)
             created.append(db_path.name)
             continue
+        if migrated_to_sqlcipher:
+            repaired.setdefault(db_path.name, []).append("SQLCipher encryption")
+        if migrated_backups:
+            repaired.setdefault(db_path.name, []).append(
+                f"SQLCipher encryption for {migrated_backups} legacy backup(s)"
+            )
         if source_dir == DEVICE_NETWORK_SCHEMA_DIR and _migrate_legacy_status_schema(
             source_dir, db_path
         ):
-            repaired[db_path.name] = ["textual status migration"]
+            repaired.setdefault(db_path.name, []).append("textual status migration")
             continue
         changes: list[str] = []
         if source_dir == DEVICE_NETWORK_SCHEMA_DIR:
@@ -405,8 +423,13 @@ def ensure_runtime_databases() -> dict[str, object]:
 def main() -> int:
     argparse.ArgumentParser(description="Build CAMS SQLite databases.").parse_args()
     try:
+        passphrase = getpass.getpass("CAMS master passphrase: ")
+        if not passphrase:
+            raise ValueError("The CAMS master passphrase must not be empty.")
+        sqlite3.configure(passphrase)
+        configure_active_vault(passphrase)
         build_all()
-    except (OSError, sqlite3.Error) as exc:
+    except (OSError, RuntimeError, ValueError, sqlite3.Error) as exc:
         print(f"Database build failed: {exc}", file=sys.stderr)
         return 1
     return 0

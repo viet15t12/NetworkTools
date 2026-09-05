@@ -262,8 +262,9 @@ trước khi có schema version, locking và ownership contract rõ ràng.
 
 ## 9. Ranh giới bảo mật và độ tin cậy
 
-- `t01_devices` hiện lưu username/password dạng text trong SQLite; mã hóa project
-  bảo vệ package khi nghỉ nhưng không thay thế secret store khi workspace đã mở.
+- Mọi database runtime/workspace được mã hóa toàn file bằng SQLCipher.
+  `t01_devices.password` còn có lớp envelope RSA-OAEP + Fernet riêng; private key
+  PKCS#8 luôn được mã hóa trên đĩa và chỉ mở trong RAM sau khi nhập master passphrase.
 - Một số RESTCONF request còn `verify=False`; không coi TLS peer verification là
   đã hoàn tất.
 - SFTP xác nhận host key. Lưu password tự động chỉ khả dụng qua Windows DPAPI;

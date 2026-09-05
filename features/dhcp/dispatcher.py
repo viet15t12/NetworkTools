@@ -1,7 +1,7 @@
 import argparse
 import json
 import os
-import sqlite3
+from infrastructure.database import sqlcipher as sqlite3
 import sys
 from contextlib import closing
 

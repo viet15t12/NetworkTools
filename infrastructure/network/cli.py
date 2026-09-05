@@ -1,7 +1,9 @@
 import os
-import sqlite3
+from infrastructure.database import sqlcipher as sqlite3
 import json
 import sys
+
+from infrastructure.security import decrypt_device_password
 
 # Try to import readline for command history (up/down arrows)
 try:
@@ -121,7 +123,7 @@ def get_device_from_db(host):
         "method": method,
         "port": port,
         "username": row["username"] or "",
-        "password": row["password"] or "",
+        "password": decrypt_device_password(row["password"]),
         "device_type": normalize_device_type(row["os"]),
     }
 

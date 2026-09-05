@@ -14,6 +14,8 @@ from xml.etree import ElementTree
 
 from PyQt6.QtCore import pyqtSlot
 
+from infrastructure.security import encrypt_device_password
+
 from .conversion import _clean_display_text
 from features.devices.classification import device_type_for_role, normalize_device_role
 
@@ -169,7 +171,7 @@ class DeviceImportSlotsMixin:
                         row["method"] or None,
                         row["port"],
                         row["username"] or None,
-                        row["password"] or None,
+                        encrypt_device_password(row["password"]),
                         row["os"] or None,
                         row["role"] or None,
                         row["type"] or "unknown",

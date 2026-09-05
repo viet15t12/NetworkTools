@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-import sqlite3
+from infrastructure.database import sqlcipher as sqlite3
 from contextlib import closing
 from pathlib import Path
 from typing import Any
 
 from domain.status import ConnectionStatus, connection_status
 from infrastructure.database.paths import DEVICE_NETWORK_DB, require_database
+from infrastructure.security.device_credentials import decrypt_device_password
 
 
 class DeviceRepository:
@@ -47,7 +48,11 @@ class DeviceRepository:
                 """,
                 ((host or "").strip(),),
             ).fetchone()
-        return dict(row) if row is not None else None
+        if row is None:
+            return None
+        result = dict(row)
+        result["password"] = decrypt_device_password(result.get("password"))
+        return result
 
     def get_role(self, host: str) -> str | None:
         """Return the normalized inventory role for one device."""

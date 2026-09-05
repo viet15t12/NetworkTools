@@ -12,7 +12,7 @@
   <p>
     <img alt="Python" src="https://img.shields.io/badge/Python-%E2%89%A53.11-3776AB?logo=python&logoColor=white">
     <img alt="PyQt6" src="https://img.shields.io/badge/UI-PyQt6%20%2B%20QML-41CD52?logo=qt&logoColor=white">
-    <img alt="SQLite" src="https://img.shields.io/badge/Database-SQLite-003B57?logo=sqlite&logoColor=white">
+    <img alt="SQLCipher" src="https://img.shields.io/badge/Database-SQLCipher-003B57?logo=sqlite&logoColor=white">
     <img alt="Status" src="https://img.shields.io/badge/Status-Development-F59E0B">
   </p>
 </div>
@@ -21,7 +21,7 @@
 
 ## Tổng quan
 
-CAMS cung cấp một giao diện thống nhất để quản lý inventory, theo dõi trạng thái và xây dựng cấu hình cho router, switch cùng các dịch vụ mạng. Ứng dụng kết hợp giao diện Qt Quick/QML với backend Python, lưu dữ liệu cục bộ bằng SQLite và giao tiếp với thiết bị qua SSH/Telnet.
+CAMS cung cấp một giao diện thống nhất để quản lý inventory, theo dõi trạng thái và xây dựng cấu hình cho router, switch cùng các dịch vụ mạng. Ứng dụng kết hợp giao diện Qt Quick/QML với backend Python, lưu dữ liệu cục bộ bằng SQLCipher và giao tiếp với thiết bị qua SSH/Telnet.
 
 Dự án được phát triển trong khuôn khổ nghiên cứu:
 
@@ -216,6 +216,11 @@ uv run python -m unittest discover -s tests -v
 ```
 
 Database runtime, log, cache, credential, private key và backup cục bộ không được đưa vào commit.
+
+CAMS sử dụng SQLCipher Community Edition để mã hóa database. SQLCipher là
+Copyright (c) 2008-2026, ZETETIC, LLC và được phân phối theo giấy phép BSD;
+toàn văn giấy phép có trong `UI/resources/licenses/SQLCIPHER.txt` và màn hình
+About của ứng dụng.
 
 ## Tài liệu
 

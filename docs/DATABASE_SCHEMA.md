@@ -121,10 +121,11 @@ DB. Xem [`BACKEND_APP_PARITY.md`](BACKEND_APP_PARITY.md) và
 
 ## 7. Bảo mật và vận hành
 
-- Credential thiết bị và PPP desired state hiện có thể là plaintext trong DB;
-  project encryption chỉ bảo vệ package khi đóng.
-- Database Browser có thể đọc/sửa dữ liệu nhạy cảm; chỉ mở project tin cậy và
-  sao lưu trước khi chỉnh tay.
+- Database được mã hóa toàn file bằng SQLCipher. Credential đăng nhập thiết bị
+  còn được bọc riêng bằng RSA-OAEP + Fernet; PPP desired state hiện dựa vào lớp
+  SQLCipher và chưa có field-level encryption riêng.
+- SQLite browser thông thường không thể đọc database mã hóa; công cụ bảo trì
+  phải hỗ trợ SQLCipher và chỉ nhận passphrase tương tác, không qua argv/config.
 - Không commit DB/WAL/journal, backup, running-config, private key, Syslog hoặc
   workspace đã giải nén.
 - Không chạy builder phá hủy trên DB cần giữ; dùng startup repair/migration hoặc

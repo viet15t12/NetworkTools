@@ -10,6 +10,9 @@ dependencies = [
     "psutil>=6.0.0",
     # Authenticated AES-256-GCM + Argon2id for optional .ntp protection.
     "cryptography>=46,<50",
+    # Statically-linked SQLCipher wheel. Source builds are forbidden below so
+    # unsupported Python/platform combinations fail clearly during setup.
+    "sqlcipher3-binary>=0.6,<0.7",
     # ORM gon cho cac thao tac CRUD/lifecycle SQLite co cau truc on dinh.
     "peewee>=3.17,<4",
     # --- KET NOI VA TUONG TAC THIET BI MANG (SSH / NETCONF) ---
@@ -45,3 +48,6 @@ speed = [
 
 [tool.uv.sources]
 qtpyterminal = { path = "qtpyTerminal-main" }
+
+[tool.uv]
+no-build-package = ["sqlcipher3-binary"]

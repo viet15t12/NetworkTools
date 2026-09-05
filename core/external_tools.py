@@ -6,7 +6,7 @@ import os
 import re
 import shlex
 import shutil
-import sqlite3
+from infrastructure.database import sqlcipher as sqlite3
 import subprocess
 import sys
 from contextlib import closing

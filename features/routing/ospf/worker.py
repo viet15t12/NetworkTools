@@ -1,5 +1,5 @@
 import os
-import sqlite3
+from infrastructure.database import sqlcipher as sqlite3
 
 
 PENDING_STATES = ("pending_apply", "pending_delete", None)

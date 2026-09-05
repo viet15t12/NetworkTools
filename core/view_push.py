@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import inspect
-import sqlite3
+from infrastructure.database import sqlcipher as sqlite3
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
