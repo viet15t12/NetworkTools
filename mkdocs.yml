@@ -29,8 +29,8 @@ exclude_docs: |
 theme:
   name: material
   language: vi
-  logo: figures/icons/ptit-logo.svg
-  favicon: figures/icons/ptit-logo.svg
+  logo: figures/icons/logo.svg
+  favicon: figures/icons/logo.svg
   font: false
   icon:
     repo: fontawesome/brands/github
@@ -93,5 +93,8 @@ markdown_extensions:
 
 extra_css:
   - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/lightbox.js
 
 copyright: Copyright &copy; Nhóm phát triển CAMS
