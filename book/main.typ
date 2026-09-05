@@ -49,6 +49,7 @@
 
 #include "contents/01_tong_quan.typ"
 #include "contents/02_cai_dat_su_dung.typ"
+#include "contents/03_giao_dien_dieu_huong.typ"
 
 // ----------------------------------------------------------
 // PHỤ LỤC
