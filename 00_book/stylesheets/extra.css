@@ -1,35 +1,205 @@
+/* ═══════════════════════════════════════════════════════════
+   CAMS Documentation · Professional Blue Theme
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── 1. Brand Color Palette ─────────────────────────────── */
 :root {
-  --md-primary-fg-color: #a6192e;
-  --md-primary-fg-color--light: #c9364e;
-  --md-primary-fg-color--dark: #7d1021;
+  /* Primary blue scale */
+  --md-primary-fg-color:        #1565C0;
+  --md-primary-fg-color--light: #1976D2;
+  --md-primary-fg-color--dark:  #0D47A1;
+
+  /* Accent */
+  --md-accent-fg-color:         #2196F3;
+  --md-accent-fg-color--light:  #64B5F6;
+
+  /* Custom brand tokens */
+  --cams-blue-100: #E3F2FD;
+  --cams-blue-200: #BBDEFB;
+  --cams-blue-500: #2196F3;
+  --cams-blue-700: #1565C0;
+  --cams-blue-900: #0D47A1;
+  --cams-shadow:   rgba(21, 101, 192, 0.15);
+  --cams-glow:     rgba(33, 150, 243, 0.25);
 }
 
+/* Dark mode overrides */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color:        #1976D2;
+  --md-primary-fg-color--light: #42A5F5;
+  --md-primary-fg-color--dark:  #1565C0;
+  --md-default-bg-color:        #0d1117;
+  --md-default-fg-color:        #e6edf3;
+  --cams-blue-100: rgba(33, 150, 243, 0.08);
+  --cams-blue-200: rgba(33, 150, 243, 0.18);
+  --cams-shadow:   rgba(21, 101, 192, 0.30);
+  --cams-glow:     rgba(33, 150, 243, 0.20);
+}
+
+/* ── 2. Typography ──────────────────────────────────────── */
 body,
 input {
   font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .md-typeset {
-  font-size: 0.8rem;
-  line-height: 1.7;
+  font-size: 0.82rem;
+  line-height: 1.75;
 }
 
+/* ── 3. Headings ─────────────────────────────────────────── */
 .md-typeset h1 {
-  color: var(--md-primary-fg-color);
-  font-weight: 700;
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--md-primary-fg-color--dark);
+  border-bottom: 3px solid var(--md-primary-fg-color);
+  padding-bottom: 0.4rem;
+  margin-bottom: 1.2rem;
 }
 
+[data-md-color-scheme="slate"] .md-typeset h1 {
+  color: var(--md-primary-fg-color--light);
+  border-bottom-color: var(--md-primary-fg-color);
+}
+
+.md-typeset h2 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--md-primary-fg-color);
+  border-left: 4px solid var(--md-primary-fg-color);
+  padding-left: 0.75rem;
+  margin-top: 2rem;
+}
+
+.md-typeset h3 {
+  font-weight: 600;
+  color: var(--md-primary-fg-color--dark);
+}
+
+[data-md-color-scheme="slate"] .md-typeset h3 {
+  color: var(--md-primary-fg-color--light);
+}
+
+/* ── 4. Header & Navigation Bar ─────────────────────────── */
+.md-header {
+  background: linear-gradient(135deg, #0D47A1 0%, #1565C0 50%, #1976D2 100%);
+  box-shadow: 0 2px 12px rgba(13, 71, 161, 0.4);
+}
+
+.md-header__title {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.md-search__input {
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.md-search__input:focus {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* ── 5. Sidebar Navigation ───────────────────────────────── */
+.md-nav__link {
+  border-radius: 0.35rem;
+  padding: 0.3rem 0.6rem;
+  transition: background 0.15s ease, color 0.15s ease, padding-left 0.15s ease;
+}
+
+.md-nav__link:hover {
+  background: var(--cams-blue-100);
+  padding-left: 0.85rem;
+  color: var(--md-primary-fg-color);
+}
+
+.md-nav__link--active {
+  font-weight: 600;
+  color: var(--md-primary-fg-color) !important;
+  background: var(--cams-blue-100) !important;
+  border-left: 3px solid var(--md-primary-fg-color);
+}
+
+/* ── 6. Images ───────────────────────────────────────────── */
 .md-typeset img {
   border: 1px solid var(--md-default-fg-color--lightest);
-  border-radius: 0.4rem;
-  box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 8%);
+  border-radius: 0.55rem;
+  box-shadow: 0 0.3rem 1.2rem var(--cams-shadow);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
 }
 
+.md-typeset img:hover {
+  box-shadow: 0 0.5rem 2rem var(--cams-glow);
+  transform: translateY(-2px);
+}
+
+/* ── 7. Code Blocks ──────────────────────────────────────── */
+.md-typeset code {
+  background: var(--cams-blue-100);
+  color: var(--md-primary-fg-color--dark);
+  border-radius: 0.25rem;
+  padding: 0.05em 0.3em;
+  font-size: 0.82em;
+}
+
+[data-md-color-scheme="slate"] .md-typeset code {
+  background: rgba(33, 150, 243, 0.1);
+  color: #64B5F6;
+}
+
+.md-typeset pre {
+  border-radius: 0.6rem;
+  border-left: 4px solid var(--md-primary-fg-color);
+  box-shadow: 0 0.2rem 0.8rem var(--cams-shadow);
+}
+
+/* ── 8. Admonitions ──────────────────────────────────────── */
+.md-typeset .admonition,
+.md-typeset details {
+  border-radius: 0.5rem;
+  box-shadow: 0 0.15rem 0.6rem var(--cams-shadow);
+  border-left-width: 4px;
+}
+
+.md-typeset .admonition-title,
+.md-typeset summary {
+  font-weight: 600;
+}
+
+/* ── 9. Tables ───────────────────────────────────────────── */
+.md-typeset table:not([class]) {
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 0.15rem 0.8rem var(--cams-shadow);
+  border: 1px solid var(--cams-blue-200);
+}
+
+.md-typeset table:not([class]) th {
+  background: var(--md-primary-fg-color);
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+.md-typeset table:not([class]) tr:hover {
+  background: var(--cams-blue-100);
+  transition: background 0.15s ease;
+}
+
+/* ── 10. Chapter Grid Cards ─────────────────────────────── */
 .chapter-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.8rem;
-  margin: 1rem 0 1.5rem;
+  gap: 1rem;
+  margin: 1.25rem 0 2rem;
 }
 
 .chapter-grid > p {
@@ -39,32 +209,121 @@ input {
 .chapter-grid a {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  min-height: 7rem;
-  padding: 1rem 1.1rem;
+  gap: 0.4rem;
+  min-height: 7.5rem;
+  padding: 1.1rem 1.25rem;
   color: var(--md-default-fg-color);
-  border: 1px solid var(--md-default-fg-color--lightest);
-  border-radius: 0.55rem;
-  background: var(--md-default-bg-color);
-  box-shadow: 0 0.2rem 0.8rem rgb(0 0 0 / 5%);
-  transition: border-color 160ms ease, box-shadow 160ms ease,
-    transform 160ms ease;
+  text-decoration: none;
+  border: 1.5px solid var(--cams-blue-200);
+  border-radius: 0.7rem;
+  background: linear-gradient(
+    135deg,
+    var(--md-default-bg-color) 0%,
+    var(--cams-blue-100) 100%
+  );
+  box-shadow: 0 0.2rem 0.8rem var(--cams-shadow);
+  transition:
+    border-color 200ms ease,
+    box-shadow 200ms ease,
+    transform 200ms ease,
+    background 200ms ease;
+}
+
+[data-md-color-scheme="slate"] .chapter-grid a {
+  border-color: rgba(33, 150, 243, 0.25);
+  background: linear-gradient(
+    135deg,
+    var(--md-default-bg-color) 0%,
+    rgba(33, 150, 243, 0.06) 100%
+  );
 }
 
 .chapter-grid a:hover,
 .chapter-grid a:focus-visible {
   color: var(--md-primary-fg-color);
-  border-color: var(--md-primary-fg-color--light);
-  box-shadow: 0 0.35rem 1rem rgb(0 0 0 / 10%);
-  transform: translateY(-2px);
+  border-color: var(--md-primary-fg-color);
+  box-shadow:
+    0 0.4rem 1.2rem var(--cams-glow),
+    0 0 0 2px rgba(21, 101, 192, 0.15);
+  transform: translateY(-3px);
+  background: linear-gradient(
+    135deg,
+    var(--cams-blue-100) 0%,
+    var(--cams-blue-200) 100%
+  );
+}
+
+[data-md-color-scheme="slate"] .chapter-grid a:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(33, 150, 243, 0.10) 0%,
+    rgba(33, 150, 243, 0.18) 100%
+  );
+}
+
+.chapter-grid a strong {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--md-primary-fg-color--dark);
+  letter-spacing: -0.01em;
+}
+
+[data-md-color-scheme="slate"] .chapter-grid a strong {
+  color: var(--md-primary-fg-color--light);
+}
+
+.chapter-grid a:hover strong {
+  color: var(--md-primary-fg-color);
 }
 
 .chapter-grid a span {
   color: var(--md-default-fg-color--light);
-  font-size: 0.72rem;
+  font-size: 0.73rem;
   line-height: 1.55;
 }
 
+/* ── 11. Footer ──────────────────────────────────────────── */
+.md-footer {
+  background: linear-gradient(135deg, #0D47A1 0%, #1565C0 100%);
+}
+
+.md-footer-meta {
+  background: #0D47A1;
+}
+
+/* ── 12. Back-to-Top Button ─────────────────────────────── */
+.md-top {
+  background: var(--md-primary-fg-color);
+  border-radius: 2rem;
+  box-shadow: 0 0.25rem 1rem var(--cams-glow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.md-top:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0.4rem 1.5rem var(--cams-glow);
+}
+
+/* ── 13. Scrollbar Styling ───────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--md-primary-fg-color--light);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--md-primary-fg-color);
+}
+
+/* ── 14. Responsive ──────────────────────────────────────── */
 @media screen and (max-width: 44.984375em) {
   .chapter-grid {
     grid-template-columns: 1fr;
@@ -73,4 +332,9 @@ input {
   .chapter-grid a {
     min-height: auto;
   }
+
+  .md-typeset h1 {
+    font-size: 1.4rem;
+  }
 }
+
