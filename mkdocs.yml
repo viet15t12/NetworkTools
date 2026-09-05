@@ -1,0 +1,77 @@
+site_name: CAMS - Tài liệu hướng dẫn
+site_description: Tài liệu hướng dẫn cài đặt và sử dụng phần mềm CAMS
+site_author: Nhóm phát triển CAMS
+site_url: https://viet15t12.github.io/CAMS/
+
+repo_name: viet15t12/CAMS
+repo_url: https://github.com/viet15t12/CAMS
+edit_uri: edit/main/00_book/
+
+docs_dir: 00_book
+site_dir: site
+
+# Giữ mã nguồn Typst trong 00_book nhưng không đưa các file đó lên website.
+# Các file Markdown được thêm vào sau này sẽ tự xuất hiện trong điều hướng.
+exclude_docs: |
+  **/*.typ
+  config/**
+  cover/**
+
+theme:
+  name: material
+  language: vi
+  logo: figures/icons/ptit-logo.svg
+  favicon: figures/icons/ptit-logo.svg
+  font: false
+  features:
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: red
+      toggle:
+        icon: material/brightness-7
+        name: Chuyển sang giao diện tối
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: red
+      toggle:
+        icon: material/brightness-4
+        name: Chuyển sang giao diện sáng
+
+plugins:
+  - search:
+      lang: vi
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 3
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+extra_css:
+  - stylesheets/extra.css
+
+copyright: Copyright &copy; Nhóm phát triển CAMS

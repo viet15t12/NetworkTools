@@ -193,6 +193,7 @@ info_collected.sql
 /app/
 /bin/
 dist/
+/site/
 vendor/alacritty/target/
 *.spec
 features/devices/sync/_engine.c

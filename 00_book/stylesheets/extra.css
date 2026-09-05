@@ -1,0 +1,27 @@
+:root {
+  --md-primary-fg-color: #a6192e;
+  --md-primary-fg-color--light: #c9364e;
+  --md-primary-fg-color--dark: #7d1021;
+}
+
+body,
+input {
+  font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.md-typeset {
+  font-size: 0.8rem;
+  line-height: 1.7;
+}
+
+.md-typeset h1 {
+  color: var(--md-primary-fg-color);
+  font-weight: 700;
+}
+
+.md-typeset img {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 0.4rem;
+  box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 8%);
+}
+
