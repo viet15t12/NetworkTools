@@ -23,6 +23,7 @@
   header: (),
   rows: (),
   caption: none,
+  figure-label: none,
   cell-align: left,
   // Neo dọc nội dung trong ô: top (trên), horizon (giữa), bottom (cuối).
   valign: top,
@@ -72,10 +73,15 @@
     set figure.caption(position: top)
     show figure: set block(breakable: false)
 
-    figure(
+    let result = figure(
       table-content,
       kind: table,
       caption: caption,
     )
+    if figure-label == none {
+      result
+    } else {
+      [#result#figure-label]
+    }
   }
 }

@@ -10,9 +10,15 @@ from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
+from unittest.mock import patch
 
 from .environment import configure_qt_environment
-from .shots import DIALOG_REGRESSION_FILENAMES, VLAN_WORKFLOW_FILENAMES, ShotSpec
+from .shots import (
+    CHAPTER_03_FILENAMES,
+    DIALOG_REGRESSION_FILENAMES,
+    VLAN_WORKFLOW_FILENAMES,
+    ShotSpec,
+)
 
 configure_qt_environment()
 
@@ -194,21 +200,29 @@ class DocumentationTerminal(QObject):
         self.shut_down = True
 
 
+class DocumentationExternalTools(ExternalToolsManager):
+    """Keep the real local browser backend without inspecting installed apps."""
+
+    @pyqtSlot(result="QVariant")
+    def discoverExternalTools(self) -> list[dict[str, Any]]:
+        return []
+
+
 class DocumentationNetworkMonitor(QObject):
     networkChanged = pyqtSignal()
     systemInfoChanged = pyqtSignal()
 
     @pyqtProperty(bool, constant=True)
     def isConnected(self) -> bool:
-        return False
+        return True
 
     @pyqtProperty(str, constant=True)
     def connectionType(self) -> str:
-        return "none"
+        return "ethernet"
 
     @pyqtProperty(str, constant=True)
     def networkName(self) -> str:
-        return ""
+        return "Documentation Link"
 
     @pyqtProperty("QVariantList", constant=True)
     def virtualLabs(self) -> list[object]:
@@ -256,7 +270,7 @@ class DocumentationNetworkMonitor(QObject):
 
     @pyqtProperty(int, constant=True)
     def ramUsagePercent(self) -> int:
-        return 0
+        return 42
 
     def shutdown(self) -> None:
         pass
@@ -470,8 +484,15 @@ class FixtureBundle:
 
         self.cli = DocumentationTerminal()
         self.status_bar_settings = StatusBarSettings()
-        for name in ("showDate", "showTime", "showNetwork", "showNetworkName", "showRam"):
+        # Keep the status bar informative but deterministic. Date/time stays
+        # hidden while the connection and RAM values come from this fixture.
+        for name in ("showDate", "showTime"):
             setattr(self.status_bar_settings, name, False)
+        self.status_bar_settings.showNetwork = True
+        self.status_bar_settings.showNetworkName = True
+        self.status_bar_settings.showRam = True
+        self.status_bar_settings.showRamBar = True
+        self.status_bar_settings.showRamText = True
         self.network_monitor = DocumentationNetworkMonitor()
         self.theme_settings = ThemeSettings()
         self.theme_settings.themeMode = 1 if request.theme == "light" else 2
@@ -485,7 +506,7 @@ class FixtureBundle:
         self.welcome_controller = DocumentationWelcomeController()
         self.workspace_controller = DocumentationWorkspaceController()
         self.app_paths = AppPaths()
-        self.external_tools = ExternalToolsManager(
+        self.external_tools = DocumentationExternalTools(
             db_path=self.root / "external_tools.db",
             device_db_path=self.device_db,
         )
@@ -493,7 +514,13 @@ class FixtureBundle:
             settings=QSettings(),
             device_login_service=None,
         )
-        self.syslog_manager = SyslogManager()
+        # SyslogManager constructs repositories immediately. Redirect its
+        # constructor defaults before construction, not after touching user DBs.
+        with patch.dict(os.environ, {"CAMS_SYSLOG_SETTINGS": str(self.root / "syslog.json")}), \
+             patch("features.syslog.qt.settings._local_ipv4_addresses", return_value=[]), \
+             patch("features.syslog.qt.manager.INFO_COLLECTED_DB", self.info_db), \
+             patch("features.syslog.qt.manager.DEVICE_NETWORK_DB", self.device_db):
+            self.syslog_manager = SyslogManager()
         self.syslog_manager.set_database_paths(self.info_db, self.device_db)
 
     def _configure_settings(self, request: RenderRequest) -> None:
@@ -525,6 +552,7 @@ class FixtureBundle:
             ("192.0.2.1", "R1", "rou", "connected"),
             ("192.0.2.2", "R2", "rou", "waiting"),
             ("192.0.2.11", "SW1", "sw2", "connected"),
+            ("192.0.2.13", "SW3", "sw3", "disconnected"),
         )
         for host, name, role, status in rows:
             if not self.db_manager.addDevice(

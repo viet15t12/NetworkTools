@@ -41,8 +41,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "shot",
-        choices=(*SHOT_REGISTRY.keys(), "vlan", "dialogs", "all"),
-        help="registered screenshot name, a workflow ('vlan' or 'dialogs'), or 'all'",
+        choices=(*SHOT_REGISTRY.keys(), "vlan", "dialogs", "chapter-03", "chapter-04", "all"),
+        help="registered screenshot name, a workflow ('vlan', 'dialogs', 'chapter-03', or 'chapter-04'), or 'all'",
     )
     parser.add_argument("--width", type=_positive_int, default=1600)
     parser.add_argument("--height", type=_positive_int, default=1000)
@@ -76,7 +76,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         render_vlan_workflow,
     )
 
-    output_dir = ensure_output_directory(args.output_dir)
+    # Chapter 3 always belongs to the current book, independent of CWD and
+    # the legacy default/override used by older workflows.
+    output_dir = ensure_output_directory(
+        APP_DIR / "book" / "figures" / "gui" / args.shot
+        if args.shot in {"chapter-03", "chapter-04"} else args.output_dir
+    )
     request = RenderRequest(
         width=args.width,
         height=args.height,
@@ -85,6 +90,16 @@ def main(argv: Sequence[str] | None = None) -> int:
         output_dir=output_dir,
     )
     try:
+        if args.shot == "chapter-04":
+            from .chapter04 import render_chapter_04_workflow
+            for result in render_chapter_04_workflow(request):
+                print(f"{result.path.name}: {result.path} ({result.width}x{result.height})")
+            return 0
+        if args.shot == "chapter-03":
+            from .chapter03 import render_chapter_03_workflow
+            for result in render_chapter_03_workflow(request):
+                print(f"{result.path.name}: {result.path} ({result.width}x{result.height})")
+            return 0
         if args.shot == "vlan":
             workflow_request = RenderRequest(
                 width=request.width,

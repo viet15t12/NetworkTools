@@ -10,6 +10,7 @@ Rectangle {
     property string message: ""
     property string severity: "info"
     property bool busy: false
+    property bool wrapText: false
     default property alias actions: actionLayout.data
 
     readonly property string normalizedSeverity: {
@@ -61,7 +62,8 @@ Rectangle {
             color: Theme.textPrimary
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeSmall
-            elide: Text.ElideRight
+            wrapMode: root.wrapText ? Text.WordWrap : Text.NoWrap
+            elide: root.wrapText ? Text.ElideNone : Text.ElideRight
         }
 
         RowLayout {

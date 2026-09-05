@@ -902,6 +902,7 @@ Item {
             InlineMessage {
                 Layout.fillWidth: true
                 severity: "error"
+                wrapText: true
                 message: "This permanently deletes " + deleteConfirmationDialog.targetIp
                          + ", its configuration, collected data, Syslog data, and backup history. This cannot be undone."
             }

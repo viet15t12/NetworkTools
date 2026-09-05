@@ -37,14 +37,14 @@ Các tổ hợp này dùng chữ cái trong tên chức năng và không chiếm
 | `Ctrl+N` | Mở Add New Device. |
 | `Ctrl+Alt+N` | Mở Batch New Device. |
 | `F2` | Sửa device đang chọn. |
-| `Delete` | Xóa device đang chọn. |
+| Chuột phải → Delete Host… | Xóa vĩnh viễn host sau khi xác nhận; không có phím Delete cho device. |
 | `Ctrl+Alt+P` | Ping device đang kết nối. |
 | `Ctrl+Alt+C` | Kết nối device đang chờ. |
-| `Ctrl+Alt+R` | Kết nối lại device bị ngắt. |
+| `Ctrl+Alt+R` | Đưa device Disconnected về Waiting; sau đó dùng Connect. |
 | `Ctrl+Alt+Down` / `Ctrl+Alt+Up` | Đánh dấu device Down/Up trong Dev mode. |
-| `Ctrl+Shift+C` | Kết nối các device đang chọn. |
-| `Ctrl+Shift+R` | Lấy running-config của các device đang chọn. |
-| `Ctrl+Shift+D` | Ngắt kết nối các device đang chọn. |
+| `Ctrl+Shift+C` | Kết nối các device Waiting đang chọn. |
+| `Ctrl+Shift+R` | Lấy running-config của các device Connected đang chọn. |
+| `Ctrl+Shift+D` | Ngắt các device Connected đang chọn, đưa về Waiting. |
 | `Ctrl+A` | Chọn toàn bộ device đang hiển thị khi ở chế độ multi-select. |
 | `Esc` | Xóa selection hiện tại. |
 | `Ctrl+\`` | Mở CAMS CLI cho device có tab active. |

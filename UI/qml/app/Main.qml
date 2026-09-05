@@ -811,6 +811,7 @@ StatefulWindow {
 
             ActivityBar {
                 id: activityBar
+                objectName: "mainActivityBar"
                 Layout.preferredWidth: Theme.activityBarWidth
                 Layout.fillHeight: true
                 onToggleSidebarRequested: root.toggleSidebar()
@@ -910,6 +911,7 @@ StatefulWindow {
 
                     DeviceTabs {
                         id: deviceTabs
+                        objectName: "mainDeviceTabs"
                         Layout.fillWidth: true
                         Layout.preferredHeight: (tabCount > 0 && root.isDeviceMode) ? Theme.tabBarHeight : 0
                         visible: Layout.preferredHeight > 0
@@ -937,6 +939,7 @@ StatefulWindow {
 
                     FeatureBar {
                         id: featureBar
+                        objectName: "mainFeatureBar"
                         Layout.fillWidth: true
                         Layout.preferredHeight: Theme.featureBarHeight
                         visible: deviceTabs.tabCount > 0 && root.isDeviceMode
@@ -961,6 +964,7 @@ StatefulWindow {
 
                     ContentArea {
                         id: contentArea
+                        objectName: "mainContentArea"
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         visible: !root.isSyslogMode && !root.isSftpMode
@@ -1016,6 +1020,7 @@ StatefulWindow {
 
         StatusBar {
             id: statusBar
+            objectName: "mainStatusBar"
             Layout.fillWidth: true
             Layout.preferredHeight: root.visibleStatusBarHeight
             visible: StatusBarState.isVisible

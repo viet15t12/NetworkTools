@@ -26,7 +26,7 @@ Rectangle {
         return Boolean(operation)
                && (operation.state === "queued" || operation.state === "running")
     }
-    readonly property int menuWidth: 300
+    readonly property int menuWidth: selectionMode ? 420 : 300
     readonly property color menuBorderColor: Theme.isHighContrast
                                              ? Theme.panelSideBarBorderColor
                                              : (Theme.isDarkMode ? Qt.rgba(1, 1, 1, 0.12)

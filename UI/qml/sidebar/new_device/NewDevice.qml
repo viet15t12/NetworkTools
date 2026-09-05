@@ -465,7 +465,7 @@ Window {
 
                 StandardButton {
                     id: addButton
-                    Layout.preferredWidth: 120
+                    Layout.preferredWidth: isEditMode ? 170 : 120
                     Layout.preferredHeight: 32
                     text: isEditMode ? "Save Changes" : "Add Device"
                     icon.source: isEditMode

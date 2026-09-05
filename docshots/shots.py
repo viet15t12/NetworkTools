@@ -51,6 +51,19 @@ DIALOG_REGRESSION_FILENAMES = (
     "create-project-password-dialog.png",
 )
 
+CHAPTER_03_FILENAMES = (
+    "01-workspace-overview.png",
+    "02-menu-bar.png",
+    "03-activity-bar.png",
+    "04-devices-sidebar.png",
+    "05-device-tabs.png",
+    "06-feature-bar-router.png",
+    "07-feature-bar-switch.png",
+    "08-content-area.png",
+    "09-status-bar.png",
+    "10-sidebar-collapsed.png",
+)
+
 
 def resolve_shots(name: str) -> tuple[ShotSpec, ...]:
     if name == "all":
@@ -65,6 +78,7 @@ def resolve_shots(name: str) -> tuple[ShotSpec, ...]:
 __all__ = [
     "SHOT_REGISTRY",
     "DIALOG_REGRESSION_FILENAMES",
+    "CHAPTER_03_FILENAMES",
     "VLAN_WORKFLOW_FILENAMES",
     "ShotSpec",
     "resolve_shots",
