@@ -2,7 +2,7 @@
 
 #front-heading[LỜI CAM ĐOAN]
 
-Chúng tôi xin cam đoan báo cáo nghiên cứu khoa học với đề tài *"Nghiên cứu và xây dựng hệ thống quản lý tập trung, tự động hóa cấu hình và giám sát an ninh mạng"*, với tên hệ thống *CAMS (Centralized Automation & Monitoring System)*, là công trình nghiên cứu do nhóm tác giả thực hiện dưới sự hướng dẫn khoa học của ThS. Phan Thanh Toản, Bộ môn Mạng Viễn thông, Học viện Công nghệ Bưu chính Viễn thông cơ sở tại TP. Hồ Chí Minh.
+Chúng tôi xin cam đoan báo cáo nghiên cứu khoa học với ĐỀ TÀI: NGHIÊN CỨU VÀ XÂY DỰNG HỆ THỐNG QUẢN LÝ TẬP TRUNG, TỰ ĐỘNG HÓA CẤU HÌNH VÀ GIÁM SÁT AN NINH MẠNG (viết tắt là CAMS) là công trình nghiên cứu do nhóm tác giả thực hiện dưới sự hướng dẫn khoa học của ThS. Phan Thanh Toản, Bộ môn Mạng Viễn thông, Học viện Công nghệ Bưu chính Viễn thông cơ sở tại TP. Hồ Chí Minh.
 
 Kết quả trình bày trong báo cáo là trung thực, do nhóm tự thực hiện và chưa từng được công bố trong bất kỳ công trình nào khác. Các phần mã nguồn do nhóm tự xây dựng, các thư viện nguồn mở, tài liệu kỹ thuật và mã tham khảo sử dụng trong quá trình phát triển đều được phân biệt rõ ràng và trích dẫn đầy đủ theo đúng quy định.
 
@@ -23,15 +23,15 @@ Kết quả trình bày trong báo cáo là trung thực, do nhóm tự thực h
     #text(size: 9pt, style: "italic")[(Trưởng nhóm)]
   ],
   [N24DCVT113],
-  [Kiến trúc dữ liệu, quản trị cơ sở dữ liệu SQLite, tích hợp backend – giao diện, mô-đun Syslog, phối hợp tích hợp SFTP, điều phối kỹ thuật và hợp nhất mã nguồn],
+  [Kiến trúc dữ liệu, quản trị cơ sở dữ liệu SQLite, tích hợp giữa các lớp của hệ thống, mô-đun Syslog, phối hợp tích hợp SFTP, điều phối kỹ thuật và hợp nhất mã nguồn],
 
   [Nguyễn Phan Kiên],
   [N24DCVT046],
-  [Nền tảng backend, API và logic nghiệp vụ cho Routing/DHCP/ACL/NAT/VLAN, mẫu cấu hình Jinja, đồng bộ Running Configuration, kiểm thử tích hợp],
+  [Nền tảng backend, giao diện lập trình và logic nghiệp vụ cho Routing/DHCP/ACL/NAT/VLAN, mẫu cấu hình Jinja, đồng bộ Running Configuration, kiểm thử tích hợp],
 
   [Nguyễn Trần Đạt Phú],
   [N24DCVT072],
-  [Thiết kế giao diện PyQt6/QML, trải nghiệm người dùng, biên soạn tài liệu, quản lý kho mã nguồn và tích hợp nhánh GitHub],
+  [Thiết kế giao diện người dùng, trải nghiệm sử dụng, biên soạn tài liệu, quản lý kho mã nguồn và tích hợp nhánh GitHub],
 )
 
 #pagebreak()
