@@ -1,4 +1,6 @@
-# LỜI CẢM ƠN
+#import "../config/commands.typ": front-heading
+
+#front-heading[LỜI CẢM ƠN]
 
 Nhóm tác giả xin cảm ơn giảng viên hướng dẫn, khoa/bộ môn, phòng thực hành và các cá nhân đã hỗ trợ trong quá trình khảo sát, xây dựng, kiểm thử và hoàn thiện đề tài.
 
@@ -8,8 +10,6 @@ Nhóm cũng xin cảm ơn Khoa Viễn thông 2 và Học viện Công nghệ Bư
 
 Do thời gian thực hiện và kiến thức còn hạn chế, báo cáo khó tránh khỏi thiếu sót. Nhóm tác giả mong nhận được sự góp ý của quý thầy cô và Hội đồng đánh giá để đề tài được hoàn thiện hơn.
 
-<div align="right">
-
-**Nhóm tác giả**
-
-</div>
+#align(right)[
+  *Nhóm tác giả*
+]

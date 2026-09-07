@@ -20,7 +20,7 @@
 | **IPC** | Inter-Process Communication | Giao tiếp giữa các tiến trình |
 | **LACP** | Link Aggregation Control Protocol | Giao thức điều khiển gom kênh liên kết |
 | **NAT** | Network Address Translation | Biên dịch địa chỉ mạng |
-| **NTP** | CAMS Package | Định dạng gói đóng gói dự án của ứng dụng |
+| **.ntp** | CAMS Package | Định dạng tệp đóng gói dự án của hệ thống CAMS |
 | **OSPF** | Open Shortest Path First | Giao thức định tuyến chọn đường ngắn nhất |
 | **PAgP** | Port Aggregation Protocol | Giao thức gom cổng độc quyền của Cisco |
 | **PAT** | Port Address Translation | Biên dịch địa chỉ theo cổng / NAT Overload |
